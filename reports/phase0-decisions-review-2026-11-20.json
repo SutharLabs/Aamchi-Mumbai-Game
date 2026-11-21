@@ -1,0 +1,49 @@
+{
+  "checked_utc": "2026-11-20T01:00:54.459106+00:00",
+  "result": "passed",
+  "scope": "Local documentation/decision consistency and saved read-only remote evidence; no runtime/spec changes, deployment or queue controls.",
+  "markdown_files_checked": 20,
+  "local_links_and_anchors_checked": 301,
+  "code_fences_balanced": true,
+  "phase_tasks": 45,
+  "phase_exit_gates": [
+    "G0",
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6"
+  ],
+  "asset_tasks": 22,
+  "json_files_validated": 18,
+  "queue_jobs": 11,
+  "declared_output_paths": 77,
+  "runtime_and_spec_files_unchanged_from_armed_manifest": 20,
+  "decisions": {
+    "first_release_platforms": [
+      "Windows PC",
+      "Android"
+    ],
+    "android_os_target": "Android 12",
+    "android_hardware_baseline": null,
+    "windows_hardware_class": "8 GB RAM, integrated graphics; exact baseline pending",
+    "district": "Bandra West",
+    "year_band": "1990–1995",
+    "theme": "Original gangster-era crime fiction",
+    "geography": "Recognizable road/landmark relationships, compressed distances",
+    "all_four_vehicle_families_player_drivable": true,
+    "human_experience": "Some experience",
+    "provisional_human_hours_per_week": 10
+  },
+  "remote_observation": {
+    "receipt": "reports/remote/epyc24/phase0-status-2026-11-20.json",
+    "checked_client_ist": "2026-11-20T06:21:08.380904+05:30",
+    "technically_completed_jobs": 11,
+    "supervisor_running": false,
+    "model_artifacts_collected_by_check": false,
+    "human_and_engine_acceptance": "pending"
+  },
+  "errors": [],
+  "phase_task_references_resolved": true
+}

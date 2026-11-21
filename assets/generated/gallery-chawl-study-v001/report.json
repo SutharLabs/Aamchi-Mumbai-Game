@@ -1,0 +1,75 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "gallery-chawl-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 6060,
+  "triangle_budget": 60000,
+  "mesh_objects": 507,
+  "materials_used": [
+    "concrete",
+    "dark",
+    "metal",
+    "plaster",
+    "wood",
+    "worn_plaster"
+  ],
+  "bounds_metres": {
+    "min": [
+      -8.25,
+      -8.399999618530273,
+      0.0
+    ],
+    "max": [
+      8.25,
+      5.0,
+      11.760000228881836
+    ],
+    "size": [
+      16.5,
+      13.399999618530273,
+      11.760000228881836
+    ]
+  },
+  "generator_details": {
+    "kind": "chawl_gallery_study",
+    "parameters": {
+      "bay_width": 3.0,
+      "room_depth": 5.0,
+      "gallery_width": 1.4,
+      "floor_height": 2.8,
+      "bays": 4,
+      "floors": 4,
+      "courtyard_width": 7.0
+    },
+    "status": "draft_pending_architectural_and_gameplay_review",
+    "dimensions_basis": "estimated_design_parameters_not_surveyed",
+    "geometry_origin": "original_procedural_primitives_no_external_meshes"
+  },
+  "source_references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Dimensions are design estimates, not a surveyed replica.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "d82e838a03f7cad72e1ee50cd459bc107aa9bf3bd90c454c85a0e5665b33b035",
+    "model.blend": "aacf740f3751e1547689389d5e1f0639b9532d158cc90d722e22b7dd5bdcf008",
+    "preview.png": "ffa86dced7db732849e9c6659f294d0781113b3845f070831c75a56331998da6",
+    "front.png": "f0adb77a56ea8056fbe4a741d01299bed2bb86ecda1ac496a63ab997ef0fe6db",
+    "rear.png": "ceb7fdebd0eff76ee335d37e81b80986f41e73ccd3eb85451fd4bdbf83f7704a",
+    "side.png": "4e26b4d2371abf5889eb5801f062dcc61afa377bd4c2961701ebf2de3184751a"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Inspect all access routes, courtyard sightlines and gallery openings.",
+    "Record proposed dimensions; this is not an exact named BDD block."
+  ]
+}

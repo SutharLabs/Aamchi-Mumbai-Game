@@ -1,0 +1,661 @@
+{
+  "checked_client_utc": "2026-11-20T00:51:08.380876+00:00",
+  "checked_client_ist": "2026-11-20T06:21:08.380904+05:30",
+  "purpose": "Read-only Phase 0 technical night-queue progress check",
+  "operations": [
+    "status",
+    "collect-list (metadata only; no asset outputs requested)",
+    "collect-read (.night-queue/supervisor.log only)"
+  ],
+  "remote_mutations": false,
+  "remote_status": {
+    "root": "/root/motion/mumbai-gully-heat",
+    "running": false,
+    "supervisor": null,
+    "clock": {
+      "native_utc": "2026-11-20T00:48:55.067394+00:00",
+      "logical_utc": "2026-11-20T00:48:55.067394+00:00",
+      "logical_ist": "2026-11-20T06:18:55.067394+05:30",
+      "offset_seconds": 0.0,
+      "calibration": null
+    },
+    "paused": false,
+    "stopped": false,
+    "state": {
+      "clock": {
+        "mode": "corrected_utc_monotonic_anchor",
+        "offset_seconds": 146.42144751548767
+      },
+      "jobs": {
+        "baithi-chawl-study-v001": {
+          "attempts": 1,
+          "fingerprint": "7f4f9d3b5df2dd7bf58f3b4d0f63fc43d82c085a010f7dfdf71696a2434f42c9",
+          "finished_at": "2026-11-19T17:49:49.044715+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/baithi-chawl-study-v001-001-eb09d28b52bb.log",
+          "outputs": {
+            "assets/generated/baithi-chawl-study-v001/front.png": {
+              "sha256": "4710a1ccc831eb8bc0c091c670dfb6771bf9291c10d55160ff264fd062da6902",
+              "size": 358097
+            },
+            "assets/generated/baithi-chawl-study-v001/model.blend": {
+              "sha256": "6bc76ef946d46ce14020fdfd9fb2d929ebf478663361794384640517cd9f1a0e",
+              "size": 174642
+            },
+            "assets/generated/baithi-chawl-study-v001/model.glb": {
+              "sha256": "131f3924167066f7797c1c47856611110f71386d8774efda3d5fe02d51156834",
+              "size": 271572
+            },
+            "assets/generated/baithi-chawl-study-v001/preview.png": {
+              "sha256": "703db54c04d75f839de82baae5245cbf8253c0237b0b2a3ee51fdd59e0c37d02",
+              "size": 341612
+            },
+            "assets/generated/baithi-chawl-study-v001/rear.png": {
+              "sha256": "e1ffbe4f5ae4a86227e353da502714a18acf43f70f1da8db0d0b9f09e705daf0",
+              "size": 354549
+            },
+            "assets/generated/baithi-chawl-study-v001/report.json": {
+              "sha256": "a2de00d7a4315f4048e7f773b24cb6afc779d0e11f31bf978ef42e797d2c6956",
+              "size": 2550
+            },
+            "assets/generated/baithi-chawl-study-v001/side.png": {
+              "sha256": "14b977dcacd962ef949d1fdfcc4e9b83ba593995ce7e063dd36d365d0b21f8ad",
+              "size": 353321
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:49:43.006556+00:00",
+          "status": "completed"
+        },
+        "chawl-frontage-bay-v001": {
+          "attempts": 1,
+          "fingerprint": "8f554dc066b6b7bc00ec9ea50206f57a254d9a54523a49fd0c050b043a69f13e",
+          "finished_at": "2026-11-19T17:47:54.535058+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/chawl-frontage-bay-v001-001-2bc30e9ae5dd.log",
+          "outputs": {
+            "assets/generated/chawl-frontage-bay-v001/front.png": {
+              "sha256": "f435a74625b51365c3f14252e2137bfae0f9ad81fc81ce404d405c4ad58a84cd",
+              "size": 364832
+            },
+            "assets/generated/chawl-frontage-bay-v001/model.blend": {
+              "sha256": "430b25b83599360e163fecf2fcb1ae8af0ea10842a73082478e2a4df9237f5ed",
+              "size": 108286
+            },
+            "assets/generated/chawl-frontage-bay-v001/model.glb": {
+              "sha256": "f03b82487f4095f0b32087a582a385aa06a194af344846fe5317e32d3acfb0fc",
+              "size": 42336
+            },
+            "assets/generated/chawl-frontage-bay-v001/preview.png": {
+              "sha256": "b05e4a02fc0e54a3ffc5568be282a693869ebc28bc5e10106c0e4b0da9da5644",
+              "size": 377668
+            },
+            "assets/generated/chawl-frontage-bay-v001/rear.png": {
+              "sha256": "122902c6cee324e4efbd13c9dc8990eb880bb9110a19d0a786ad3b45e5b56a94",
+              "size": 360158
+            },
+            "assets/generated/chawl-frontage-bay-v001/report.json": {
+              "sha256": "254e31de651b9c4f05afe800971d7564434e172116c55a76921391968548fee9",
+              "size": 2386
+            },
+            "assets/generated/chawl-frontage-bay-v001/side.png": {
+              "sha256": "9824ed6c491adb03c8baebeb4b2fc26be7126df06bb016efa9141248011e407b",
+              "size": 369671
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:47:48.499743+00:00",
+          "status": "completed"
+        },
+        "chawl-props-v001": {
+          "attempts": 1,
+          "fingerprint": "3a39d39c2f2975fd90e60bff443a6c12c8ad8a60bd2c45dc1a869a4197d1fa1e",
+          "finished_at": "2026-11-19T17:50:25.205885+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/chawl-props-v001-001-c6300f467724.log",
+          "outputs": {
+            "assets/generated/chawl-props-v001/front.png": {
+              "sha256": "33f07cfaa8311cc394e577ded70dba1c28826c9f42af2fac2a0072777965ea44",
+              "size": 392772
+            },
+            "assets/generated/chawl-props-v001/model.blend": {
+              "sha256": "b72fa06f0e49f1493908fa33fbf87eef8f78c84b67cd4d94c31eef201add1873",
+              "size": 105399
+            },
+            "assets/generated/chawl-props-v001/model.glb": {
+              "sha256": "4c325fadc46529c865244fe314bb8620f7dcb0722576b008c9ba45b0003a9c9a",
+              "size": 24100
+            },
+            "assets/generated/chawl-props-v001/preview.png": {
+              "sha256": "0f8057fc0d201f7e06e40b3b7178c33c2e9739d236a4816f2eec35a853bc256b",
+              "size": 371802
+            },
+            "assets/generated/chawl-props-v001/rear.png": {
+              "sha256": "ceabba4daa43556455dfb7a37c47d618e5d1b314adfc143962fc61fa0a9262e1",
+              "size": 386207
+            },
+            "assets/generated/chawl-props-v001/report.json": {
+              "sha256": "703b22ef73e6d790c89e498216dcb13cc859c427838dc3e250c1a7f26b4eaa25",
+              "size": 2485
+            },
+            "assets/generated/chawl-props-v001/side.png": {
+              "sha256": "da5c9f21059e8e78f334844e1406f74f4a315261227acbb9a1d3b13fa3f3d77f",
+              "size": 361273
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:50:19.167599+00:00",
+          "status": "completed"
+        },
+        "chawl-stair-v001": {
+          "attempts": 1,
+          "fingerprint": "2d88d739c0f8220ab379bd6269e215563dec924e2e055375a5c3b11168eba8fb",
+          "finished_at": "2026-11-19T17:48:30.690836+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/chawl-stair-v001-001-18f60ece2912.log",
+          "outputs": {
+            "assets/generated/chawl-stair-v001/front.png": {
+              "sha256": "3eba1a625bc2ad8d7a6058582dc85d49c98793c065967d8af2a4bf39bc7b5435",
+              "size": 378073
+            },
+            "assets/generated/chawl-stair-v001/model.blend": {
+              "sha256": "8bceffaca3ed726f85ed0c94fa4cc173c9e39e70912aa74c39cd96fc111c063e",
+              "size": 156065
+            },
+            "assets/generated/chawl-stair-v001/model.glb": {
+              "sha256": "539f60488e44fe1727c3e74a35ba6297da15483e7578502a40db1883f1f33f30",
+              "size": 234424
+            },
+            "assets/generated/chawl-stair-v001/preview.png": {
+              "sha256": "33e40071c56299cacdb24683092b4734ca2df59b8c20f5a70872df7d21e92840",
+              "size": 390308
+            },
+            "assets/generated/chawl-stair-v001/rear.png": {
+              "sha256": "9b67e459a15fa459665f4946cc8177d952dd427a90338bba1e275d170b00cc62",
+              "size": 374936
+            },
+            "assets/generated/chawl-stair-v001/report.json": {
+              "sha256": "445f9ca3354c0f422ca0e135d67ce84acb077ce2b89e9508760f1a03527d604a",
+              "size": 2360
+            },
+            "assets/generated/chawl-stair-v001/side.png": {
+              "sha256": "25423f0f0b3f65874faeec8b954fb7a245f24f9c6b2b55c1ffe90427bffddffa",
+              "size": 419449
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:48:24.652489+00:00",
+          "status": "completed"
+        },
+        "contemporary-character-study-v001": {
+          "attempts": 1,
+          "fingerprint": "9fe8313bff49167f5be74d0c124c069494ad6f9d859d4cdf7053e719538e8beb",
+          "finished_at": "2026-11-19T17:52:49.877431+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/contemporary-character-study-v001-001-35660cd3f4ce.log",
+          "outputs": {
+            "assets/generated/contemporary-character-study-v001/front.png": {
+              "sha256": "2c8ac3285696a84e184590a77f556588004bbb4aa2688d7cb74d244f2d2016a0",
+              "size": 380697
+            },
+            "assets/generated/contemporary-character-study-v001/model.blend": {
+              "sha256": "fc5ac0e7e357f786d81d315d98dcd43b4407f3cd10a5f3f987b719db2ea5c309",
+              "size": 125731
+            },
+            "assets/generated/contemporary-character-study-v001/model.glb": {
+              "sha256": "ba42713964f7f78a907465e5c65973952e8e69c626360805f3bd1640caebed3b",
+              "size": 219868
+            },
+            "assets/generated/contemporary-character-study-v001/preview.png": {
+              "sha256": "7a6edce3caa01b0122d477835fa1f15ef31c4636e507f6f85a69ba10447378da",
+              "size": 344569
+            },
+            "assets/generated/contemporary-character-study-v001/rear.png": {
+              "sha256": "515a00a6bf791366b8ddc59cebf7e0bba35ea7190d3bbffdd0544627ec9c0c2e",
+              "size": 376302
+            },
+            "assets/generated/contemporary-character-study-v001/report.json": {
+              "sha256": "32370fb76c206ba82b0f2dbf13831b582bbd1ec225f0ab1928c15e32f0c63251",
+              "size": 2183
+            },
+            "assets/generated/contemporary-character-study-v001/side.png": {
+              "sha256": "58acaea4827c6d2758b1990d165f8d7f1072350a98ebcf53b92412eae440e533",
+              "size": 359441
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:52:43.841248+00:00",
+          "status": "completed"
+        },
+        "everyday-sari-study-v001": {
+          "attempts": 1,
+          "fingerprint": "59658dedfe39570b88164ab685079b427ba0d2e005dc6390f3bb65ab7879840e",
+          "finished_at": "2026-11-19T17:52:13.708293+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/everyday-sari-study-v001-001-dc99a2655dd0.log",
+          "outputs": {
+            "assets/generated/everyday-sari-study-v001/front.png": {
+              "sha256": "2045722471bef6a54f2935cc97c34aacfd58c2e6bf87c50da05cd969071dd095",
+              "size": 395847
+            },
+            "assets/generated/everyday-sari-study-v001/model.blend": {
+              "sha256": "02ee67e2f5d709463f49f7dd53a868138a62c10303df9d72eaec1787b447c1e4",
+              "size": 132093
+            },
+            "assets/generated/everyday-sari-study-v001/model.glb": {
+              "sha256": "8e52f21e6c21b981126d4dd6720b555177a06179c6b0011830da49facfb84e4f",
+              "size": 247400
+            },
+            "assets/generated/everyday-sari-study-v001/preview.png": {
+              "sha256": "933353bef94d2029cbcb8bc1e03b01b323af8cc006661b103c44a39c0ecc90c0",
+              "size": 369764
+            },
+            "assets/generated/everyday-sari-study-v001/rear.png": {
+              "sha256": "d7634f230ca9a02417d47d7a951a430be646093aa9e8105787a4c6e46cb5d46a",
+              "size": 387843
+            },
+            "assets/generated/everyday-sari-study-v001/report.json": {
+              "sha256": "6c92b557c520372ed45ff794410bc06e5ab531fdd806fb5a687f44e6afbc69ae",
+              "size": 2183
+            },
+            "assets/generated/everyday-sari-study-v001/side.png": {
+              "sha256": "4e27da80e2511034c2a57f35c9db6d578e51ae34b09bdf898d98bfce127edabc",
+              "size": 376604
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:52:07.670243+00:00",
+          "status": "completed"
+        },
+        "gallery-chawl-study-v001": {
+          "attempts": 1,
+          "fingerprint": "6cea3641999bfc1794ffbd31d5c761b21583886ccbd103087a9e4836c2565e95",
+          "finished_at": "2026-11-19T17:49:12.885198+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/gallery-chawl-study-v001-001-9c7e24f168b3.log",
+          "outputs": {
+            "assets/generated/gallery-chawl-study-v001/front.png": {
+              "sha256": "f0adb77a56ea8056fbe4a741d01299bed2bb86ecda1ac496a63ab997ef0fe6db",
+              "size": 430929
+            },
+            "assets/generated/gallery-chawl-study-v001/model.blend": {
+              "sha256": "aacf740f3751e1547689389d5e1f0639b9532d158cc90d722e22b7dd5bdcf008",
+              "size": 308647
+            },
+            "assets/generated/gallery-chawl-study-v001/model.glb": {
+              "sha256": "d82e838a03f7cad72e1ee50cd459bc107aa9bf3bd90c454c85a0e5665b33b035",
+              "size": 842444
+            },
+            "assets/generated/gallery-chawl-study-v001/preview.png": {
+              "sha256": "ffa86dced7db732849e9c6659f294d0781113b3845f070831c75a56331998da6",
+              "size": 447960
+            },
+            "assets/generated/gallery-chawl-study-v001/rear.png": {
+              "sha256": "ceb7fdebd0eff76ee335d37e81b80986f41e73ccd3eb85451fd4bdbf83f7704a",
+              "size": 404815
+            },
+            "assets/generated/gallery-chawl-study-v001/report.json": {
+              "sha256": "379ec650018a306671574ed5a234f3aee7014c6defb76b3069cd2b45c74902dc",
+              "size": 2452
+            },
+            "assets/generated/gallery-chawl-study-v001/side.png": {
+              "sha256": "4e26b4d2371abf5889eb5801f062dcc61afa377bd4c2961701ebf2de3184751a",
+              "size": 406499
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:49:00.813514+00:00",
+          "status": "completed"
+        },
+        "gandhi-cap-study-v001": {
+          "attempts": 1,
+          "fingerprint": "e855f438e8bcb028b402917af3ccbc9f765566bcd1ed93d829b70772cc2d42f2",
+          "finished_at": "2026-11-19T17:53:27.055428+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/gandhi-cap-study-v001-001-e8fdb2e42e20.log",
+          "outputs": {
+            "assets/generated/gandhi-cap-study-v001/front.png": {
+              "sha256": "c31fade0ea0b1c699f17cae350f8c7bb157795ea65cf8ec5e3f928274acd363e",
+              "size": 359441
+            },
+            "assets/generated/gandhi-cap-study-v001/model.blend": {
+              "sha256": "64843009fb4f1e4958ac0128853b463dcf3f27a1a008e45920910ed852889b94",
+              "size": 93802
+            },
+            "assets/generated/gandhi-cap-study-v001/model.glb": {
+              "sha256": "21b32bf916ad49e7332ddb94775023ba8da54e8535d1b2812225d7891d09d9c6",
+              "size": 4640
+            },
+            "assets/generated/gandhi-cap-study-v001/preview.png": {
+              "sha256": "a82c11b351cba3c5a84e80986dabe267590eefe95d5530578c0ee3bee98ff02b",
+              "size": 343301
+            },
+            "assets/generated/gandhi-cap-study-v001/rear.png": {
+              "sha256": "c210494ff18fce6e630f0d86a6e25e42c874d88f5af1ce38ceb069c2fb74aeec",
+              "size": 366549
+            },
+            "assets/generated/gandhi-cap-study-v001/report.json": {
+              "sha256": "4ff50823e6c3b97e0216f78b60862eec1472b17dfe02a26ffd07967c7be16ac4",
+              "size": 2132
+            },
+            "assets/generated/gandhi-cap-study-v001/side.png": {
+              "sha256": "03b5d9e6b3c97c9a8b7d1c275f3411548df27e2ac991e06ead78be17c152dee7",
+              "size": 369978
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:53:20.012288+00:00",
+          "status": "completed"
+        },
+        "kurta-dhoti-cap-study-v001": {
+          "attempts": 1,
+          "fingerprint": "4a62541aae8043ae208165ef5bb0db2377ba7f5487c9e01ad222b234d2ca3172",
+          "finished_at": "2026-11-19T17:51:01.367276+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/kurta-dhoti-cap-study-v001-001-3c64e981da73.log",
+          "outputs": {
+            "assets/generated/kurta-dhoti-cap-study-v001/front.png": {
+              "sha256": "6f9ad3ed933e194b7dd40aa7063ff94d8118d76bc500ed6086dbe00324e94f6a",
+              "size": 383608
+            },
+            "assets/generated/kurta-dhoti-cap-study-v001/model.blend": {
+              "sha256": "af3fce19516a04630672e2962f9ddfca4acc66df3ad573a00c9df256142d5da8",
+              "size": 130717
+            },
+            "assets/generated/kurta-dhoti-cap-study-v001/model.glb": {
+              "sha256": "e533b120fa87228069386c82748023c3e7843d410234f827d6b2d920b0e57606",
+              "size": 238876
+            },
+            "assets/generated/kurta-dhoti-cap-study-v001/preview.png": {
+              "sha256": "574f28702811bf64eded078ff9bb6e8862cc0ebf7c07913f7e217ac10f4d540e",
+              "size": 345840
+            },
+            "assets/generated/kurta-dhoti-cap-study-v001/rear.png": {
+              "sha256": "6a9d2b1368f5a9da9a653034b7ba4a48e607704b8521a2a3813ea900b722b71d",
+              "size": 380158
+            },
+            "assets/generated/kurta-dhoti-cap-study-v001/report.json": {
+              "sha256": "1eb0d3de8aa160d780bc32330c53c053f39476d781dc10fcbafa5a3cbfd717d2",
+              "size": 2180
+            },
+            "assets/generated/kurta-dhoti-cap-study-v001/side.png": {
+              "sha256": "8d4968f2f57eb2beb3acd29c11f960fd995bc369b926ab17263c74d8154bdfb8",
+              "size": 362271
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:50:55.327570+00:00",
+          "status": "completed"
+        },
+        "nauvari-kashtha-study-v001": {
+          "attempts": 1,
+          "fingerprint": "542ee86e66caf32834ae0d0f7630582ea23b940c84e1d8c410cfcc09fbac182e",
+          "finished_at": "2026-11-19T17:51:37.538350+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/nauvari-kashtha-study-v001-001-705c57789952.log",
+          "outputs": {
+            "assets/generated/nauvari-kashtha-study-v001/front.png": {
+              "sha256": "fd5010e64fe58b992a612e47f55d227452f8da0ca5766824964044f0b101c8e0",
+              "size": 396951
+            },
+            "assets/generated/nauvari-kashtha-study-v001/model.blend": {
+              "sha256": "0b1e246eb21b390a45869e87c114e48b1a33e400b395ef1974706b07c1ff9566",
+              "size": 131251
+            },
+            "assets/generated/nauvari-kashtha-study-v001/model.glb": {
+              "sha256": "d4ceeb025229dc62ac8d9657c5ac35f479e8b1500aa72b11d232a7e072957c70",
+              "size": 249476
+            },
+            "assets/generated/nauvari-kashtha-study-v001/preview.png": {
+              "sha256": "eb7b2df1c29016e529f505f552cc66442cf86df58e205e670f8fbc3406f76622",
+              "size": 370877
+            },
+            "assets/generated/nauvari-kashtha-study-v001/rear.png": {
+              "sha256": "5ef9e71a84fb2ed7b5cd6f02bece7c7399df307467429630c94992ccf0fa523e",
+              "size": 391861
+            },
+            "assets/generated/nauvari-kashtha-study-v001/report.json": {
+              "sha256": "6f768a407f86e1cb325fde4c5445713dc4e058d32935041c1194c6a4398b1ecf",
+              "size": 2257
+            },
+            "assets/generated/nauvari-kashtha-study-v001/side.png": {
+              "sha256": "b5d01170f55af00c00c50affee7f95335bade90a65def38d94d4efd15506c650",
+              "size": 374930
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:51:31.497275+00:00",
+          "status": "completed"
+        },
+        "pheta-study-v001": {
+          "attempts": 1,
+          "fingerprint": "2cb7aa5d21f7bc574bfb182158b35266dc04c92b74f73fe57a2609e973ced070",
+          "finished_at": "2026-11-19T17:54:03.231413+00:00",
+          "launches": 1,
+          "log": ".night-queue/logs/pheta-study-v001-001-70e7eb407dcb.log",
+          "outputs": {
+            "assets/generated/pheta-study-v001/front.png": {
+              "sha256": "32c048838bedb0c355b80e737df01892c98cd81b589ac5fcab1700a66424c1d9",
+              "size": 395535
+            },
+            "assets/generated/pheta-study-v001/model.blend": {
+              "sha256": "b5bfa3909832dc955a87ed697167c1ad862e263990d1b2a9d4b47642b3701d50",
+              "size": 97110
+            },
+            "assets/generated/pheta-study-v001/model.glb": {
+              "sha256": "70ca7b233b5de968792a23295acbccd0d4cf574133054cfab671095cc7cf13a0",
+              "size": 23400
+            },
+            "assets/generated/pheta-study-v001/preview.png": {
+              "sha256": "bc0aef8534ccd396bff2757fa24678b2f4117e76edaf988cb914e95fad928c38",
+              "size": 381814
+            },
+            "assets/generated/pheta-study-v001/rear.png": {
+              "sha256": "626b897cb06169f46c007250277693eb64bdc5301ffc8cd80a18ed836e9173f3",
+              "size": 392155
+            },
+            "assets/generated/pheta-study-v001/report.json": {
+              "sha256": "9126568a2fd13cf525ff8f9249ae2a6e73eef3ced353991e40f917a6235694cc",
+              "size": 2101
+            },
+            "assets/generated/pheta-study-v001/side.png": {
+              "sha256": "0bdc01cf4437ca4d9c1b66a824bc00557af432832138894144f4b8407f637341",
+              "size": 389517
+            }
+          },
+          "reason": "All declared outputs freshly written",
+          "started_at": "2026-11-19T17:53:57.193045+00:00",
+          "status": "completed"
+        }
+      },
+      "updated_at": "2026-11-19T17:54:33.364283+00:00",
+      "version": 1
+    }
+  },
+  "summary": {
+    "counts": {
+      "completed": 11
+    },
+    "attempts": 11,
+    "launches": 11,
+    "jobs": {
+      "baithi-chawl-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:49:43.006556+00:00",
+        "finished_at": "2026-11-19T17:49:49.044715+00:00",
+        "log": ".night-queue/logs/baithi-chawl-study-v001-001-eb09d28b52bb.log"
+      },
+      "chawl-frontage-bay-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:47:48.499743+00:00",
+        "finished_at": "2026-11-19T17:47:54.535058+00:00",
+        "log": ".night-queue/logs/chawl-frontage-bay-v001-001-2bc30e9ae5dd.log"
+      },
+      "chawl-props-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:50:19.167599+00:00",
+        "finished_at": "2026-11-19T17:50:25.205885+00:00",
+        "log": ".night-queue/logs/chawl-props-v001-001-c6300f467724.log"
+      },
+      "chawl-stair-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:48:24.652489+00:00",
+        "finished_at": "2026-11-19T17:48:30.690836+00:00",
+        "log": ".night-queue/logs/chawl-stair-v001-001-18f60ece2912.log"
+      },
+      "contemporary-character-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:52:43.841248+00:00",
+        "finished_at": "2026-11-19T17:52:49.877431+00:00",
+        "log": ".night-queue/logs/contemporary-character-study-v001-001-35660cd3f4ce.log"
+      },
+      "everyday-sari-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:52:07.670243+00:00",
+        "finished_at": "2026-11-19T17:52:13.708293+00:00",
+        "log": ".night-queue/logs/everyday-sari-study-v001-001-dc99a2655dd0.log"
+      },
+      "gallery-chawl-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:49:00.813514+00:00",
+        "finished_at": "2026-11-19T17:49:12.885198+00:00",
+        "log": ".night-queue/logs/gallery-chawl-study-v001-001-9c7e24f168b3.log"
+      },
+      "gandhi-cap-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:53:20.012288+00:00",
+        "finished_at": "2026-11-19T17:53:27.055428+00:00",
+        "log": ".night-queue/logs/gandhi-cap-study-v001-001-e8fdb2e42e20.log"
+      },
+      "kurta-dhoti-cap-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:50:55.327570+00:00",
+        "finished_at": "2026-11-19T17:51:01.367276+00:00",
+        "log": ".night-queue/logs/kurta-dhoti-cap-study-v001-001-3c64e981da73.log"
+      },
+      "nauvari-kashtha-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:51:31.497275+00:00",
+        "finished_at": "2026-11-19T17:51:37.538350+00:00",
+        "log": ".night-queue/logs/nauvari-kashtha-study-v001-001-705c57789952.log"
+      },
+      "pheta-study-v001": {
+        "status": "completed",
+        "reason": "All declared outputs freshly written",
+        "attempts": 1,
+        "launches": 1,
+        "started_at": "2026-11-19T17:53:57.193045+00:00",
+        "finished_at": "2026-11-19T17:54:03.231413+00:00",
+        "log": ".night-queue/logs/pheta-study-v001-001-70e7eb407dcb.log"
+      }
+    }
+  },
+  "diagnostic_file_metadata": [
+    {
+      "path": ".night-queue/logs/baithi-chawl-study-v001-001-eb09d28b52bb.log",
+      "size": 16028
+    },
+    {
+      "path": ".night-queue/logs/chawl-frontage-bay-v001-001-2bc30e9ae5dd.log",
+      "size": 3408
+    },
+    {
+      "path": ".night-queue/logs/chawl-props-v001-001-c6300f467724.log",
+      "size": 2714
+    },
+    {
+      "path": ".night-queue/logs/chawl-stair-v001-001-18f60ece2912.log",
+      "size": 13514
+    },
+    {
+      "path": ".night-queue/logs/contemporary-character-study-v001-001-35660cd3f4ce.log",
+      "size": 3683
+    },
+    {
+      "path": ".night-queue/logs/everyday-sari-study-v001-001-dc99a2655dd0.log",
+      "size": 4374
+    },
+    {
+      "path": ".night-queue/logs/gallery-chawl-study-v001-001-9c7e24f168b3.log",
+      "size": 45766
+    },
+    {
+      "path": ".night-queue/logs/gandhi-cap-study-v001-001-e8fdb2e42e20.log",
+      "size": 1398
+    },
+    {
+      "path": ".night-queue/logs/kurta-dhoti-cap-study-v001-001-3c64e981da73.log",
+      "size": 4108
+    },
+    {
+      "path": ".night-queue/logs/nauvari-kashtha-study-v001-001-705c57789952.log",
+      "size": 4253
+    },
+    {
+      "path": ".night-queue/logs/pheta-study-v001-001-70e7eb407dcb.log",
+      "size": 2076
+    },
+    {
+      "path": ".night-queue/state.json",
+      "size": 19852
+    },
+    {
+      "path": ".night-queue/supervisor.log",
+      "size": 25429
+    },
+    {
+      "path": ".night-queue/supervisor.pid",
+      "size": 445
+    }
+  ],
+  "supervisor_log": {
+    "path": ".night-queue/supervisor.log",
+    "size_bytes": 25429,
+    "sha256": "46b98f5b7070b5bce4c11daeb651ef3c8d307c900f3bb1b1bfc2d06acd9cdd90",
+    "last_12_lines": [
+      "{\"time_ist\": \"2026-11-19T23:17:54.536221+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:18:30.692441+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:19:12.886940+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:19:49.046595+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:20:25.207629+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:21:01.371355+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:21:37.540316+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:22:13.710250+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:22:49.879451+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:23:27.057589+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:24:03.233571+05:30\", \"result\": \"completed\"}",
+      "{\"time_ist\": \"2026-11-19T23:24:33.365545+05:30\", \"result\": \"queue_complete\"}"
+    ]
+  },
+  "finished_client_utc": "2026-11-20T00:51:50.601545+00:00"
+}

@@ -1,0 +1,76 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "chawl-props-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 176,
+  "triangle_budget": 15000,
+  "mesh_objects": 14,
+  "materials_used": [
+    "cloth_blue",
+    "cloth_red",
+    "cloth_white",
+    "concrete",
+    "metal",
+    "plaster",
+    "wood"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.42250001430511475,
+      -1.190000057220459,
+      0.0
+    ],
+    "max": [
+      2.122499942779541,
+      1.340000033378601,
+      2.200000047683716
+    ],
+    "size": [
+      2.5450000762939453,
+      2.5300002098083496,
+      2.200000047683716
+    ]
+  },
+  "generator_details": {
+    "kind": "chawl_props",
+    "parameters": {
+      "bay_width": 3.0,
+      "room_depth": 5.0,
+      "gallery_width": 1.4,
+      "floor_height": 2.8,
+      "bays": 4,
+      "floors": 4,
+      "courtyard_width": 7.0
+    },
+    "status": "draft_pending_architectural_and_gameplay_review",
+    "dimensions_basis": "estimated_design_parameters_not_surveyed",
+    "geometry_origin": "original_procedural_primitives_no_external_meshes"
+  },
+  "source_references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Dimensions are design estimates, not a surveyed replica.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "4c325fadc46529c865244fe314bb8620f7dcb0722576b008c9ba45b0003a9c9a",
+    "model.blend": "b72fa06f0e49f1493908fa33fbf87eef8f78c84b67cd4d94c31eef201add1873",
+    "preview.png": "0f8057fc0d201f7e06e40b3b7178c33c2e9739d236a4816f2eec35a853bc256b",
+    "front.png": "33f07cfaa8311cc394e577ded70dba1c28826c9f42af2fac2a0072777965ea44",
+    "rear.png": "ceabba4daa43556455dfb7a37c47d618e5d1b314adfc143962fc61fa0a9262e1",
+    "side.png": "da5c9f21059e8e78f334844e1406f74f4a315261227acbb9a1d3b13fa3f3d77f"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Keep circulation unobstructed.",
+    "Replace generic details with current local-reference details before acceptance."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "smoke-nauvari-study",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 3240,
+  "triangle_budget": 14000,
+  "mesh_objects": 33,
+  "materials_used": [
+    "blouse",
+    "dark",
+    "eye",
+    "hair",
+    "sari",
+    "shoe",
+    "skin",
+    "trim"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.4480000138282776,
+      -0.1850000023841858,
+      0.00299999862909317
+    ],
+    "max": [
+      0.4480000138282776,
+      0.16499999165534973,
+      1.694000005722046
+    ],
+    "size": [
+      0.8960000276565552,
+      0.3499999940395355,
+      1.690999984741211
+    ]
+  },
+  "generator_details": {
+    "dimensions_basis": "estimated_design_parameters_not_surveyed"
+  },
+  "source_references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "Technical preflight only; cultural review is pending."
+  ],
+  "sha256": {
+    "model.glb": "d6063c226ed4f692e887bbaa238f317f39171c9695d1386a1db166b98ffd2138",
+    "model.blend": "56f546bcdc9f150f85340d8cc57648959f8024a79a3f787d086005b28405fa0f",
+    "preview.png": "51820328609c394aaa46d63188df708cda3e31e71cb7e87c2d036e5513cb08f1",
+    "front.png": "92536e889c06ab3549384a61f8dcaca8cad6f5332f66daa0fa8755aa6a4de11e",
+    "rear.png": "d316b7ad6813e1fd7b659a3cc6c0b80bb48b532bf0cb7e28b84392c2deffc16d",
+    "side.png": "affbe0375998060003e48dd12bae08ce5eb1bc767b3258c995e98530c279d6dd"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Review front, side and back drape with a knowledgeable reviewer.",
+    "Generic cylindrical sari geometry does not meet this job.",
+    "This draft is not an accepted authentic nauvari outfit."
+  ]
+}

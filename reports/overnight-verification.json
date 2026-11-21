@@ -1,0 +1,40 @@
+{
+  "verified_utc": "2026-11-19T15:16:34.394345+00:00",
+  "running": true,
+  "pending_jobs": 11,
+  "job_fingerprints_match": true,
+  "deployed_source_hashes_match": true,
+  "deployed_files": 21,
+  "json_files_validated": 18,
+  "markdown_documents_link_checked": [
+    "README.md",
+    "AGENTS.md",
+    "docs/OVERNIGHT_HANDOFF.md",
+    "docs/OVERNIGHT_MODELING.md",
+    "docs/CHAWL_MODEL_RESEARCH.md",
+    "docs/AGENT_WORKFLOW.md",
+    "docs/ROADMAP.md",
+    "research/OPEN_MODEL_CATALOGUE.md",
+    "research/INDIAN_MAHARASHTRIAN_CHARACTERS.md"
+  ],
+  "windows_tests": {
+    "run": 37,
+    "passed": 35,
+    "skipped": 2
+  },
+  "remote_linux_tests": {
+    "run": 23,
+    "passed": 23
+  },
+  "watchdog_integration_passed": true,
+  "collection": {
+    "collected": [
+      "reports/remote/epyc24/state.json",
+      "reports/remote/epyc24/supervisor.log",
+      "reports/remote/epyc24/supervisor.pid"
+    ],
+    "files": 3,
+    "bytes_listed": 4310,
+    "note": "Generated outputs copied; remote diagnostics are under reports/remote. No sources copied back."
+  }
+}

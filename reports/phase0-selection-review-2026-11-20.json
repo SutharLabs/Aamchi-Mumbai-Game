@@ -1,0 +1,61 @@
+{
+  "checked_client_utc": "2026-11-20T01:37:00.321840+00:00",
+  "result": "passed",
+  "scope": "Research selections, actual offline map acquisition, collected original-study evidence and local documentation. User-deferred engine/Git/export setup not performed.",
+  "markdown_files_checked": 25,
+  "local_links_and_anchors_checked": 392,
+  "json_files_validated": 50,
+  "phase_tasks": 45,
+  "phase_references_resolved": true,
+  "asset_tasks": 22,
+  "phase_exit_gates": [
+    "G0",
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6"
+  ],
+  "runtime_and_spec_files_unchanged_from_armed_manifest": 20,
+  "queue_jobs": 11,
+  "generated_files_hash_verified_against_checkpoints": 77,
+  "model_metadata_unique_ids": 25,
+  "map": {
+    "raw_bytes": 572456,
+    "counts": {
+      "node": 4392,
+      "way": 816,
+      "relation": 2
+    },
+    "all_way_node_references_present": true,
+    "package_checksums_verified": 10,
+    "license": "ODbL-1.0",
+    "historical_acceptance": false,
+    "engine_acceptance": false
+  },
+  "decisions": {
+    "os_targets": [
+      "Windows 10",
+      "Android 12"
+    ],
+    "area": "Ranwar/Waroda/Chapel Road pocket, Bandra West",
+    "period": "1990-1995",
+    "first_greybox_source_area_km2": 0.2016,
+    "engine": "Godot 4.7.2-stable standard",
+    "renderer": "Compatibility",
+    "language": "Typed GDScript",
+    "physics": "Built-in Jolt; 60Hz provisional unmeasured starting point",
+    "refinement_first": [
+      "chawl-frontage-bay-v001",
+      "chawl-props-v001"
+    ],
+    "human_hours_per_week": 10,
+    "deferred_by_user": [
+      "Git/recovery",
+      "Repeatable Windows/Android export setup"
+    ],
+    "phase0_technical_gate": "not passed"
+  },
+  "errors": []
+}

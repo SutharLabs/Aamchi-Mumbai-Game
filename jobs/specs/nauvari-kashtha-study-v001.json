@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "id": "nauvari-kashtha-study-v001",
+  "kind": "nauvari_study",
+  "triangle_budget": 14000,
+  "parameters": {},
+  "instructions": [
+    "Create a reference-gated divided lower-drape, back-tuck and shoulder-pallu massing study.",
+    "Use original procedural geometry only; no downloaded meshes, textures or celebrity likeness.",
+    "Produce static review-stage models, not automatically accepted production assets."
+  ],
+  "references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "review_checks": [
+    "Review front, side and back drape with a knowledgeable reviewer.",
+    "Generic cylindrical sari geometry does not meet this job.",
+    "This draft is not an accepted authentic nauvari outfit."
+  ],
+  "construction_notes": [
+    "Preserve visible separation of lower legs, a front pleat marker and rear-tuck massing.",
+    "Keep blouse, shoulder/pallu route and back drop identifiable for later cloth correction.",
+    "Current primitive draft needs a cloth construction pass; it must not be approved from silhouette alone."
+  ]
+}

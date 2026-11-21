@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "dataset_id": "bandra-ranwar-modern-osm-2026-11-20",
+  "status": "acquired_modern_reference_not_historical_or_engine_accepted",
+  "acquisition_started_utc": "2026-11-20T01:19:16.011725+00:00",
+  "acquisition_completed_utc": "2026-11-20T01:20:54.909632+00:00",
+  "source": {
+    "name": "OpenStreetMap contributors via Overpass API",
+    "endpoint": "https://overpass-api.de/api/interpreter",
+    "query_file": "source-query.overpassql",
+    "method": "GET",
+    "response": {
+      "status": 200,
+      "final_url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%5Bmaxsize%3A16777216%5D%3B%0A%28%0A++way%5B%22highway%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++way%5B%22building%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++way%5B%22landuse%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++way%5B%22leisure%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++way%5B%22natural%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++nwr%5B%22amenity%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++nwr%5B%22historic%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++nwr%5B%22tourism%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++nwr%5B%22place%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A++relation%5B%22type%22%3D%22multipolygon%22%5D%5B%22building%22%5D%2819.0505%2C72.8243%2C19.0555%2C72.8322%29%3B%0A%29%3B%0A%28._%3B%3E%3B%29%3B%0Aout+body%3B%0A",
+      "headers": {
+        "Server": "nginx",
+        "Date": "Fri, 20 Nov 2026 01:20:46 GMT",
+        "Content-Type": "application/osm3s+xml"
+      }
+    },
+    "database_timestamp": {
+      "osm_base": "2026-11-20T01:19:21Z"
+    },
+    "osm_generator": "Overpass API 0.7.62.11 87bfad18",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+    "failed_acquisition_attempts": [
+      {
+        "endpoint": "https://overpass-api.de/api/interpreter",
+        "method": "GET",
+        "result": "HTTP 502 on first acquisition query; no file accepted"
+      },
+      {
+        "endpoint": "https://overpass.kumi.systems/api/interpreter",
+        "method": "GET",
+        "result": "TimeoutError: The read operation timed out"
+      }
+    ]
+  },
+  "requested_bbox_wgs84_south_west_north_east": [
+    19.0505,
+    72.8243,
+    19.0555,
+    72.8322
+  ],
+  "geographic_classification": "modern OpenStreetMap reference; not a 1990-1995 map",
+  "license": {
+    "name": "Open Database License 1.0",
+    "spdx": "ODbL-1.0",
+    "url": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "attribution": "Map data from OpenStreetMap contributors",
+    "copyright_url": "https://www.openstreetmap.org/copyright",
+    "local_text_file": "ODbL-1.0.txt",
+    "text_download_url": "https://opendatacommons.org/licenses/odbl/odbl-10.txt"
+  },
+  "counts": {
+    "node": 4392,
+    "way": 816,
+    "relation": 2,
+    "highway_ways": 221,
+    "building_tagged_ways": 539,
+    "named_highway_ways": 63
+  },
+  "validation": {
+    "xml_parsed": true,
+    "all_way_node_references_present": true,
+    "raw_response_unchanged": true,
+    "all_relation_member_references_present": true,
+    "unique_osm_object_ids": true,
+    "osm_objects": 5210,
+    "geojson_parsed": true,
+    "geojson_highway_features": 221,
+    "svg_xml_parsed": true,
+    "preview_has_embedded_attribution": true,
+    "road_loop_closed_by_shared_osm_nodes": true,
+    "historical_csv_rows": 7,
+    "engine_import_performed": false,
+    "historical_geometry_accepted": false
+  },
+  "raw_file": {
+    "path": "bandra-ranwar-modern.osm",
+    "bytes": 572456,
+    "sha256": "e082b0ce3f2efa1eb67a42738604a716ee67c2c8aa907793531047932fb8a32c"
+  },
+  "limitations": [
+    "Bounds select intersecting objects; full geometry and relation dependencies can extend outside the box.",
+    "Current road names/access/oneway/surfaces/buildings/POIs are not approved facts for 1990-1995.",
+    "OSM omissions do not establish absence of a building/lane.",
+    "No imagery rights included.",
+    "No engine/navigation/driving/device performance acceptance."
+  ],
+  "returned_node_bounds_wgs84_south_west_north_east": [
+    19.0462389,
+    72.8196829,
+    19.0596604,
+    72.8342653
+  ],
+  "derived_files": {
+    "roads-modern.geojson": {
+      "features": 221,
+      "license": "ODbL-1.0",
+      "geometry": "full highway ways, no clipping, no coordinate compression"
+    },
+    "candidate-layout.json": {
+      "license": "ODbL-1.0 for OSM-derived content",
+      "purpose": "source bbox versus proposed gameplay core, actual topological route and footway"
+    },
+    "reference-preview.svg": {
+      "purpose": "Produced Work preview; attribution embedded; source database retained"
+    }
+  },
+  "provenance_obligations": [
+    "Retain OSM source/license attribution with raw and derivative databases.",
+    "Classify publicly used derivative geographic data and provide ODbL database/alteration access where required; produced work presentation does not erase underlying obligations.",
+    "Historical authored layer separation preserves provenance rather than removing obligations from OSM-derived edits.",
+    "No source imagery rights or engine/game/device acceptance granted."
+  ],
+  "files": [
+    {
+      "path": "ATTRIBUTION.md",
+      "bytes": 2499,
+      "sha256": "f0d6634be03f91bfffee37b84c300c4992fbd929e3867acd4116ecc102bcfbbc"
+    },
+    {
+      "path": "bandra-ranwar-modern.osm",
+      "bytes": 572456,
+      "sha256": "e082b0ce3f2efa1eb67a42738604a716ee67c2c8aa907793531047932fb8a32c"
+    },
+    {
+      "path": "candidate-layout.json",
+      "bytes": 10311,
+      "sha256": "3dada5fc7771483f5898a3f9c6b9828b20b7574ab3f0887346e074a96b6687b5"
+    },
+    {
+      "path": "historical-change-ledger.csv",
+      "bytes": 2376,
+      "sha256": "9b48b6a18add675239774051f8bbdbd22296f91324e6123296964e6587e9588d"
+    },
+    {
+      "path": "ODbL-1.0.txt",
+      "bytes": 25278,
+      "sha256": "607680718977f6f6c9607972afd98f208573f19251315ed1362a8589b51beaf5"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2859,
+      "sha256": "43b421c8750f06d877b7137c8ba68cb12399d92876d1da8337958eef017529ad"
+    },
+    {
+      "path": "reference-preview.svg",
+      "bytes": 124475,
+      "sha256": "9a0e3c911f7f533b6d7fbfa190c2f8c5e41a2b35d952a11194745e3aa7b77aa9"
+    },
+    {
+      "path": "roads-modern.geojson",
+      "bytes": 98413,
+      "sha256": "0a7ab3e4768db70694de21f6e7429b79c9460b1accadde5266b8368db56e9ebd"
+    },
+    {
+      "path": "source-query.overpassql",
+      "bytes": 619,
+      "sha256": "8bf5e35438d0f0e65a05fe95cefb63101328262f762c64af1d9ea523629a1d19"
+    }
+  ]
+}

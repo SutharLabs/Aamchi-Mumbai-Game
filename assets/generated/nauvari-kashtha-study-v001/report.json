@@ -1,0 +1,66 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "nauvari-kashtha-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 3240,
+  "triangle_budget": 14000,
+  "mesh_objects": 33,
+  "materials_used": [
+    "blouse",
+    "dark",
+    "eye",
+    "hair",
+    "sari",
+    "shoe",
+    "skin",
+    "trim"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.4480000138282776,
+      -0.1850000023841858,
+      0.00299999862909317
+    ],
+    "max": [
+      0.4480000138282776,
+      0.16499999165534973,
+      1.694000005722046
+    ],
+    "size": [
+      0.8960000276565552,
+      0.3499999940395355,
+      1.690999984741211
+    ]
+  },
+  "generator_details": {
+    "dimensions_basis": "estimated_design_parameters_not_surveyed"
+  },
+  "source_references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "d4ceeb025229dc62ac8d9657c5ac35f479e8b1500aa72b11d232a7e072957c70",
+    "model.blend": "0b1e246eb21b390a45869e87c114e48b1a33e400b395ef1974706b07c1ff9566",
+    "preview.png": "eb7b2df1c29016e529f505f552cc66442cf86df58e205e670f8fbc3406f76622",
+    "front.png": "fd5010e64fe58b992a612e47f55d227452f8da0ca5766824964044f0b101c8e0",
+    "rear.png": "5ef9e71a84fb2ed7b5cd6f02bece7c7399df307467429630c94992ccf0fa523e",
+    "side.png": "b5d01170f55af00c00c50affee7f95335bade90a65def38d94d4efd15506c650"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Review front, side and back drape with a knowledgeable reviewer.",
+    "Generic cylindrical sari geometry does not meet this job.",
+    "This draft is not an accepted authentic nauvari outfit."
+  ]
+}

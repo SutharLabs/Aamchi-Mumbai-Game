@@ -1,0 +1,47 @@
+INFO Draco is available, use library at /root/motion/.tools/blender-5.3.0/lib/libbf_intern_draco_bridge.so
+INFO MeshOptimizer is available, use library at /root/motion/.tools/blender-5.3.0/lib/libbf_intern_meshopt_bridge.so
+23:17:53 | INFO: Starting glTF 2.0 export
+23:17:53 | INFO: Extracting primitive: Cube.004
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.005
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.003
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cylinder
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cylinder.001
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | WARNING: Mesh chawl_props_laundry_0 is not valid, and may be exported wrongly
+23:17:53 | INFO: Extracting primitive: chawl_props_laundry_0
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | WARNING: Mesh chawl_props_laundry_1 is not valid, and may be exported wrongly
+23:17:53 | INFO: Extracting primitive: chawl_props_laundry_1
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | WARNING: Mesh chawl_props_laundry_2 is not valid, and may be exported wrongly
+23:17:53 | INFO: Extracting primitive: chawl_props_laundry_2
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.008
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.006
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.007
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.001
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Extracting primitive: Cube.002
+23:17:53 | INFO: Primitives created: 1
+23:17:53 | INFO: Finished glTF 2.0 export in 0.01679396629333496 s
+/root/motion/mumbai-gully-heat/tools/build_queued_model.py:98: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  scene.world.use_nodes = True
+00:01.974  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/chawl-props-v001/.attempt-kxwxjug_/preview.png'
+00:03.186  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/chawl-props-v001/.attempt-kxwxjug_/front.png'
+00:04.349  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/chawl-props-v001/.attempt-kxwxjug_/rear.png'
+00:05.415  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/chawl-props-v001/.attempt-kxwxjug_/side.png'
+
+Info: Saved as "model.blend"
+MODEL_STUDY_COMPLETE chawl-props-v001 triangles=176
+Blender 5.3.0 (hash 02f0899d78e3 built 2026-11-10 01:31:18)
+
+Blender quit

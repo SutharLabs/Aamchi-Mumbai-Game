@@ -1,0 +1,71 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "smoke-chawl-bay",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 300,
+  "triangle_budget": 12000,
+  "mesh_objects": 25,
+  "materials_used": [
+    "concrete",
+    "dark",
+    "metal",
+    "plaster",
+    "wood"
+  ],
+  "bounds_metres": {
+    "min": [
+      0.0,
+      -1.4000000953674316,
+      0.0
+    ],
+    "max": [
+      3.0,
+      5.0,
+      2.8000001907348633
+    ],
+    "size": [
+      3.0,
+      6.400000095367432,
+      2.8000001907348633
+    ]
+  },
+  "generator_details": {
+    "kind": "chawl_bay",
+    "parameters": {
+      "bay_width": 3.0,
+      "room_depth": 5.0,
+      "gallery_width": 1.4,
+      "floor_height": 2.8,
+      "bays": 4,
+      "floors": 4,
+      "courtyard_width": 7.0
+    },
+    "status": "draft_pending_architectural_and_gameplay_review",
+    "dimensions_basis": "estimated_design_parameters_not_surveyed",
+    "geometry_origin": "original_procedural_primitives_no_external_meshes"
+  },
+  "source_references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Preflight export check only."
+  ],
+  "sha256": {
+    "model.glb": "ced20156c7dc882bb4194545c99f73caec8ad8dee860a15814f4b910ee71b422",
+    "model.blend": "11981c554b4287337c6c971d7d1a27e3d5c542e613ae99044cac5c2069503b8e",
+    "preview.png": "7b04a12ff9790ab4f9907f46499844d54dba522bfe48575e2fae1eeb29291efd",
+    "front.png": "abfee9f451ca2ff9fcc6a7360bbd95aa1bf65326c94d2f7de836cc0e2c37dd05",
+    "rear.png": "3a4b3051712a7d397bb52eb44d7ff7ef45805c73a17d036912e50fb6375b5ef3",
+    "side.png": "3a68b228157d9998ba2ecfe7defe43203565f3e87e7e080305c38b11fe885f64"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Technical setup check, not a production asset."
+  ]
+}

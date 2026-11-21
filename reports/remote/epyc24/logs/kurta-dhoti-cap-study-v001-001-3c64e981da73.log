@@ -1,0 +1,80 @@
+INFO Draco is available, use library at /root/motion/.tools/blender-5.3.0/lib/libbf_intern_draco_bridge.so
+INFO MeshOptimizer is available, use library at /root/motion/.tools/blender-5.3.0/lib/libbf_intern_meshopt_bridge.so
+23:18:29 | INFO: Starting glTF 2.0 export
+23:18:29 | INFO: Extracting primitive: body_torso
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cube.003
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cube.001
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cube
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: dhoti_lower_1
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: dhoti_lower_-1
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: dhoti_waist
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.009
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.004
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.007
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.002
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.011
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.006
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.005
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.002
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: gandhi_cap_fold_study
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.012
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.010
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.005
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: kurta_sadara
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.006
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.003
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.001
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.008
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Sphere.003
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cube.002
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.008
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.007
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.004
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Extracting primitive: Cylinder.001
+23:18:29 | INFO: Primitives created: 1
+23:18:29 | INFO: Finished glTF 2.0 export in 0.03070235252380371 s
+/root/motion/mumbai-gully-heat/tools/build_queued_model.py:98: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  scene.world.use_nodes = True
+00:01.953  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/kurta-dhoti-cap-study-v001/.attempt-rq028rcw/preview.png'
+00:03.097  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/kurta-dhoti-cap-study-v001/.attempt-rq028rcw/front.png'
+00:04.216  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/kurta-dhoti-cap-study-v001/.attempt-rq028rcw/rear.png'
+00:05.285  render           | Saved: '/root/motion/mumbai-gully-heat/assets/generated/kurta-dhoti-cap-study-v001/.attempt-rq028rcw/side.png'
+
+Info: Saved as "model.blend"
+MODEL_STUDY_COMPLETE kurta-dhoti-cap-study-v001 triangles=3140
+Blender 5.3.0 (hash 02f0899d78e3 built 2026-11-10 01:31:18)
+
+Blender quit

@@ -1,0 +1,122 @@
+{
+  "root": "/root/motion/mumbai-gully-heat",
+  "running": true,
+  "supervisor": {
+    "pid": 2061718,
+    "start_token": "425304148",
+    "clock_offset_seconds": 146.42144751548767,
+    "clock_calibration": {
+      "method": "client_utc_midpoint_minus_remote_utc",
+      "client_midpoint_utc_unix_seconds": 1795101312.6243305,
+      "client_midpoint_utc": "2026-11-19T15:15:12.624331+00:00",
+      "remote_utc_unix_seconds": 1795101166.202883,
+      "round_trip_seconds": 1.8826270001009107,
+      "uncertainty_seconds": 0.9413135000504553,
+      "offset_seconds": 146.42144751548767
+    }
+  },
+  "clock": {
+    "native_utc": "2026-11-19T15:14:03.464468+00:00",
+    "logical_utc": "2026-11-19T15:16:29.885915+00:00",
+    "logical_ist": "2026-11-19T20:46:29.885915+05:30",
+    "offset_seconds": 146.42144751548767,
+    "calibration": {
+      "method": "client_utc_midpoint_minus_remote_utc",
+      "client_midpoint_utc_unix_seconds": 1795101312.6243305,
+      "client_midpoint_utc": "2026-11-19T15:15:12.624331+00:00",
+      "remote_utc_unix_seconds": 1795101166.202883,
+      "round_trip_seconds": 1.8826270001009107,
+      "uncertainty_seconds": 0.9413135000504553,
+      "offset_seconds": 146.42144751548767
+    }
+  },
+  "paused": false,
+  "stopped": false,
+  "state": {
+    "clock": {
+      "mode": "corrected_utc_monotonic_anchor",
+      "offset_seconds": 146.42144751548767
+    },
+    "jobs": {
+      "baithi-chawl-study-v001": {
+        "attempts": 0,
+        "fingerprint": "7f4f9d3b5df2dd7bf58f3b4d0f63fc43d82c085a010f7dfdf71696a2434f42c9",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "chawl-frontage-bay-v001": {
+        "attempts": 0,
+        "fingerprint": "8f554dc066b6b7bc00ec9ea50206f57a254d9a54523a49fd0c050b043a69f13e",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "chawl-props-v001": {
+        "attempts": 0,
+        "fingerprint": "3a39d39c2f2975fd90e60bff443a6c12c8ad8a60bd2c45dc1a869a4197d1fa1e",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "chawl-stair-v001": {
+        "attempts": 0,
+        "fingerprint": "2d88d739c0f8220ab379bd6269e215563dec924e2e055375a5c3b11168eba8fb",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "contemporary-character-study-v001": {
+        "attempts": 0,
+        "fingerprint": "9fe8313bff49167f5be74d0c124c069494ad6f9d859d4cdf7053e719538e8beb",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "everyday-sari-study-v001": {
+        "attempts": 0,
+        "fingerprint": "59658dedfe39570b88164ab685079b427ba0d2e005dc6390f3bb65ab7879840e",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "gallery-chawl-study-v001": {
+        "attempts": 0,
+        "fingerprint": "6cea3641999bfc1794ffbd31d5c761b21583886ccbd103087a9e4836c2565e95",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "gandhi-cap-study-v001": {
+        "attempts": 0,
+        "fingerprint": "e855f438e8bcb028b402917af3ccbc9f765566bcd1ed93d829b70772cc2d42f2",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "kurta-dhoti-cap-study-v001": {
+        "attempts": 0,
+        "fingerprint": "4a62541aae8043ae208165ef5bb0db2377ba7f5487c9e01ad222b234d2ca3172",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "nauvari-kashtha-study-v001": {
+        "attempts": 0,
+        "fingerprint": "542ee86e66caf32834ae0d0f7630582ea23b940c84e1d8c410cfcc09fbac182e",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      },
+      "pheta-study-v001": {
+        "attempts": 0,
+        "fingerprint": "2cb7aa5d21f7bc574bfb182158b35266dc04c92b74f73fe57a2609e973ced070",
+        "launches": 0,
+        "reason": "New job or generator/input/specification changed",
+        "status": "pending"
+      }
+    },
+    "updated_at": "2026-11-19T15:16:14.980181+00:00",
+    "version": 1
+  }
+}

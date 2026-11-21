@@ -1,0 +1,466 @@
+{
+  "schema_version": 1,
+  "status": "selected_reference_pocket_and_proposed_greybox_core_not_shipped_boundary",
+  "selected_reference_area": "Bandra West: Ranwar / Waroda Road / Chapel Road / Hill Road",
+  "game_period": "1990-1995",
+  "source_data_period": "modern OSM database snapshot; not historical validation",
+  "source_crop": {
+    "bbox_wgs84_south_west_north_east": [
+      19.0505,
+      72.8243,
+      19.0555,
+      72.8322
+    ],
+    "approx_width_m": 830.3,
+    "approx_height_m": 556.0,
+    "approx_area_km2": 0.4616
+  },
+  "proposed_first_greybox_core": {
+    "bbox_wgs84_south_west_north_east": [
+      19.0519,
+      72.826,
+      19.05535,
+      72.831
+    ],
+    "approx_width_m": 525.5,
+    "approx_height_m": 383.6,
+    "approx_area_km2": 0.2016
+  },
+  "local_origin_wgs84_lat_lon": [
+    19.0519,
+    72.826
+  ],
+  "local_axis_convention": "x east, y north; actual engine transform/elevation not implemented",
+  "anchors": [
+    {
+      "id": "A",
+      "label": "Hill Road / Waroda Road",
+      "osm_node_id": 346633397,
+      "lat": 19.054694,
+      "lon": 72.8260536
+    },
+    {
+      "id": "B",
+      "label": "Hill Road / St Peter's Road",
+      "osm_node_id": 9681688973,
+      "lat": 19.0552115,
+      "lon": 72.8308263
+    },
+    {
+      "id": "C",
+      "label": "Waroda / Chapel / St Peter's Road junction",
+      "osm_node_id": 346620827,
+      "lat": 19.0537922,
+      "lon": 72.8307258
+    },
+    {
+      "id": "D",
+      "label": "Waroda Road / Veronica Road",
+      "osm_node_id": 346621512,
+      "lat": 19.0541089,
+      "lon": 72.8284513
+    },
+    {
+      "id": "E",
+      "label": "Nagrana Lane / Waroda Road",
+      "osm_node_id": 347181270,
+      "lat": 19.0541387,
+      "lon": 72.827596
+    },
+    {
+      "id": "F",
+      "label": "Nagrana Lane / Hill Road",
+      "osm_node_id": 10242737039,
+      "lat": 19.0547279,
+      "lon": 72.8278068
+    }
+  ],
+  "driving_loop": {
+    "status": "undirected geometric connectivity verified from actual OSM nodes; not legal/current/historical routing acceptance",
+    "description": "A Hill/Waroda -> Hill Road -> B St Peter's Road -> C Chapel/Waroda -> D Veronica/Waroda -> A",
+    "parts": [
+      {
+        "node_ids": [
+          346633397,
+          9681688983,
+          9681688998,
+          10242737039,
+          9681688984,
+          13523326236,
+          13713210040,
+          9681689000,
+          9681688985,
+          13064902240,
+          10882727465,
+          9916444554,
+          10242737040,
+          9681688973
+        ],
+        "way_ids_in_order": [
+          1053511374
+        ],
+        "source_length_m": 506.5,
+        "coordinates_lon_lat": [
+          [
+            72.8260536,
+            19.054694
+          ],
+          [
+            72.826784,
+            19.0547146
+          ],
+          [
+            72.8277874,
+            19.0547276
+          ],
+          [
+            72.8278068,
+            19.0547279
+          ],
+          [
+            72.8279658,
+            19.0547299
+          ],
+          [
+            72.8281003,
+            19.0547447
+          ],
+          [
+            72.8282675,
+            19.054763
+          ],
+          [
+            72.8283741,
+            19.0547747
+          ],
+          [
+            72.8294289,
+            19.0549497
+          ],
+          [
+            72.8299154,
+            19.0550476
+          ],
+          [
+            72.8299944,
+            19.0550635
+          ],
+          [
+            72.8300536,
+            19.0550739
+          ],
+          [
+            72.8305086,
+            19.055161
+          ],
+          [
+            72.8308263,
+            19.0552115
+          ]
+        ]
+      },
+      {
+        "node_ids": [
+          9681688973,
+          13713841819,
+          4377556097,
+          346640642,
+          4377556096,
+          4515092968,
+          346620827
+        ],
+        "way_ids_in_order": [
+          31152959
+        ],
+        "source_length_m": 159.0,
+        "coordinates_lon_lat": [
+          [
+            72.8308263,
+            19.0552115
+          ],
+          [
+            72.830794,
+            19.054964
+          ],
+          [
+            72.8307538,
+            19.0546559
+          ],
+          [
+            72.8307082,
+            19.0542969
+          ],
+          [
+            72.830691,
+            19.0541219
+          ],
+          [
+            72.8306934,
+            19.0539441
+          ],
+          [
+            72.8307258,
+            19.0537922
+          ]
+        ]
+      },
+      {
+        "node_ids": [
+          346620827,
+          346640940,
+          13067345318,
+          4515092962,
+          4515092960,
+          13069181101,
+          13067345282,
+          346640942,
+          347182456,
+          13713857429,
+          13713823100,
+          13507198316,
+          13507198304,
+          13067310092,
+          13067310086,
+          346640947,
+          346621512
+        ],
+        "way_ids_in_order": [
+          31152970
+        ],
+        "source_length_m": 246.5,
+        "coordinates_lon_lat": [
+          [
+            72.8307258,
+            19.0537922
+          ],
+          [
+            72.8305729,
+            19.0538026
+          ],
+          [
+            72.8304922,
+            19.0538012
+          ],
+          [
+            72.8304468,
+            19.0538004
+          ],
+          [
+            72.8302674,
+            19.0537625
+          ],
+          [
+            72.8300126,
+            19.05374
+          ],
+          [
+            72.8297616,
+            19.0537438
+          ],
+          [
+            72.8297316,
+            19.0537443
+          ],
+          [
+            72.8293725,
+            19.0538226
+          ],
+          [
+            72.8292556,
+            19.0538652
+          ],
+          [
+            72.8291503,
+            19.0539035
+          ],
+          [
+            72.8289628,
+            19.0539718
+          ],
+          [
+            72.8287705,
+            19.0540418
+          ],
+          [
+            72.828697,
+            19.0540686
+          ],
+          [
+            72.8286324,
+            19.0540922
+          ],
+          [
+            72.8286073,
+            19.0541013
+          ],
+          [
+            72.8284513,
+            19.0541089
+          ]
+        ]
+      },
+      {
+        "node_ids": [
+          346621512,
+          13852809212,
+          13852809210,
+          12996344280,
+          347181270,
+          12996344279,
+          10242721204,
+          346646689,
+          346640954,
+          346640955,
+          346646637,
+          7241583691,
+          10106787079,
+          7241563869,
+          12270847949,
+          347183801,
+          7241563870,
+          346640958,
+          346633397
+        ],
+        "way_ids_in_order": [
+          431825049
+        ],
+        "source_length_m": 274.7,
+        "coordinates_lon_lat": [
+          [
+            72.8284513,
+            19.0541089
+          ],
+          [
+            72.8280245,
+            19.0541238
+          ],
+          [
+            72.8278733,
+            19.054129
+          ],
+          [
+            72.827618,
+            19.0541379
+          ],
+          [
+            72.827596,
+            19.0541387
+          ],
+          [
+            72.8275709,
+            19.0541383
+          ],
+          [
+            72.8274294,
+            19.0541359
+          ],
+          [
+            72.8273395,
+            19.0541344
+          ],
+          [
+            72.8272114,
+            19.0541332
+          ],
+          [
+            72.8269875,
+            19.0541631
+          ],
+          [
+            72.826847,
+            19.0541802
+          ],
+          [
+            72.8267991,
+            19.0541921
+          ],
+          [
+            72.8266876,
+            19.0542197
+          ],
+          [
+            72.826627,
+            19.0542347
+          ],
+          [
+            72.8265616,
+            19.0542664
+          ],
+          [
+            72.8264462,
+            19.0543223
+          ],
+          [
+            72.8264071,
+            19.0543412
+          ],
+          [
+            72.8260753,
+            19.0546043
+          ],
+          [
+            72.8260536,
+            19.054694
+          ]
+        ]
+      }
+    ],
+    "closed": true,
+    "total_source_length_m": 1186.7
+  },
+  "on_foot_shortcut": {
+    "name": "Nagrana Lane",
+    "osm_highway": "footway",
+    "status": "OSM geometry verified; period/width/public accessibility and gameplay collision unverified",
+    "node_ids": [
+      347181270,
+      8716642958,
+      8716642959,
+      8716642960,
+      347181272,
+      8716642957,
+      10242737039
+    ],
+    "way_ids_in_order": [
+      31217220
+    ],
+    "source_length_m": 70.5,
+    "coordinates_lon_lat": [
+      [
+        72.827596,
+        19.0541387
+      ],
+      [
+        72.8276071,
+        19.0542799
+      ],
+      [
+        72.8276282,
+        19.0543105
+      ],
+      [
+        72.8276677,
+        19.0544493
+      ],
+      [
+        72.8277187,
+        19.0545446
+      ],
+      [
+        72.8277695,
+        19.0546053
+      ],
+      [
+        72.8278068,
+        19.0547279
+      ]
+    ]
+  },
+  "compression": {
+    "initial_greybox": "retain approximate source scale and junction order",
+    "later_option": "shorten selected block travel distances gently (up to about 15 percent as an initial design trial), without uniformly shrinking vehicle clearances or changing landmark order",
+    "status": "design recommendation; no geometry compression performed"
+  },
+  "historical_layer": "Keep source IDs and a separate authored 1990-1995 change/uncertainty ledger; current POIs/traffic tags are not accepted historical facts.",
+  "license": "ODbL-1.0 for OSM-derived database content; retain source attribution and actual distribution obligations."
+}

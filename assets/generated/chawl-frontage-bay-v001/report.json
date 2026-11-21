@@ -1,0 +1,74 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "chawl-frontage-bay-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 300,
+  "triangle_budget": 12000,
+  "mesh_objects": 25,
+  "materials_used": [
+    "concrete",
+    "dark",
+    "metal",
+    "plaster",
+    "wood"
+  ],
+  "bounds_metres": {
+    "min": [
+      0.0,
+      -1.4000000953674316,
+      0.0
+    ],
+    "max": [
+      3.0,
+      5.0,
+      2.8000001907348633
+    ],
+    "size": [
+      3.0,
+      6.400000095367432,
+      2.8000001907348633
+    ]
+  },
+  "generator_details": {
+    "kind": "chawl_bay",
+    "parameters": {
+      "bay_width": 3.0,
+      "room_depth": 5.0,
+      "gallery_width": 1.4,
+      "floor_height": 2.8,
+      "bays": 4,
+      "floors": 4,
+      "courtyard_width": 7.0
+    },
+    "status": "draft_pending_architectural_and_gameplay_review",
+    "dimensions_basis": "estimated_design_parameters_not_surveyed",
+    "geometry_origin": "original_procedural_primitives_no_external_meshes"
+  },
+  "source_references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Dimensions are design estimates, not a surveyed replica.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "f03b82487f4095f0b32087a582a385aa06a194af344846fe5317e32d3acfb0fc",
+    "model.blend": "430b25b83599360e163fecf2fcb1ae8af0ea10842a73082478e2a4df9237f5ed",
+    "preview.png": "b05e4a02fc0e54a3ffc5568be282a693869ebc28bc5e10106c0e4b0da9da5644",
+    "front.png": "f435a74625b51365c3f14252e2137bfae0f9ad81fc81ce404d405c4ad58a84cd",
+    "rear.png": "122902c6cee324e4efbd13c9dc8990eb880bb9110a19d0a786ad3b45e5b56a94",
+    "side.png": "9824ed6c491adb03c8baebeb4b2fc26be7126df06bb016efa9141248011e407b"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Check clear doorway and circulation.",
+    "Compare proportion and gallery rhythm against dated local references."
+  ]
+}

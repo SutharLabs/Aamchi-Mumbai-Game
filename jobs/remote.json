@@ -1,0 +1,10 @@
+{
+  "node_name": "epyc24",
+  "host": "10.64.100.159",
+  "user": "root",
+  "port": 22,
+  "remote_root": "/root/motion/mumbai-gully-heat",
+  "blender": "/root/motion/.tools/blender-5.3.0/blender",
+  "shared_lock": "/root/motion/.jobs/heavy.lock",
+  "threads": 8
+}

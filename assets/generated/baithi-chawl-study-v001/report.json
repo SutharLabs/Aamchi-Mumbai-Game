@@ -1,0 +1,79 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "baithi-chawl-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 1968,
+  "triangle_budget": 40000,
+  "mesh_objects": 164,
+  "materials_used": [
+    "cloth_blue",
+    "cloth_red",
+    "cloth_white",
+    "concrete",
+    "dark",
+    "metal",
+    "plaster",
+    "roof",
+    "wood",
+    "worn_plaster"
+  ],
+  "bounds_metres": {
+    "min": [
+      -6.25,
+      -10.100000381469727,
+      0.0
+    ],
+    "max": [
+      9.1225004196167,
+      10.100000381469727,
+      3.6500000953674316
+    ],
+    "size": [
+      15.3725004196167,
+      20.200000762939453,
+      3.6500000953674316
+    ]
+  },
+  "generator_details": {
+    "kind": "chawl_baithi_study",
+    "parameters": {
+      "bay_width": 3.0,
+      "room_depth": 5.0,
+      "gallery_width": 1.4,
+      "floor_height": 2.8,
+      "bays": 4,
+      "floors": 1,
+      "courtyard_width": 7.0
+    },
+    "status": "draft_pending_architectural_and_gameplay_review",
+    "dimensions_basis": "estimated_design_parameters_not_surveyed",
+    "geometry_origin": "original_procedural_primitives_no_external_meshes"
+  },
+  "source_references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Dimensions are design estimates, not a surveyed replica.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "131f3924167066f7797c1c47856611110f71386d8774efda3d5fe02d51156834",
+    "model.blend": "6bc76ef946d46ce14020fdfd9fb2d929ebf478663361794384640517cd9f1a0e",
+    "preview.png": "703db54c04d75f839de82baae5245cbf8253c0237b0b2a3ee51fdd59e0c37d02",
+    "front.png": "4710a1ccc831eb8bc0c091c670dfb6771bf9291c10d55160ff264fd062da6902",
+    "rear.png": "e1ffbe4f5ae4a86227e353da502714a18acf43f70f1da8db0d0b9f09e705daf0",
+    "side.png": "14b977dcacd962ef949d1fdfcc4e9b83ba593995ce7e063dd36d365d0b21f8ad"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Keep the low-rise typology distinct from the multistorey study.",
+    "Check courtyard access, roof clearance and service-area placement."
+  ]
+}

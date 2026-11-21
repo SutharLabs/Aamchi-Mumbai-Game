@@ -1,0 +1,8 @@
+{
+  "supervisor_killed": true,
+  "inherited_lock_held_after_supervisor_exit": true,
+  "lock_released_after_independent_timeout": true,
+  "child_pid": 2055118,
+  "child_process_exists": false,
+  "passed": true
+}

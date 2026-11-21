@@ -1,0 +1,65 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "everyday-sari-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 3152,
+  "triangle_budget": 14000,
+  "mesh_objects": 35,
+  "materials_used": [
+    "blouse",
+    "dark",
+    "eye",
+    "hair",
+    "sari",
+    "shoe",
+    "skin",
+    "trim"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.4480000138282776,
+      -0.1850000023841858,
+      0.00299999862909317
+    ],
+    "max": [
+      0.4480000138282776,
+      0.16499999165534973,
+      1.694000005722046
+    ],
+    "size": [
+      0.8960000276565552,
+      0.3499999940395355,
+      1.690999984741211
+    ]
+  },
+  "generator_details": {
+    "dimensions_basis": "estimated_design_parameters_not_surveyed"
+  },
+  "source_references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "8e52f21e6c21b981126d4dd6720b555177a06179c6b0011830da49facfb84e4f",
+    "model.blend": "02ee67e2f5d709463f49f7dd53a868138a62c10303df9d72eaec1787b447c1e4",
+    "preview.png": "933353bef94d2029cbcb8bc1e03b01b323af8cc006661b103c44a39c0ecc90c0",
+    "front.png": "2045722471bef6a54f2935cc97c34aacfd58c2e6bf87c50da05cd969071dd095",
+    "rear.png": "d7634f230ca9a02417d47d7a951a430be646093aa9e8105787a4c6e46cb5d46a",
+    "side.png": "4e27da80e2511034c2a57f35c9db6d578e51ae34b09bdf898d98bfce127edabc"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Review drape, cloth intersections and shoulder route.",
+    "Do not describe this as a specifically Maharashtrian drape."
+  ]
+}

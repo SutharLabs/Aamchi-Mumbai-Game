@@ -1,0 +1,86 @@
+[
+  {
+    "path": "docs/OVERNIGHT_MODELING.md",
+    "sha256": "1ae5a030c631472d26815524e0b72bdc8a28b721e57d631e5deb4cea16a8a214"
+  },
+  {
+    "path": "jobs/night-queue.json",
+    "sha256": "570bd729eb519cfe76a06efba5a653b88fd58f29dc7bbfa42da5f8fd63284ece"
+  },
+  {
+    "path": "jobs/specs/baithi-chawl-study-v001.json",
+    "sha256": "6e53b5c5525aaad05dfc2ec0fb7238c171f2525ebcec504afe411ad58c6096c3"
+  },
+  {
+    "path": "jobs/specs/chawl-frontage-bay-v001.json",
+    "sha256": "d698bffc447d12a8cbbe0f12d9fa3d3f9a86eadb10a8ca7d5b22b1f0161a899e"
+  },
+  {
+    "path": "jobs/specs/chawl-props-v001.json",
+    "sha256": "3a82acc246f7a1a34d3832dc4fbfc3ce8ff5a973f68ae88fdfa6f194f0984ebe"
+  },
+  {
+    "path": "jobs/specs/chawl-stair-v001.json",
+    "sha256": "b1bb3f616f89f28c977951fd683bc3856730ff5a3e42e72fffa0f8ccf8263557"
+  },
+  {
+    "path": "jobs/specs/contemporary-character-study-v001.json",
+    "sha256": "e3ad9fb47fd3c33555299916e97c3e1786e4d1f5d88237a92cf9e6975169c89f"
+  },
+  {
+    "path": "jobs/specs/everyday-sari-study-v001.json",
+    "sha256": "a11ca6261a7934d385f3255a1280f49df90ed350dc2402f4559e5bac9caad8cd"
+  },
+  {
+    "path": "jobs/specs/gallery-chawl-study-v001.json",
+    "sha256": "f532f86a20303f9a7174e0fb45fb4ca3d60f0a85770c89b8aedcc67e83717089"
+  },
+  {
+    "path": "jobs/specs/gandhi-cap-study-v001.json",
+    "sha256": "f1ecb32e464f78fc75425224bc51979dea07965a915048e559bfcd53057f84bc"
+  },
+  {
+    "path": "jobs/specs/kurta-dhoti-cap-study-v001.json",
+    "sha256": "2e42379bcfe56f983fc8926a603c38f69d7d1f114f671ef09cdd7e7984f0b6e8"
+  },
+  {
+    "path": "jobs/specs/nauvari-kashtha-study-v001.json",
+    "sha256": "caa4fc9d80f5af61a196a0b2bf2e794e522339779888fa93760e9d9c572b6e04"
+  },
+  {
+    "path": "jobs/specs/pheta-study-v001.json",
+    "sha256": "6dbd5431019818e999ce198ba9b4e7983e3db9358abb08dbcf04cdb300c64468"
+  },
+  {
+    "path": "jobs/specs/smoke-chawl-bay.json",
+    "sha256": "5dcb89f24c4d044eaddd0f9c32a9714ee6e5e7fa112fcce808e6e2fe75f0b468"
+  },
+  {
+    "path": "jobs/specs/smoke-nauvari-study.json",
+    "sha256": "163e4001e759aa850f4a4f77e52f965096197d362e0029c1a635a8b3aca966eb"
+  },
+  {
+    "path": "tools/build_queued_model.py",
+    "sha256": "22bcdae84097f495ad29b2fd0c7212b1f20822c58326b91d983c528c736e18fa"
+  },
+  {
+    "path": "tools/modeling/__init__.py",
+    "sha256": "05998d27b04cf5ca4b514a7f005961cd4eb561e734fda08eadaf889e532dcc50"
+  },
+  {
+    "path": "tools/modeling/characters.py",
+    "sha256": "fd8483f07ef7bc2444ba0ed15ee659bd6ff086e646eb6edc043f6ab51d57c1e2"
+  },
+  {
+    "path": "tools/modeling/chawl.py",
+    "sha256": "78276893085cf2ddcdc2c4f970f092ce3e7cae7ead8567371e71d2b97d4ba95e"
+  },
+  {
+    "path": "tools/modeling/core.py",
+    "sha256": "da9621c36e9cdd49c68de216550df546910f5054510d128df73055b32005ba90"
+  },
+  {
+    "path": "tools/night_queue.py",
+    "sha256": "c2fe17e5dd7a34d6beb73f267da85f0e42ea0e796302f6ccda77b5c149f6fb4a"
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "contemporary-character-study-v001",
+  "kind": "contemporary_character",
+  "triangle_budget": 12000,
+  "parameters": {},
+  "instructions": [
+    "Create an original adult shirt/trouser street-clothing proportion study.",
+    "Use original procedural geometry only; no downloaded meshes, textures or celebrity likeness.",
+    "Produce static review-stage models, not automatically accepted production assets."
+  ],
+  "references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "review_checks": [
+    "Keep ordinary contemporary clothing in the roster.",
+    "Add rig/deformation/animation work in a later reviewed pass."
+  ],
+  "construction_notes": [
+    "Use estimated adult body proportions with short-sleeve shirt, trousers and footwear.",
+    "Keep clothing and body objects identifiable; later replace primitive joint/body topology with a shared deformable rig workflow."
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "chawl-stair-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 1656,
+  "triangle_budget": 15000,
+  "mesh_objects": 140,
+  "materials_used": [
+    "concrete",
+    "metal"
+  ],
+  "bounds_metres": {
+    "min": [
+      -2.240000009536743,
+      -5.119999885559082,
+      0.0
+    ],
+    "max": [
+      0.0,
+      0.020000001415610313,
+      9.5625
+    ],
+    "size": [
+      2.240000009536743,
+      5.139999866485596,
+      9.5625
+    ]
+  },
+  "generator_details": {
+    "kind": "chawl_stair",
+    "parameters": {
+      "bay_width": 3.0,
+      "room_depth": 5.0,
+      "gallery_width": 1.4,
+      "floor_height": 2.8,
+      "bays": 4,
+      "floors": 4,
+      "courtyard_width": 7.0
+    },
+    "status": "draft_pending_architectural_and_gameplay_review",
+    "dimensions_basis": "estimated_design_parameters_not_surveyed",
+    "geometry_origin": "original_procedural_primitives_no_external_meshes"
+  },
+  "source_references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Dimensions are design estimates, not a surveyed replica.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "539f60488e44fe1727c3e74a35ba6297da15483e7578502a40db1883f1f33f30",
+    "model.blend": "8bceffaca3ed726f85ed0c94fa4cc173c9e39e70912aa74c39cd96fc111c063e",
+    "preview.png": "33e40071c56299cacdb24683092b4734ca2df59b8c20f5a70872df7d21e92840",
+    "front.png": "3eba1a625bc2ad8d7a6058582dc85d49c98793c065967d8af2a4bf39bc7b5435",
+    "rear.png": "9b67e459a15fa459665f4946cc8177d952dd427a90338bba1e275d170b00cc62",
+    "side.png": "25423f0f0b3f65874faeec8b954fb7a245f24f9c6b2b55c1ffe90427bffddffa"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Check tread/landing connections and player-width assumptions.",
+    "Do not claim an as-built BDD staircase."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "id": "chawl-props-v001",
+  "kind": "chawl_props",
+  "triangle_budget": 15000,
+  "parameters": {
+    "bay_width": 3.0,
+    "room_depth": 5.0,
+    "gallery_width": 1.4,
+    "floor_height": 2.8,
+    "bays": 4,
+    "floors": 4
+  },
+  "instructions": [
+    "Create simple original laundry/service props suitable for reviewing a shared-circulation housing study.",
+    "Use original procedural geometry only; no downloaded meshes, textures or celebrity likeness.",
+    "Produce static review-stage models, not automatically accepted production assets."
+  ],
+  "references": [
+    "https://www.mhada.gov.in/sites/default/files/PMC-Agreement-for-BDD-Redevelopment-Project-26_2_2019-Worli.pdf",
+    "https://mmrhcs.org.in/images/documents/projects/chembur/03-final-stage-5-revised-report-15-12-11.pdf"
+  ],
+  "assumptions": [
+    "Dimensions are design estimates, not a surveyed replica.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "review_checks": [
+    "Keep circulation unobstructed.",
+    "Replace generic details with current local-reference details before acceptance."
+  ]
+}

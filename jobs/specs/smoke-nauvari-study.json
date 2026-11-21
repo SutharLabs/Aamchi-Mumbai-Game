@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "id": "smoke-nauvari-study",
+  "kind": "nauvari_study",
+  "triangle_budget": 14000,
+  "parameters": {
+    "bay_width": 3.0,
+    "room_depth": 5.0,
+    "gallery_width": 1.4,
+    "floor_height": 2.8,
+    "bays": 4,
+    "floors": 4
+  },
+  "instructions": [
+    "Create a reference-gated divided lower-drape, back-tuck and shoulder-pallu massing study.",
+    "Use original procedural geometry only; no downloaded meshes, textures or celebrity likeness.",
+    "Produce static review-stage models, not automatically accepted production assets."
+  ],
+  "references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "Technical preflight only; cultural review is pending."
+  ],
+  "review_checks": [
+    "Review front, side and back drape with a knowledgeable reviewer.",
+    "Generic cylindrical sari geometry does not meet this job.",
+    "This draft is not an accepted authentic nauvari outfit."
+  ]
+}

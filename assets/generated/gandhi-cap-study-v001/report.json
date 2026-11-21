@@ -1,0 +1,59 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "gandhi-cap-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 40,
+  "triangle_budget": 3000,
+  "mesh_objects": 2,
+  "materials_used": [
+    "cloth_white",
+    "dhoti"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.0949999988079071,
+      -0.11999999731779099,
+      0.014999999664723873
+    ],
+    "max": [
+      0.0949999988079071,
+      0.11999999731779099,
+      0.08650001883506775
+    ],
+    "size": [
+      0.1899999976158142,
+      0.23999999463558197,
+      0.0715000182390213
+    ]
+  },
+  "generator_details": {
+    "dimensions_basis": "estimated_design_parameters_not_surveyed"
+  },
+  "source_references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "21b32bf916ad49e7332ddb94775023ba8da54e8535d1b2812225d7891d09d9c6",
+    "model.blend": "64843009fb4f1e4958ac0128853b463dcf3f27a1a008e45920910ed852889b94",
+    "preview.png": "a82c11b351cba3c5a84e80986dabe267590eefe95d5530578c0ee3bee98ff02b",
+    "front.png": "c31fade0ea0b1c699f17cae350f8c7bb157795ea65cf8ec5e3f928274acd363e",
+    "rear.png": "c210494ff18fce6e630f0d86a6e25e42c874d88f5af1ce38ceb069c2fb74aeec",
+    "side.png": "03b5d9e6b3c97c9a8b7d1c275f3411548df27e2ac991e06ead78be17c152dee7"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Review folding silhouette rather than calling an arbitrary hat a Gandhi cap.",
+    "Check fit against the adult base before acceptance."
+  ]
+}

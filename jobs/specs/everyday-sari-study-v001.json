@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "id": "everyday-sari-study-v001",
+  "kind": "sari_study",
+  "triangle_budget": 14000,
+  "parameters": {},
+  "instructions": [
+    "Create an ordinary sari/blouse silhouette study distinct from the nauvari draft.",
+    "Use original procedural geometry only; no downloaded meshes, textures or celebrity likeness.",
+    "Produce static review-stage models, not automatically accepted production assets."
+  ],
+  "references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "review_checks": [
+    "Review drape, cloth intersections and shoulder route.",
+    "Do not describe this as a specifically Maharashtrian drape."
+  ],
+  "construction_notes": [
+    "Use an undivided lower sari wrap with pleat markers and a contrasting border.",
+    "Keep blouse sleeves, front pallu and back drop identifiable; inspect intersections from all views."
+  ]
+}

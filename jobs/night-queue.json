@@ -1,0 +1,326 @@
+{
+  "version": 1,
+  "project": "Mumbai: Gully Heat",
+  "window_description": "22:00-08:00 Asia/Kolkata; runtime CLI enforces window",
+  "jobs": [
+    {
+      "id": "chawl-frontage-bay-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/chawl-frontage-bay-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/chawl-frontage-bay-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/chawl.py"
+      ],
+      "outputs": [
+        "assets/generated/chawl-frontage-bay-v001/model.blend",
+        "assets/generated/chawl-frontage-bay-v001/model.glb",
+        "assets/generated/chawl-frontage-bay-v001/preview.png",
+        "assets/generated/chawl-frontage-bay-v001/front.png",
+        "assets/generated/chawl-frontage-bay-v001/rear.png",
+        "assets/generated/chawl-frontage-bay-v001/side.png",
+        "assets/generated/chawl-frontage-bay-v001/report.json"
+      ],
+      "validation_report": "assets/generated/chawl-frontage-bay-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "chawl-stair-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/chawl-stair-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/chawl-stair-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/chawl.py"
+      ],
+      "outputs": [
+        "assets/generated/chawl-stair-v001/model.blend",
+        "assets/generated/chawl-stair-v001/model.glb",
+        "assets/generated/chawl-stair-v001/preview.png",
+        "assets/generated/chawl-stair-v001/front.png",
+        "assets/generated/chawl-stair-v001/rear.png",
+        "assets/generated/chawl-stair-v001/side.png",
+        "assets/generated/chawl-stair-v001/report.json"
+      ],
+      "validation_report": "assets/generated/chawl-stair-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "gallery-chawl-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/gallery-chawl-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/gallery-chawl-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/chawl.py"
+      ],
+      "outputs": [
+        "assets/generated/gallery-chawl-study-v001/model.blend",
+        "assets/generated/gallery-chawl-study-v001/model.glb",
+        "assets/generated/gallery-chawl-study-v001/preview.png",
+        "assets/generated/gallery-chawl-study-v001/front.png",
+        "assets/generated/gallery-chawl-study-v001/rear.png",
+        "assets/generated/gallery-chawl-study-v001/side.png",
+        "assets/generated/gallery-chawl-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/gallery-chawl-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "baithi-chawl-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/baithi-chawl-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/baithi-chawl-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/chawl.py"
+      ],
+      "outputs": [
+        "assets/generated/baithi-chawl-study-v001/model.blend",
+        "assets/generated/baithi-chawl-study-v001/model.glb",
+        "assets/generated/baithi-chawl-study-v001/preview.png",
+        "assets/generated/baithi-chawl-study-v001/front.png",
+        "assets/generated/baithi-chawl-study-v001/rear.png",
+        "assets/generated/baithi-chawl-study-v001/side.png",
+        "assets/generated/baithi-chawl-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/baithi-chawl-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "chawl-props-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/chawl-props-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/chawl-props-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/chawl.py"
+      ],
+      "outputs": [
+        "assets/generated/chawl-props-v001/model.blend",
+        "assets/generated/chawl-props-v001/model.glb",
+        "assets/generated/chawl-props-v001/preview.png",
+        "assets/generated/chawl-props-v001/front.png",
+        "assets/generated/chawl-props-v001/rear.png",
+        "assets/generated/chawl-props-v001/side.png",
+        "assets/generated/chawl-props-v001/report.json"
+      ],
+      "validation_report": "assets/generated/chawl-props-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "kurta-dhoti-cap-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/kurta-dhoti-cap-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/kurta-dhoti-cap-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/characters.py"
+      ],
+      "outputs": [
+        "assets/generated/kurta-dhoti-cap-study-v001/model.blend",
+        "assets/generated/kurta-dhoti-cap-study-v001/model.glb",
+        "assets/generated/kurta-dhoti-cap-study-v001/preview.png",
+        "assets/generated/kurta-dhoti-cap-study-v001/front.png",
+        "assets/generated/kurta-dhoti-cap-study-v001/rear.png",
+        "assets/generated/kurta-dhoti-cap-study-v001/side.png",
+        "assets/generated/kurta-dhoti-cap-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/kurta-dhoti-cap-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "nauvari-kashtha-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/nauvari-kashtha-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/nauvari-kashtha-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/characters.py"
+      ],
+      "outputs": [
+        "assets/generated/nauvari-kashtha-study-v001/model.blend",
+        "assets/generated/nauvari-kashtha-study-v001/model.glb",
+        "assets/generated/nauvari-kashtha-study-v001/preview.png",
+        "assets/generated/nauvari-kashtha-study-v001/front.png",
+        "assets/generated/nauvari-kashtha-study-v001/rear.png",
+        "assets/generated/nauvari-kashtha-study-v001/side.png",
+        "assets/generated/nauvari-kashtha-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/nauvari-kashtha-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "everyday-sari-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/everyday-sari-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/everyday-sari-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/characters.py"
+      ],
+      "outputs": [
+        "assets/generated/everyday-sari-study-v001/model.blend",
+        "assets/generated/everyday-sari-study-v001/model.glb",
+        "assets/generated/everyday-sari-study-v001/preview.png",
+        "assets/generated/everyday-sari-study-v001/front.png",
+        "assets/generated/everyday-sari-study-v001/rear.png",
+        "assets/generated/everyday-sari-study-v001/side.png",
+        "assets/generated/everyday-sari-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/everyday-sari-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "contemporary-character-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/contemporary-character-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/contemporary-character-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/characters.py"
+      ],
+      "outputs": [
+        "assets/generated/contemporary-character-study-v001/model.blend",
+        "assets/generated/contemporary-character-study-v001/model.glb",
+        "assets/generated/contemporary-character-study-v001/preview.png",
+        "assets/generated/contemporary-character-study-v001/front.png",
+        "assets/generated/contemporary-character-study-v001/rear.png",
+        "assets/generated/contemporary-character-study-v001/side.png",
+        "assets/generated/contemporary-character-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/contemporary-character-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "gandhi-cap-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/gandhi-cap-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/gandhi-cap-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/characters.py"
+      ],
+      "outputs": [
+        "assets/generated/gandhi-cap-study-v001/model.blend",
+        "assets/generated/gandhi-cap-study-v001/model.glb",
+        "assets/generated/gandhi-cap-study-v001/preview.png",
+        "assets/generated/gandhi-cap-study-v001/front.png",
+        "assets/generated/gandhi-cap-study-v001/rear.png",
+        "assets/generated/gandhi-cap-study-v001/side.png",
+        "assets/generated/gandhi-cap-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/gandhi-cap-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    },
+    {
+      "id": "pheta-study-v001",
+      "enabled": true,
+      "script": "tools/build_queued_model.py",
+      "args": [
+        "--spec",
+        "jobs/specs/pheta-study-v001.json"
+      ],
+      "inputs": [
+        "jobs/specs/pheta-study-v001.json",
+        "tools/modeling/core.py",
+        "tools/modeling/__init__.py",
+        "tools/modeling/characters.py"
+      ],
+      "outputs": [
+        "assets/generated/pheta-study-v001/model.blend",
+        "assets/generated/pheta-study-v001/model.glb",
+        "assets/generated/pheta-study-v001/preview.png",
+        "assets/generated/pheta-study-v001/front.png",
+        "assets/generated/pheta-study-v001/rear.png",
+        "assets/generated/pheta-study-v001/side.png",
+        "assets/generated/pheta-study-v001/report.json"
+      ],
+      "validation_report": "assets/generated/pheta-study-v001/report.json",
+      "timeout_seconds": 1200,
+      "max_attempts": 2,
+      "minimum_window_seconds": 90,
+      "acceptance_stage": "technical_export_only_human_review_pending"
+    }
+  ]
+}

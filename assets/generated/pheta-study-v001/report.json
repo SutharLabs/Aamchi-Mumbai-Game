@@ -1,0 +1,58 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "pheta-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 312,
+  "triangle_budget": 5000,
+  "mesh_objects": 10,
+  "materials_used": [
+    "pheta"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.13981841504573822,
+      -0.11500000208616257,
+      -0.11500000208616257
+    ],
+    "max": [
+      0.13860902190208435,
+      0.13249999284744263,
+      0.3712106943130493
+    ],
+    "size": [
+      0.2784274220466614,
+      0.2475000023841858,
+      0.4862107038497925
+    ]
+  },
+  "generator_details": {
+    "dimensions_basis": "estimated_design_parameters_not_surveyed"
+  },
+  "source_references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "70ca7b233b5de968792a23295acbccd0d4cf574133054cfab671095cc7cf13a0",
+    "model.blend": "b5bfa3909832dc955a87ed697167c1ad862e263990d1b2a9d4b47642b3701d50",
+    "preview.png": "bc0aef8534ccd396bff2757fa24678b2f4117e76edaf988cb914e95fad928c38",
+    "front.png": "32c048838bedb0c355b80e737df01892c98cd81b589ac5fcab1700a66424c1d9",
+    "rear.png": "626b897cb06169f46c007250277693eb64bdc5301ffc8cd80a18ed836e9173f3",
+    "side.png": "0bdc01cf4437ca4d9c1b66a824bc00557af432832138894144f4b8407f637341"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Specific regional tying style is pending visual and cultural review.",
+    "Do not label a generic turban as a finished pheta."
+  ]
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "research_date": "2026-11-19",
+    "metadata_url": "https://api.sketchfab.com/v3/models/4066feb6fe1240e2b6f3710f243d5031",
+    "uid": "4066feb6fe1240e2b6f3710f243d5031",
+    "name": "Indian Style Building",
+    "creator": "Shahalam",
+    "url": "https://sketchfab.com/3d-models/indian-style-building-4066feb6fe1240e2b6f3710f243d5031",
+    "license": "CC Attribution",
+    "license_url": "http://creativecommons.org/licenses/by/4.0/",
+    "downloadable": true,
+    "faces": 570,
+    "archive_downloaded": false,
+    "is_verified_mumbai_chawl": false
+  },
+  {
+    "research_date": "2026-11-19",
+    "metadata_url": "https://api.sketchfab.com/v3/models/3f2b22855bd14cbf877b1ab5f6689582",
+    "uid": "3f2b22855bd14cbf877b1ab5f6689582",
+    "name": "indian house - gameasset",
+    "creator": "nayan pachori",
+    "url": "https://sketchfab.com/3d-models/indian-house-gameasset-3f2b22855bd14cbf877b1ab5f6689582",
+    "license": "CC Attribution",
+    "license_url": "http://creativecommons.org/licenses/by/4.0/",
+    "downloadable": true,
+    "faces": 1930,
+    "archive_downloaded": false,
+    "is_verified_mumbai_chawl": false
+  },
+  {
+    "research_date": "2026-11-19",
+    "metadata_url": "https://api.sketchfab.com/v3/models/c0a4f9868c1a40428f370c010ea5fead",
+    "uid": "c0a4f9868c1a40428f370c010ea5fead",
+    "name": "indian house 2 - game asset",
+    "creator": "nayan pachori",
+    "url": "https://sketchfab.com/3d-models/indian-house-2-game-asset-c0a4f9868c1a40428f370c010ea5fead",
+    "license": "CC Attribution",
+    "license_url": "http://creativecommons.org/licenses/by/4.0/",
+    "downloadable": true,
+    "faces": 548,
+    "archive_downloaded": false,
+    "is_verified_mumbai_chawl": false
+  }
+]

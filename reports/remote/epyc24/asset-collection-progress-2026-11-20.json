@@ -1,0 +1,9 @@
+{
+  "checked_client_utc": "2026-11-20T01:27:49.306190+00:00",
+  "mode": "read-only bounded parallel RPC via existing collector",
+  "expected_files": 80,
+  "written": 80,
+  "status": "completed",
+  "last_file": "assets/generated/pheta-study-v001/side.png",
+  "accepted_outputs_verified": 77
+}

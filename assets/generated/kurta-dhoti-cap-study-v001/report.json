@@ -1,0 +1,66 @@
+{
+  "status": "ok",
+  "technical_export_passed": true,
+  "asset_id": "kurta-dhoti-cap-study-v001",
+  "geometry_stage": "original_procedural_blockout",
+  "human_review_required": true,
+  "cultural_architectural_review": "pending",
+  "rigged": false,
+  "animations": 0,
+  "triangle_count": 3140,
+  "triangle_budget": 12000,
+  "mesh_objects": 32,
+  "materials_used": [
+    "cloth_white",
+    "dark",
+    "dhoti",
+    "eye",
+    "hair",
+    "kurta",
+    "shoe",
+    "skin",
+    "trim"
+  ],
+  "bounds_metres": {
+    "min": [
+      -0.4480000138282776,
+      -0.1850000023841858,
+      0.00299999862909317
+    ],
+    "max": [
+      0.4480000138282776,
+      0.14949999749660492,
+      1.7515000104904175
+    ],
+    "size": [
+      0.8960000276565552,
+      0.3345000147819519,
+      1.7484999895095825
+    ]
+  },
+  "generator_details": {
+    "dimensions_basis": "estimated_design_parameters_not_surveyed"
+  },
+  "source_references": [
+    "https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm",
+    "https://artsandculture.google.com/story/QAWx8kNCYEA_JQ"
+  ],
+  "assumptions": [
+    "The generator uses fixed estimated adult proportions or accessory dimensions; no clothing fit or surveyed measurement is claimed.",
+    "Reference sources inform geometry; their images have not been imported.",
+    "Cultural and architectural fidelity requires human review."
+  ],
+  "sha256": {
+    "model.glb": "e533b120fa87228069386c82748023c3e7843d410234f827d6b2d920b0e57606",
+    "model.blend": "af3fce19516a04630672e2962f9ddfca4acc66df3ad573a00c9df256142d5da8",
+    "preview.png": "574f28702811bf64eded078ff9bb6e8862cc0ebf7c07913f7e217ac10f4d540e",
+    "front.png": "6f9ad3ed933e194b7dd40aa7063ff94d8118d76bc500ed6086dbe00324e94f6a",
+    "rear.png": "6a9d2b1368f5a9da9a653034b7ba4a48e607704b8521a2a3813ea900b722b71d",
+    "side.png": "8d4968f2f57eb2beb3acd29c11f960fd995bc369b926ab17263c74d8154bdfb8"
+  },
+  "ownership_note": "Original procedural geometry; no external meshes/textures imported.",
+  "next_review": [
+    "Review dhoti folds, cap shape and sleeve/leg separation.",
+    "No rig or NPC readiness claim."
+  ]
+}
