@@ -100,7 +100,7 @@ func _build_materials() -> void:
 		"mint": Color("93aba0"), "rose": Color("b58e83"),
 		"blue": Color("879da9"), "gully": Color("6a9e98"),
 		"bay": Color("344247"), "bay_cyan": Color("32d7d2"),
-		"bay_white": Color("f1ede2")
+		"white_paint": Color("f1ede2")
 	}
 	for key: String in colors:
 		var material := StandardMaterial3D.new()
@@ -177,7 +177,7 @@ func _build_roads() -> void:
 			if width >= 10.0:
 				var distance := 5.0
 				while distance < length-4.0:
-					_strip("CenterDash",from+along*distance,from+along*minf(distance+3.0,length),0.14,0.008,0.024,"paint",false)
+					_strip("CenterDash",from+along*distance,from+along*minf(distance+3.0,length),0.14,0.008,0.024,"white_paint",false)
 					distance += 10.0
 		# Junction pads cover small polyline corner gaps without a navigation mesh.
 		for point: Vector3 in points:
@@ -343,7 +343,7 @@ func _build_vehicle_bays() -> void:
 	_paint_vehicle_bay("CarBay",VEHICLE_START,2.8,5.4,"paint")
 	_paint_vehicle_bay("AutoBay",RICKSHAW_START,2.4,4.4,"paint")
 	_paint_vehicle_bay("MotorcycleBay",MOTORCYCLE_START,1.8,3.8,"bay_cyan")
-	_paint_vehicle_bay("ScooterBay",SCOOTER_START,1.7,3.4,"bay_white")
+	_paint_vehicle_bay("ScooterBay",SCOOTER_START,1.7,3.4,"white_paint")
 	_label("RANWAR / BANDRA WEST",Vector3(9.2,3.2,-32.0))
 	# Sparse painted training guide only; no new maneuver obstacles or route changes.
 	for index in range(5):

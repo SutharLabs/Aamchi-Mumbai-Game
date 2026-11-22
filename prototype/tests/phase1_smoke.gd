@@ -43,20 +43,23 @@ func _run() -> void:
 	await _hold(&"move_back", 30)
 	_expect(game.car.position.z > stopped.z + 0.45, "car reverses after stopping")
 	await _hold(&"brake", 35)
+	var preferred_exit: Vector3 = game._find_exit(game.car)
+	var side_axis: Vector3 = game.car.global_basis.x
+	_expect(preferred_exit.is_finite() and (preferred_exit - game.car.position).dot(side_axis) > 1.0,
+		"car prefers the right driver side when clear")
 	var left := _block_exit(-1.0)
 	var right := _block_exit(1.0)
 	await _frames(3)
 	await _tap(&"interact")
 	_expect(game.driving, "occupied exit spaces keep the player in the car")
-	right.queue_free()
+	left.queue_free()
 	await _frames(3)
 	await _tap(&"interact")
 	_expect(not game.driving and game.player.visible and not game.car.driver_active, "exit transfers back to walking")
 	_expect(game.player.visual.animation_player.active and game.player.visual.animation_player.current_animation == &"idle", "exiting resumes on-foot idle")
 	var exit_delta: Vector3 = game.player.position - game.car.position
-	var side_axis: Vector3 = game.car.global_basis.x
-	_expect(exit_delta.dot(side_axis) > 1.0, "second-side exit succeeds when first side is blocked")
-	left.queue_free()
+	_expect(exit_delta.dot(side_axis) < -1.0, "car uses the left exit when the right side is blocked")
+	right.queue_free()
 	await _tap(&"recover")
 	_expect(not game.driving and absf(game.car.position.z) < 0.1 and absf(game.player.position.z - 5.0) < 0.1, "reset restores both actors")
 	_check_route_clearance()

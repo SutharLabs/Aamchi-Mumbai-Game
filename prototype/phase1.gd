@@ -265,8 +265,8 @@ func _try_interact() -> void:
 
 func _find_exit(vehicle: Vehicle) -> Vector3:
 	var space := get_world_3d().direct_space_state
-	for side in [-1.0, 1.0]:
-		var candidate := vehicle.global_position + vehicle.global_basis.x * (vehicle.exit_side_offset * float(side))
+	for side: float in [vehicle.preferred_exit_side, -vehicle.preferred_exit_side]:
+		var candidate := vehicle.global_position + vehicle.global_basis.x * (vehicle.exit_side_offset * side)
 		var ray := PhysicsRayQueryParameters3D.create(candidate + Vector3.UP * 1.1, candidate - Vector3.UP * 1.0, 1)
 		var ground := space.intersect_ray(ray)
 		if ground.is_empty():

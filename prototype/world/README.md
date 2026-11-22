@@ -16,9 +16,13 @@ The modern source is an acquired mapping snapshot, not a surveyed current street
 
 Map data from **OpenStreetMap contributors**, under **ODbL 1.0**. Retain the raw extract, transformation details and data-offer obligations if distributing this derived layout. The source package includes the extract, attribution, license and candidate layout. [OpenStreetMap reference package](../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md) The frontage kit uses original geometry and shared materials.
 
+## Map and asset placement
+
+The current playable area covers the Ranwar pocket of Bandra West. The road and footway mesh uses selected bends and junctions from the saved OpenStreetMap extract. All 30 coordinate entries used by the game were checked against nodes on the corresponding five saved ways. The St Peter's Church site comes from its mapped footprint, with a designed setback and simplified building dimensions. The five fictional shops and seven village-house frontages are placed in authored lots along those streets. The shop parcels, practice bays, handling yard, street widths and curb geometry are authored gameplay elements. Current parcel and street-condition checks are tracked separately. [Source map and acquisition](../../research/BANDRA_REFERENCE_AREA_AND_MAP.md)
+
 ## Left-hand lane graph
 
-The traffic graph derives directed lane centers from the same projected centerlines and authored widths as the street mesh. It places lanes one quarter of the road width to the left of travel and joins legal successive roads through their shared endpoints. Junction turns use short cubic curves. The traffic graph leaves Nagrana as a walking connection.
+The traffic graph derives directed lane centers from the same projected centerlines and authored widths as the street mesh. It places lanes one quarter of the road width to the left of travel and joins legal successive roads through their shared endpoints. Junction turns use short cubic curves. The traffic graph leaves Nagrana as a walking connection. The road mesh uses white broken longitudinal markings on its authored asphalt. The lane convention and paint reference come from Indian guidance, with the exact markings on the modeled Mumbai streets still to be field-checked. [Motor Vehicles (Driving) Regulations, regulation 4](https://morth.gov.in/sites/default/files/Motor-Vehicle-Driving-Regulation-2017.pdf) · [MoRTH pavement marking circular](https://morth.nic.in/sites/default/files/circulars_document/Guidelines_for_Road_Pavement_Marking_circular_dated_07.01.2019.pdf)
 
 | Road | Snapshot tag | Directions in the prototype traffic graph |
 |---|---|---|

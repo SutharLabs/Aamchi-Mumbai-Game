@@ -11,6 +11,7 @@ func _init() -> void:
 	name = "Phase1Car"
 	vehicle_label = "Car"
 	exit_side_offset = 1.48
+	preferred_exit_side = 1.0
 	follow_distance = 6.9
 	_build_collision(Vector3(1.64, 0.92, 3.8), Vector3(0.0, -0.04, 0.0))
 	_build_bodywork()
@@ -22,9 +23,9 @@ func _build_bodywork() -> void:
 	paint.metallic = 0.12
 	var roof := _material(Color("cc9b3e"))
 	roof.roughness = 0.41
-	var glass := _material(Color("355460"))
+	var glass := _material(Color("63879745"))
 	glass.roughness = 0.22
-	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var trim := _material(Color("23282c"))
 	var satin := _material(Color("7c888b"))
 	satin.metallic = 0.24
@@ -48,6 +49,7 @@ func _build_bodywork() -> void:
 		section_rings.append(_body_ring(z, width, rocker, shoulder))
 	BodyMesh.loft(self, "WheelArchedBody", section_rings, paint)
 	_build_cabin(roof, glass, trim)
+	_build_cabin_interior()
 	_build_fascias(trim, satin)
 	for side: float in [-1.0, 1.0]:
 		_build_door_details(side, paint, trim, satin)
@@ -73,8 +75,8 @@ func _build_cabin(roof: Material, glass: Material, trim: Material) -> void:
 	var hatch_top := Vector3(0.609, 0.991, 1.230)
 	var left := Vector3(-1.0, 1.0, 1.0)
 	var panes: Array[PackedVector3Array] = [
-		PackedVector3Array([windscreen_low * left, windscreen_top * left, windscreen_top, windscreen_low]),
-		PackedVector3Array([hatch_low, hatch_top, hatch_top * left, hatch_low * left]),
+		PackedVector3Array([windscreen_low, windscreen_top, windscreen_top * left, windscreen_low * left]),
+		PackedVector3Array([hatch_low * left, hatch_top * left, hatch_top, hatch_low]),
 	]
 	for side: float in [-1.0, 1.0]:
 		var mirror := Vector3(side, 1.0, 1.0)
@@ -100,6 +102,36 @@ func _build_cabin(roof: Material, glass: Material, trim: Material) -> void:
 		_roof_ring(1.334, 0.572, 0.970, 1.008),
 	], roof)
 	BodyMesh.bar(self, "RearWiper", Vector3(-0.23, 0.539, 1.527), Vector3(0.204, 0.627, 1.475), 0.010, trim)
+
+
+func _build_cabin_interior() -> void:
+	# Local +X is the driver's right when facing forward along -Z.
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var block := BoxMesh.new()
+	block.size = Vector3(1.18, 0.15, 0.26)
+	surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(0.0, 0.48, -0.75)))
+	for side: float in [-1.0, 1.0]:
+		var seat_x := side * 0.35
+		block.size = Vector3(0.43, 0.11, 0.42)
+		surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(seat_x, 0.45, 0.08)))
+		block.size = Vector3(0.43, 0.38, 0.11)
+		surface.append_from(block, 0, Transform3D(Basis(Vector3.RIGHT, 0.13), Vector3(seat_x, 0.63, 0.25)))
+		block.size = Vector3(0.25, 0.12, 0.10)
+		surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(seat_x, 0.86, 0.28)))
+
+	block.size = Vector3(0.08, 0.095, 0.13)
+	surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(0.35, 0.585, -0.622)))
+	var wheel := TorusMesh.new()
+	wheel.inner_radius = 0.134
+	wheel.outer_radius = 0.170
+	wheel.rings = 12
+	wheel.ring_segments = 6
+	var steering_pose := Transform3D(Basis(Vector3.RIGHT, 1.25), Vector3(0.35, 0.64, -0.57))
+	surface.append_from(wheel, 0, steering_pose)
+	block.size = Vector3(0.28, 0.035, 0.032)
+	surface.append_from(block, 0, steering_pose)
+	BodyMesh.part(self, "RightHandDriveInterior", surface.commit(), _material(Color("514943")))
 
 
 func _roof_ring(z: float, half_width: float, bottom: float, crown: float) -> PackedVector3Array:

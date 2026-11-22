@@ -21,6 +21,7 @@ var wheel_radius: float = 0.32
 var vehicle_label: String = "Vehicle"
 var is_two_wheeler: bool = false
 var exit_side_offset: float = 1.48
+var preferred_exit_side: float = -1.0
 var follow_distance: float = 6.9
 var steering_full_speed: float = 3.0
 var high_speed_steering_factor: float = 0.55

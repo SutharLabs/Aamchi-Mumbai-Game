@@ -20,7 +20,7 @@ The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profil
 | Windows gamepad | Left stick to move or drive, right stick to look, X to jog, A to interact, LB to brake, Y to reset, Start to pause and B to go back. |
 | Touch controls | Walk or drive with the left stick, drag the right side to look, and use Interact, Brake, Reset and Pause. |
 
-Follow Hill Road from the start past the St Peter's exterior, turn onto St Peter's Road at the junction and follow Waroda Road back. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
+To follow the ambient traffic circuit, take western Waroda Road from the start toward Veronica. Continue on eastern Waroda to Chapel, take St Peter's Road to Hill Road, then follow Hill Road past the church back toward the start. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
 Walk up to Mira or Rafiq on Hill Road and press **E** or **A** on a gamepad, or tap **Interact**, when the talk prompt appears. Each pauses to face you and offers a short route tip, then continues walking. Pedestrians yield when their route is blocked and are solid to the player and all four vehicles.
 

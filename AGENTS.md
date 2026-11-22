@@ -20,7 +20,7 @@ Latest user delegation, 20 November: target **Windows 10 and Android 12**. Choos
 
 Open `prototype/project.godot` with the pinned Godot 4.7.2 standard editor. Keep prototype source in `prototype/`, toolchain material in `.toolchain/`, and Windows exports in `builds/`. Use the Windows desktop preset and smoke script documented in `prototype/README.md`. The user authorized execution servers for rendering or high CPU work when needed. Follow the remote runbook for shared node access.
 
-Use the visible street geometry to govern free-roam traversal. Test ordinary curbs, driveways and grades with all four vehicle families in both directions. Keep walls, high obstacles, blocked clearance and vehicle-width restrictions physically solid. Review the driving camera over changes in road height.
+Use left-hand traffic for Mumbai. Model the hatchback with its steering station on the right and keep handlebar-controlled riders centered. Base ambient directions on the recorded road data and track locally verified access separately. Use the visible street geometry to govern free-roam traversal. Test ordinary curbs, driveways and grades with all four vehicle families in both directions. Keep walls, high obstacles, blocked clearance and vehicle-width restrictions physically solid. Review the driving camera over changes in road height.
 
 ## Current overnight work
 
