@@ -26,7 +26,7 @@ The project uses an original menu layout and puts the Credits entry in the main 
 
 ## Controls guide and gameplay HUD
 
-Rockstar documents separate on-foot and vehicle controls in GTA V's pause settings. Forza Horizon 5 places remapping in settings and lets players pare down HUD elements independently. Aamchi Mumbai Game puts the complete keyboard or touch guide under **Help ? Controls** from the title and pause menus. The gameplay HUD shows short contextual prompts, feedback and vehicle speed where relevant. [Rockstar Games Support](https://support.rockstargames.com/articles/4b6n5wYVseQhdCo2bNpVY5/how-to-change-vehicle-controls-in-grand-theft-auto-v) ? [Forza Horizon 5 accessibility support](https://support.forza.net/hc/en-us/articles/4409280058259-Forza-Horizon-5-Accessibility-Support)
+Rockstar documents separate on-foot and vehicle controls in GTA V's pause settings. Forza Horizon 5 places remapping in settings and lets players pare down HUD elements independently. Aamchi Mumbai Game puts the complete keyboard or touch guide under **Help → Controls** from the title and pause menus. The gameplay HUD shows short contextual prompts, feedback and vehicle speed where relevant. [Rockstar Games Support](https://support.rockstargames.com/articles/4b6n5wYVseQhdCo2bNpVY5/how-to-change-vehicle-controls-in-grand-theft-auto-v) · [Forza Horizon 5 accessibility support](https://support.forza.net/hc/en-us/articles/4409280058259-Forza-Horizon-5-Accessibility-Support)
 
 ## Attribution and distributed notices
 

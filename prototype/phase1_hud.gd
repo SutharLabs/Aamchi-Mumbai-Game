@@ -5,6 +5,7 @@ signal reset_pressed
 signal pause_pressed
 signal look_dragged(relative: Vector2)
 
+const Controls := preload("res://startup/control_bindings.gd")
 const PROMPT_WIDTH := 342.0
 
 var touch_enabled := false
@@ -16,6 +17,9 @@ var _speed := Label.new()
 var _prompt_row := HBoxContainer.new()
 var _interact_key := Label.new()
 var _prompt := Label.new()
+var _pause_card: PanelContainer
+var _pause_hint: Label
+var _using_gamepad := false
 var _touch_surface: Control
 var _move_finger := -1
 var _look_finger := -1
@@ -24,7 +28,7 @@ var _stick_radius := 67.0
 
 
 func _ready() -> void:
-	touch_enabled = OS.has_feature("mobile") or "--touch-preview" in OS.get_cmdline_user_args()
+	touch_enabled = Controls.uses_touch_ui()
 	var canvas := Control.new()
 	add_child(canvas)
 	canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -42,7 +46,6 @@ func _ready() -> void:
 	details.add_child(_prompt_row)
 	_prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_prompt_row.add_theme_constant_override("separation", 8)
-	_interact_key.text = "E"
 	_interact_key.add_theme_color_override("font_color", Color("deebef"))
 	_interact_key.add_theme_font_size_override("font_size", 17)
 	_prompt_row.add_child(_interact_key)
@@ -60,19 +63,37 @@ func _ready() -> void:
 		_touch_surface.gui_input.connect(_touch_input)
 		_touch_surface.draw.connect(_draw_touch)
 	elif pause_enabled:
-		var pause_card := _card()
-		pause_card.name = "PauseHint"
-		canvas.add_child(pause_card)
-		var pause_hint := Label.new()
-		pause_hint.text = "Esc  Pause"
-		pause_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		pause_hint.add_theme_font_size_override("font_size", 15)
-		pause_card.add_child(pause_hint)
-		pause_card.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		pause_card.offset_left = -112.0
-		pause_card.offset_top = 18.0
-		pause_card.offset_right = -18.0
-		pause_card.offset_bottom = 18.0 + pause_card.get_combined_minimum_size().y
+		_pause_card = _card()
+		_pause_card.name = "PauseHint"
+		canvas.add_child(_pause_card)
+		_pause_hint = Label.new()
+		_pause_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_pause_hint.add_theme_font_size_override("font_size", 15)
+		_pause_card.add_child(_pause_hint)
+		_pause_card.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		_pause_card.offset_top = 18.0
+		_pause_card.offset_right = -18.0
+	refresh_bindings()
+
+
+func set_gamepad_input(active: bool) -> void:
+	if not touch_enabled and _using_gamepad != active:
+		_using_gamepad = active
+		refresh_bindings()
+
+
+func refresh_bindings() -> void:
+	if touch_enabled:
+		return
+	var device := Controls.GAMEPAD if _using_gamepad else Controls.KEYBOARD
+	_interact_key.text = Controls.label("interact", device, true)
+	if _status_panel.visible:
+		_status_panel.reset_size.call_deferred()
+	if _pause_card != null:
+		_pause_hint.text = "%s  Pause" % Controls.label("pause_game", device, true)
+		var minimum := _pause_card.get_combined_minimum_size()
+		_pause_card.offset_left = -18.0 - maxf(minimum.x, 94.0)
+		_pause_card.offset_bottom = 18.0 + minimum.y
 
 
 func _card() -> PanelContainer:

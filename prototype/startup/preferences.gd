@@ -2,6 +2,7 @@ extends Node
 
 signal changed
 
+const Controls := preload("res://startup/control_bindings.gd")
 const MAX_PROFILE_NAME_LENGTH := 32
 const MAX_PROFILES := 12
 const MIN_LOOK_SENSITIVITY := 0.25
@@ -53,6 +54,7 @@ func _ready() -> void:
 		if not saved.is_empty():
 			_state = saved
 			_has_saved_state = true
+	Controls.apply(_state["control_bindings"])
 	_apply_settings()
 
 
@@ -124,6 +126,32 @@ func set_settings(volume: float, use_fullscreen: bool, sensitivity: float) -> Er
 	return _commit(next_state)
 
 
+func set_control_binding(action: String, device: String, input_event: InputEvent) -> Error:
+	if not _state["control_bindings"].has(device) or action not in Controls.actions_for(device):
+		return ERR_INVALID_PARAMETER
+	if Controls.input_device(input_event) != device:
+		return ERR_INVALID_PARAMETER
+	var event := Controls.custom_event(device, Controls.binding_data(input_event))
+	if event == null or (action == "pause_game" and event is InputEventJoypadMotion):
+		return ERR_INVALID_PARAMETER
+	if not Controls.conflict(action, device, event).is_empty():
+		return ERR_ALREADY_EXISTS
+	var next_state := _state.duplicate(true)
+	next_state["control_bindings"][device][action] = Controls.binding_data(event)
+	return _commit(next_state)
+
+
+func reset_control_bindings(device: String) -> Error:
+	var bindings: Dictionary = _state["control_bindings"]
+	if not bindings.has(device):
+		return ERR_INVALID_PARAMETER
+	if bindings[device].is_empty():
+		return OK
+	var next_state := _state.duplicate(true)
+	next_state["control_bindings"][device] = {}
+	return _commit(next_state)
+
+
 func _default_state() -> Dictionary:
 	var entries: Array[Dictionary] = [{"id": "1", "name": "Player"}]
 	return {
@@ -131,6 +159,7 @@ func _default_state() -> Dictionary:
 		"profiles": entries,
 		"active_profile_id": "1",
 		"settings": {"master_volume": 1.0, "fullscreen": false, "look_sensitivity": 1.0},
+		"control_bindings": Controls.defaults(),
 	}
 
 
@@ -170,6 +199,7 @@ func _normalize(raw: Dictionary) -> Dictionary:
 		saved_settings.get("look_sensitivity"), 1.0, MIN_LOOK_SENSITIVITY, MAX_LOOK_SENSITIVITY)
 	if saved_settings.get("fullscreen") is bool:
 		settings["fullscreen"] = saved_settings["fullscreen"]
+	normalized["control_bindings"] = Controls.normalized(raw.get("control_bindings"))
 	return normalized
 
 
@@ -248,6 +278,8 @@ func _commit(next_state: Dictionary) -> Error:
 	var error := _write_atomic(storage_path, next_state)
 	if error != OK:
 		return error
+	if _state["control_bindings"] != next_state["control_bindings"]:
+		Controls.apply(next_state["control_bindings"])
 	_state = next_state
 	_has_saved_state = true
 	_apply_settings()

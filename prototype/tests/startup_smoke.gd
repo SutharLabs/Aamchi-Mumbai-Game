@@ -2,6 +2,7 @@ extends SceneTree
 
 const Start := preload("res://startup/startup.tscn")
 const Preferences := preload("res://startup/preferences.gd")
+const Controls := preload("res://startup/control_bindings.gd")
 var _failures := 0
 var _checks := 0
 var _capture_enabled := false
@@ -17,8 +18,17 @@ func _run() -> void:
 	app = Start.instantiate()
 	var storage := "user://menu-probe-%s.json" % OS.get_process_id()
 	app.preferences.storage_path = storage
+	var legacy := FileAccess.open(storage, FileAccess.WRITE)
+	legacy.store_string(JSON.stringify({
+		"version": 1,
+		"profiles": [{"id": "1", "name": "Player"}],
+		"active_profile_id": "1",
+		"settings": {"master_volume": 0.8, "look_sensitivity": 1.0, "fullscreen": false},
+	}))
+	legacy.close()
 	root.add_child(app)
 	await _settle()
+	_expect(is_equal_approx(app.preferences.master_volume, 0.8) and Controls.label("interact", Controls.KEYBOARD) == "E", "existing saves keep settings and receive default controls")
 	_expect(_button("PlayButton") != null and _button("QuitButton") != null, "home primary actions")
 	_expect(app.gameplay == null and _has_label("आमची मुंबई"), "title shows Marathi identity before creating a game")
 	_expect(root.gui_get_focus_owner() == _button("PlayButton"), "initial keyboard focus")
@@ -87,11 +97,25 @@ func _run() -> void:
 		await _settle()
 		_expect(root.mode == Window.MODE_WINDOWED, "windowed mode can be restored from settings")
 	await _capture("startup-settings.png")
+	if touch_preview:
+		_expect(_button("ControlBindingsButton") == null, "touch settings do not expose desktop bindings")
+	else:
+		await _check_control_bindings(storage)
 	_press("BackButton")
 	await _settle()
-	_key(KEY_ENTER)
+	if touch_preview:
+		_key(KEY_ENTER)
+	else:
+		_joy_menu(JOY_BUTTON_DPAD_DOWN)
+		await _settle()
+		_expect(root.gui_get_focus_owner() == _button("ProfilesButton"), "gamepad navigates the title menu")
+		_joy_menu(JOY_BUTTON_DPAD_UP)
+		_joy_menu(JOY_BUTTON_A)
 	await _settle()
-	_expect(app.gameplay != null and not app.menu.visible, "keyboard activates Play")
+	_expect(app.gameplay != null and not app.menu.visible, "keyboard activates Play" if touch_preview else "gamepad activates Play")
+	if app.gameplay == null:
+		quit(1)
+		return
 	_expect(not Input.emulate_mouse_from_touch, "touch emulation disabled in play")
 	_expect(is_equal_approx(app.gameplay.look_sensitivity, 1.35), "saved sensitivity reaches game")
 	var yaw: float = app.gameplay._yaw
@@ -107,6 +131,7 @@ func _run() -> void:
 	if not touch_preview:
 		var pause_hint := app.gameplay.hud.find_child("PauseHint", true, false) as PanelContainer
 		_expect(pause_hint != null and pause_hint.size.x <= 110.0 and pause_hint.position.x > pause_hint.get_parent().size.x * 0.75, "desktop Pause hint stays compact at the top right")
+		await _check_gamepad_gameplay()
 	_key(KEY_ESCAPE)
 	await _settle()
 	_expect(paused and app.menu.visible and _button("ResumeButton") != null, "Escape pauses and opens menu")
@@ -152,6 +177,130 @@ func _run() -> void:
 	quit(0 if _failures == 0 else 1)
 
 
+func _check_control_bindings(storage: String) -> void:
+	_press("ControlBindingsButton")
+	await _settle()
+	_expect(_has_label("Control bindings") and _button("Bind_interact") != null, "Settings opens keyboard bindings")
+	_press("Bind_interact")
+	_key(KEY_W)
+	_expect(_has_label("Already assigned to Forward. Choose another input."), "conflicting keyboard input is rejected")
+	_key(KEY_ESCAPE)
+	_expect(_button("Bind_interact").text == "E", "Escape cancels capture without leaving settings")
+	_press("Bind_interact")
+	_key(KEY_F)
+	_expect(_button("Bind_interact").text == "F" and Controls.label("interact", Controls.GAMEPAD) == "A", "keyboard rebinding preserves the gamepad input")
+	_press("GamepadBindingsButton")
+	await _settle()
+	_press("Bind_brake")
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 0.15)
+	_expect(_button("Bind_brake").text == "Waiting for input…", "gamepad capture ignores analog drift")
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 0.0)
+	_expect(_button("Bind_brake").text == "LT", "gamepad accepts an analog trigger binding")
+	_press("RestoreBindingsButton")
+	await _settle()
+	_expect(_button("Bind_brake").text == "LB" and Controls.label("interact", Controls.KEYBOARD) == "F", "restoring one device preserves the other device")
+	_press("Bind_brake")
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 0.0)
+	var restored := Preferences.new()
+	restored.storage_path = storage
+	root.add_child(restored)
+	_expect(Controls.label("interact", Controls.KEYBOARD) == "F" and Controls.label("brake", Controls.GAMEPAD) == "LT", "both control bindings reload from disk")
+	restored.queue_free()
+	_key(KEY_ESCAPE)
+	await _settle()
+	_expect(_button("ApplySettingsButton") != null, "bindings Back returns to Settings")
+	_press("BackButton")
+	await _settle()
+	_press("HelpButton")
+	await _settle()
+	_expect(_has_label("F") and _has_label("LT") and _has_label("Gamepad"), "Help shows effective bindings for both devices")
+	_press("BackButton")
+	await _settle()
+	_press("SettingsButton")
+	await _settle()
+
+
+func _check_gamepad_gameplay() -> void:
+	var game := app.gameplay as Node3D
+	var start: Vector3 = game.player.position
+	_joy_axis(JOY_AXIS_LEFT_Y, -0.65)
+	await _physics_frames(24)
+	_joy_axis(JOY_AXIS_LEFT_Y, 0.0)
+	_expect(game.player.position.distance_to(start) > 0.15, "gamepad left stick moves Omkar")
+	var yaw: float = game._yaw
+	_joy_axis(JOY_AXIS_RIGHT_X, 0.80)
+	await _physics_frames(12)
+	_joy_axis(JOY_AXIS_RIGHT_X, 0.0)
+	_expect(absf(angle_difference(yaw, game._yaw)) > 0.1, "gamepad right stick pans the gameplay camera")
+	game.player.position = Vector3(game.car.position.x, game.player.position.y, game.car.position.z + 2.7)
+	await _physics_frames(3)
+	await _joy_game(JOY_BUTTON_A)
+	_expect(game.driving and game.active_vehicle == game.car, "gamepad Interact enters the car")
+	_joy_axis(JOY_AXIS_LEFT_Y, -1.0)
+	_joy_axis(JOY_AXIS_LEFT_X, 0.35)
+	await _physics_frames(24)
+	_expect(game.car.get_speed_mps() > 1.3 and absf(game.car.rotation.y) > 0.01, "gamepad stick accelerates and steers")
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 1.0)
+	await _physics_frames(22)
+	_expect(game.car.get_speed_mps() < 0.2, "rebound trigger brakes while the gamepad throttle is held")
+	_joy_axis(JOY_AXIS_LEFT_Y, 0.0)
+	_joy_axis(JOY_AXIS_LEFT_X, 0.0)
+	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 0.0)
+	await _joy_game(JOY_BUTTON_A)
+	_expect(not game.driving, "gamepad Interact exits after stopping")
+	await _joy_game(JOY_BUTTON_Y)
+	_expect(game.player.position.distance_to(start) < 0.2, "gamepad reset returns Omkar to the start")
+	_joy_menu(JOY_BUTTON_START)
+	await _settle()
+	_expect(paused and app.menu.visible, "gamepad Start opens Pause")
+	_joy_menu(JOY_BUTTON_B)
+	await _settle()
+	_expect(not paused and not app.menu.visible, "gamepad B resumes play")
+	game.player.position = Vector3(game.car.position.x, game.player.position.y, game.car.position.z + 2.7)
+	await _physics_frames(3)
+	await _key_game(KEY_E)
+	_expect(not game.driving, "the overwritten keyboard action no longer enters the car")
+	await _key_game(KEY_F)
+	_expect(game.driving, "rebound keyboard Interact enters the car")
+	await _joy_game(JOY_BUTTON_Y)
+
+
+func _physics_frames(count: int) -> void:
+	for index in range(count):
+		await physics_frame
+
+
+func _joy_event(button: JoyButton, pressed: bool) -> InputEventJoypadButton:
+	var event := InputEventJoypadButton.new()
+	event.button_index = button
+	event.pressed = pressed
+	return event
+
+
+func _joy_menu(button: JoyButton) -> void:
+	root.push_input(_joy_event(button, true))
+	root.push_input(_joy_event(button, false))
+
+
+func _joy_game(button: JoyButton) -> void:
+	Input.parse_input_event(_joy_event(button, true))
+	Input.flush_buffered_events()
+	await _physics_frames(3)
+	Input.parse_input_event(_joy_event(button, false))
+	Input.flush_buffered_events()
+	await _physics_frames(2)
+
+
+func _joy_axis(axis: JoyAxis, strength: float) -> void:
+	var event := InputEventJoypadMotion.new()
+	event.axis = axis
+	event.axis_value = strength
+	Input.parse_input_event(event)
+	Input.flush_buffered_events()
+
+
 func _settle() -> void:
 	for i in range(5):
 		await process_frame
@@ -180,11 +329,24 @@ func _press(node_name: String) -> void:
 
 func _key(key: Key) -> void:
 	for pressed: bool in [true, false]:
-		var event := InputEventKey.new()
-		event.keycode = key
-		event.physical_keycode = key
-		event.pressed = pressed
-		root.push_input(event)
+		root.push_input(_key_event(key, pressed))
+
+
+func _key_game(key: Key) -> void:
+	Input.parse_input_event(_key_event(key, true))
+	Input.flush_buffered_events()
+	await _physics_frames(3)
+	Input.parse_input_event(_key_event(key, false))
+	Input.flush_buffered_events()
+	await _physics_frames(2)
+
+
+func _key_event(key: Key, pressed: bool) -> InputEventKey:
+	var event := InputEventKey.new()
+	event.keycode = key
+	event.physical_keycode = key
+	event.pressed = pressed
+	return event
 
 
 func _has_label(text: String) -> bool:

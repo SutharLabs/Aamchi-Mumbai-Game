@@ -1,6 +1,6 @@
 ﻿{
-    "status":  "Phase 1 present-day traversal blockout; modern-reference-derived layout with original authored dressing, not surveyed current buildings or an accepted district",
-    "source":  "../../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json",
+    "status":  "Present-day traversal prototype with a Phase 2 frontage sample; modern-reference-derived route with original typology studies",
+    "source":  "../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json",
     "derivation":  "Selected polyline bend points; local metric approximation; rotation only, no uniform scale compression. Widths, buildings and handling yard authored for gameplay.",
     "axes":  "Y up; A at origin; A-to-B approximately negative Z",
     "player_spawn":  [
@@ -138,11 +138,13 @@
                                   ]
                  },
     "present_day_dressing":  {
-                                 "frontage_count":  8,
-                                 "services":  "Original generic service signs, shutters, wall equipment, three digital-payment notices",
-                                 "provenance":  "Authored game additions, not an actual current shop or building survey",
+                                 "frontage_count":  12,
+                                 "shop_lots":  5,
+                                 "house_lots":  7,
+                                 "services":  "Fictional shop signs and shutters, village-house verandahs and tile profiles",
+                                 "provenance":  "Original Ranwar-inspired typology studies based on the precinct survey and heritage inventory",
                                  "dependencies":  "No external assets or plugins",
-                                 "route_geometry":  "Existing source-derived route and authored collision ground preserved"
+                                 "route_geometry":  "Existing route and wall envelopes, with porch collisions in building setbacks"
                              },
     "world_check":  {
                         "script":  "Temporary extended probe based on ignored .toolchain/world_clearance_check.gd; removed after run",

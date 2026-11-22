@@ -14,6 +14,7 @@ Latest user delegation, 20 November: target **Windows 10 and Android 12**. Choos
 - Windows and epyc24 may edit, test, commit, fetch and transfer reviewed Git commits between the workspaces. Stage the intended files and run the checks relevant to the change before committing.
 - Before publishing `main`, sync epyc24 at `/tmp/Aamchi-Mumbai-Game` and Ubuntu to the same reviewed commit. Allow only fast-forward updates and preserve dirty or diverged work for explicit resolution. After the push, verify the full commit ID on GitHub and both remote `main` branches, confirm that both worktrees are clean, and compare their tracked files.
 - Follow the [commit, synchronization and publishing procedure](docs/AGENT_WORKFLOW.md#git-commit-synchronization-and-publishing). This applies to code, assets and documentation.
+- Create release packages, bump the release version, tag a release or publish GitHub release assets only at the user's explicit request. Use source-level smoke checks for routine development. Keep any private debug export under ignored builds/local/ so it cannot overwrite an existing release package.
 
 ## Phase 1 playtest
 

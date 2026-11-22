@@ -9,6 +9,7 @@ const BACKDROP := "res://startup/art/mumbai-dusk.webp"
 const MARK := "res://startup/art/amg-mark.png"
 const DEVANAGARI := "res://startup/art/NotoSansDevanagari.ttf"
 const CREDITS := "res://startup/credits_data.gd"
+const Controls := preload("res://startup/control_bindings.gd")
 const NAVY := Color("0c1725")
 const PANEL := Color("182638")
 const BORDER := Color("405268")
@@ -30,6 +31,9 @@ var _profile_name: LineEdit
 var _volume: HSlider
 var _look: HSlider
 var _fullscreen: CheckButton
+var _binding_device := Controls.KEYBOARD
+var _binding_action := ""
+var _binding_button: Button
 
 
 func _ready() -> void:
@@ -74,11 +78,13 @@ func show_pause(character_name: String) -> void:
 func back_requested() -> bool:
 	if not is_visible_in_tree() or _page == &"top":
 		return false
-	_show_page(&"top")
+	_show_page(&"settings" if _page == &"bindings" else &"top")
 	return true
 
 
 func _show_page(page: StringName) -> void:
+	_binding_action = ""
+	_binding_button = null
 	_page = page
 	_canvas.color = Color(0.03, 0.06, 0.10, 0.68) if _paused_menu else NAVY
 	_art.visible = not _paused_menu
@@ -97,6 +103,7 @@ func _show_page(page: StringName) -> void:
 	match page:
 		&"profiles": _show_profiles()
 		&"settings": _show_settings()
+		&"bindings": _show_bindings()
 		&"help": _show_help()
 		&"credits": _show_credits()
 		_: _show_top()
@@ -221,6 +228,8 @@ func _show_settings() -> void:
 	_content.add_child(_fullscreen)
 	_notice = _label(_content, "", 17, GOLD)
 	_button(_content, "ApplySettingsButton", "Apply settings", _apply_settings, true)
+	if not Controls.uses_touch_ui():
+		_route_button("ControlBindingsButton", "Control bindings", &"bindings")
 	_back_button()
 	_focus.call_deferred(_volume)
 
@@ -228,6 +237,86 @@ func _show_settings() -> void:
 func _apply_settings() -> void:
 	var result: Error = preferences.set_settings(_volume.value, _fullscreen.button_pressed, _look.value)
 	_notice.text = "Settings saved." if result == OK else "Settings could not be saved."
+
+
+func _show_bindings() -> void:
+	_page_header("Control bindings")
+	_button(_content, "BindingsBackButton", "Back to settings", func(): _show_page(&"settings"))
+	var devices := HBoxContainer.new()
+	devices.add_theme_constant_override("separation", 8)
+	_content.add_child(devices)
+	var keyboard := _button(devices, "KeyboardBindingsButton", "Keyboard", _select_binding_device.bind(Controls.KEYBOARD), _binding_device == Controls.KEYBOARD)
+	var gamepad := _button(devices, "GamepadBindingsButton", "Gamepad", _select_binding_device.bind(Controls.GAMEPAD), _binding_device == Controls.GAMEPAD)
+	keyboard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	gamepad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_focus.call_deferred(keyboard if _binding_device == Controls.KEYBOARD else gamepad)
+	_notice = _label(_content, "Select an action to change its binding.", 17, GOLD)
+	_notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	for action: String in Controls.actions_for(_binding_device):
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		_content.add_child(row)
+		_label(row, Controls.ACTION_LABELS[action], 18, CREAM).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var binding := Controls.label(action, _binding_device)
+		var button := _button(row, "Bind_" + action, binding, _begin_binding.bind(action))
+		button.custom_minimum_size.x = 194.0
+	_button(_content, "RestoreBindingsButton", "Restore defaults for this device", _restore_bindings)
+
+
+func _select_binding_device(device: String) -> void:
+	_binding_device = device
+	_show_page(&"bindings")
+
+
+func _begin_binding(action: String) -> void:
+	if is_instance_valid(_binding_button):
+		_binding_button.text = Controls.label(_binding_action, _binding_device)
+	_binding_action = action
+	_binding_button = _content.find_child("Bind_" + action, true, false) as Button
+	_binding_button.text = "Waiting for input…"
+	_notice.text = "Press a key. Esc cancels." if _binding_device == Controls.KEYBOARD else "Press a button or move a stick firmly. B cancels."
+
+
+func capture_control_input(event: InputEvent) -> bool:
+	if _binding_action.is_empty() or not is_visible_in_tree():
+		return false
+	if event.is_action_pressed(&"ui_cancel"):
+		_finish_binding("Binding unchanged.")
+		return true
+	if Controls.input_device(event) != _binding_device:
+		return false
+	if event is InputEventJoypadMotion:
+		if absf(event.axis_value) < 0.75:
+			return true
+		if _binding_action == "pause_game":
+			_notice.text = "Choose a button for Pause."
+			return true
+	elif not event.is_pressed() or event.is_echo():
+		return true
+	var result: Error = preferences.set_control_binding(_binding_action, _binding_device, event)
+	match result:
+		OK: _finish_binding("Binding saved.")
+		ERR_ALREADY_EXISTS:
+			_binding_button.text = "Input in use"
+			_notice.text = "Already assigned to %s. Choose another input." % Controls.conflict(_binding_action, _binding_device, event)
+		ERR_INVALID_PARAMETER:
+			_binding_button.text = "Try another input"
+			_notice.text = "Choose another input."
+		_: _finish_binding("The binding could not be saved.")
+	return true
+
+
+func _finish_binding(message: String) -> void:
+	_binding_button.text = Controls.label(_binding_action, _binding_device)
+	_binding_action = ""
+	_binding_button = null
+	_notice.text = message
+
+
+func _restore_bindings() -> void:
+	var result: Error = preferences.reset_control_bindings(_binding_device)
+	_show_page(&"bindings")
+	_notice.text = "Default bindings restored." if result == OK else "The bindings could not be saved."
 
 
 func _slider(node_name: String, caption: String, minimum: float, maximum: float, step: float, value: float, percent: bool) -> HSlider:
@@ -254,7 +343,7 @@ func _setting_value(value: float, percent: bool) -> String:
 func _show_help() -> void:
 	_page_header("Controls")
 	_focus.call_deferred(_back_button())
-	if OS.has_feature("mobile") or "--touch-preview" in OS.get_cmdline_user_args():
+	if Controls.uses_touch_ui():
 		_control_group("On foot", {
 			"Left stick": "Walk",
 			"Drag the right side": "Look around",
@@ -267,18 +356,35 @@ func _show_help() -> void:
 		})
 		_control_group("General", {"Reset": "Return to the start", "Pause": "Open the pause menu"})
 	else:
+		var keys := Controls.KEYBOARD
+		var pad := Controls.GAMEPAD
+		var movement := Controls.direction_label(Controls.MOVE_ACTIONS, keys)
 		_control_group("On foot", {
-			"WASD / arrows": "Walk",
-			"Shift": "Jog while moving",
+			movement: "Walk",
+			Controls.label("run", keys): "Jog while moving",
 			"Mouse": "Look around",
-			"E": "Talk, enter or mount",
+			Controls.label("interact", keys): "Talk, enter or mount",
 		})
 		_control_group("Driving", {
-			"WASD / arrows": "Steer and control speed",
-			"Space": "Brake",
-			"E": "Exit when stopped",
+			movement: "Steer and control speed",
+			Controls.label("brake", keys): "Brake",
+			Controls.label("interact", keys): "Exit when stopped",
 		})
-		_control_group("General", {"R": "Return to the start", "Esc": "Pause or go back"})
+		_control_group("General", {
+			Controls.label("recover", keys): "Return to the start",
+			Controls.label("pause_game", keys): "Pause",
+		})
+		_control_group("Gamepad", {
+			Controls.direction_label(Controls.MOVE_ACTIONS, pad): "Walk, steer and control speed",
+			Controls.direction_label(Controls.LOOK_ACTIONS, pad): "Look around",
+			Controls.label("run", pad): "Jog while moving",
+			Controls.label("interact", pad): "Talk, enter, mount or exit",
+			Controls.label("brake", pad): "Brake",
+			Controls.label("recover", pad): "Return to the start",
+			Controls.label("pause_game", pad): "Pause",
+			"D-pad / left stick": "Navigate menus",
+			"A / B": "Select / go back in menus",
+		})
 
 
 func _control_group(title: String, bindings: Dictionary) -> void:
@@ -289,7 +395,12 @@ func _control_group(title: String, bindings: Dictionary) -> void:
 	table.add_theme_constant_override("v_separation", 7)
 	_content.add_child(table)
 	for binding: String in bindings:
-		_label(table, binding, 17, CREAM)
+		var input_label := _label(table, binding, 17, CREAM)
+		if not Controls.uses_touch_ui():
+			var font := input_label.get_theme_font("font")
+			var width := font.get_string_size(binding, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x
+			input_label.custom_minimum_size.x = minf(ceilf(width) + 1.0, 220.0)
+			input_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var action := _label(table, bindings[binding], 17, MUTED)
 		action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

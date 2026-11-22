@@ -2,6 +2,12 @@
 ## Deterministic present-day traversal blockout, not a surveyed current Bandra model.
 ## Modern OSM-derived polylines: see README.md and layout.json beside this script.
 
+const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
+const SHOP_LABELS: Array[String] = [
+	"MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY",
+	"LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"
+]
+
 const ORIGIN := Vector2(72.8260536, 19.0546940)
 const EAST_METERS := 105220.0
 const NORTH_METERS := 111320.0
@@ -81,8 +87,6 @@ func _build_materials() -> void:
 		"cream": Color("d9c9a7"), "ochre": Color("bd9f66"),
 		"mint": Color("93aba0"), "rose": Color("b58e83"),
 		"blue": Color("879da9"), "gully": Color("6a9e98"),
-		"shop_teal": Color("236d70"), "shop_saffron": Color("d39a39"),
-		"shop_blue": Color("345c83"), "shutter": Color("737c7c"),
 		"bay": Color("344247"), "bay_cyan": Color("32d7d2"),
 		"bay_white": Color("f1ede2")
 	}
@@ -91,6 +95,11 @@ func _build_materials() -> void:
 		material.albedo_color = colors[key]
 		material.roughness = 1.0
 		_materials[key] = material
+	var frontage_material := StandardMaterial3D.new()
+	frontage_material.vertex_color_use_as_albedo = true
+	frontage_material.vertex_color_is_srgb = true
+	frontage_material.roughness = 1.0
+	_materials["frontage_kit"] = frontage_material
 
 
 func _box(label: String, at: Vector3, size: Vector3, material_name: String, solid: bool = false, rotation_y: float = 0.0) -> Node3D:
@@ -110,12 +119,16 @@ func _box(label: String, at: Vector3, size: Vector3, material_name: String, soli
 	mesh_instance.material_override = _materials[material_name]
 	root.add_child(mesh_instance)
 	if solid:
-		var collision := CollisionShape3D.new()
-		var shape := BoxShape3D.new()
-		shape.size = size
-		collision.shape = shape
-		root.add_child(collision)
+		_add_box_collision(root, size)
 	return root
+
+
+func _add_box_collision(body: Node3D, size: Vector3) -> void:
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
 
 
 func _strip(label: String, from: Vector3, to: Vector3, width: float, height: float, top: float, material_name: String, solid: bool) -> void:
@@ -231,6 +244,7 @@ func _is_free_lot(point: Vector3, radius: float) -> bool:
 func _build_frontages() -> void:
 	var palette: Array[String] = ["cream","ochre","mint","rose","blue"]
 	var building_count := 0
+	var inner_lane_count := 0
 	for road_index in range(_roads.size()):
 		var points: PackedVector3Array = _roads[road_index]
 		for index in range(points.size()-1):
@@ -248,47 +262,57 @@ func _build_frontages() -> void:
 					var tall: bool = road_index == 0 and building_count % 3 == 0
 					var height := 11.0 if tall else 5.5+float(building_count%3)*1.5
 					var angle := atan2(along.x,along.z)
-					_box("Frontage",point+Vector3(0,height*0.5,0),Vector3(12,height,13),palette[building_count%palette.size()],true,angle)
-					_box("RoofCap",point+Vector3(0,height+0.15,0),Vector3(12.6,0.3,13.6),"roof",false,angle)
-					var facing := point-across*side*6.15
-					_box("Porch",facing+Vector3(0,2.1,0),Vector3(9,0.18,2.4),"dark",false,angle)
-					# A bounded dressing sample signals present-day services without copying businesses.
-					if building_count < 8:
-						_dress_storefront(point,across,side,angle,building_count)
+					var wall_color := palette[building_count % palette.size()]
+					var hill_sample := building_count < SHOP_LABELS.size()
+					var inner_lane_sample := road_index == 3 and inner_lane_count < 4 and point.distance_to(_gully[0]) < 85.0
+					if hill_sample or inner_lane_sample:
+						var storefront := hill_sample and (tall or building_count % 2 == 0)
+						_add_ranwar_frontage(point, side, angle, height, wall_color, storefront, building_count)
+						if inner_lane_sample:
+							inner_lane_count += 1
+					else:
+						_box("Frontage",point+Vector3(0,height*0.5,0),Vector3(12,height,13),wall_color,true,angle)
+						_box("RoofCap",point+Vector3(0,height+0.15,0),Vector3(12.6,0.3,13.6),"roof",false,angle)
+						var facing := point-across*side*6.15
+						_box("Porch",facing+Vector3(0,2.1,0),Vector3(9,0.18,2.4),"dark",false,angle)
 					building_count += 1
 				distance += 24.0
 
 
-func _dress_storefront(point: Vector3, across: Vector3, side: float, angle: float, index: int) -> void:
-	var services: Array[String] = ["MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY", "LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"]
-	var sign_colors: Array[String] = ["shop_teal","shop_saffron","shop_blue"]
-	var face_normal := -across*side
-	var face := point+face_normal*6.2
-	# Thin face panels and equipment are decorative only, contained at the building face.
-	_box("ShopShutter",face+Vector3(0,1.05,0),Vector3(0.12,2.1,7.7),"shutter",false,angle)
-	_box("PaintedShopSign",face+face_normal*0.12+Vector3(0,2.65,0),Vector3(0.2,0.95,9.4),sign_colors[index%sign_colors.size()],false,angle)
+func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int) -> void:
+	# Preserve the existing solid wall envelope and keep trim out of the traversal lane.
+	var body := StaticBody3D.new()
+	body.name = "Frontage"
+	body.position = point + Vector3.UP * height * 0.5
+	body.rotation.y = angle
+	add_child(body)
+	_add_box_collision(body, Vector3(12, height, 13))
+	var wall := _materials[wall_name] as StandardMaterial3D
+	var visible_frontage := RanwarFrontage.create(height, wall.albedo_color, storefront, variant, _materials["frontage_kit"])
+	visible_frontage.rotation.y = -side * PI * 0.5
+	visible_frontage.position.y = -height * 0.5
+	body.add_child(visible_frontage)
+	if storefront:
+		var face_yaw := angle + side * PI * 0.5
+		var normal := Vector3(sin(face_yaw), 0, cos(face_yaw))
+		_add_shop_label(body, SHOP_LABELS[variant], body.to_local(point + normal * 6.23 + Vector3.UP * 3.13), side * PI * 0.5)
+		if variant < 3:
+			_add_shop_label(body, "DIGITAL PAYMENTS", body.to_local(point + normal * 6.30 + Vector3.UP * 1.78), side * PI * 0.5, 0.009)
+	else:
+		RanwarFrontage.add_verandah_collisions(body, visible_frontage.transform, variant)
+
+
+func _add_shop_label(body: Node3D, caption: String, at: Vector3, yaw: float, pixel_size: float = 0.020) -> void:
 	var lettering := Label3D.new()
 	lettering.name = "OriginalServiceLettering"
-	lettering.text = services[index]
-	lettering.position = face+face_normal*0.25+Vector3(0,2.65,0)
-	lettering.rotation.y = angle+side*PI*0.5
+	lettering.text = caption
+	lettering.position = at
+	lettering.rotation.y = yaw
 	lettering.font_size = 40
-	lettering.pixel_size = 0.016
+	lettering.pixel_size = pixel_size
 	lettering.modulate = Color("fff6db")
 	lettering.outline_size = 3
-	add_child(lettering)
-	_box("WallServiceUnit",face+Vector3(0,3.9,0),Vector3(0.45,0.65,1.2),"cream",false,angle)
-	if index < 3:
-		var payments := Label3D.new()
-		payments.name = "GenericPaymentNotice"
-		payments.text = "DIGITAL PAYMENTS"
-		payments.position = face+face_normal*0.28+Vector3(0,0.75,0)
-		payments.rotation.y = angle+side*PI*0.5
-		payments.font_size = 32
-		payments.pixel_size = 0.009
-		payments.modulate = Color("fff6db")
-		payments.outline_size = 3
-		add_child(payments)
+	body.add_child(lettering)
 
 
 func _build_vehicle_bays() -> void:

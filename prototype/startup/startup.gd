@@ -26,7 +26,19 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"ui_cancel") and _go_back():
+	if menu.capture_control_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	var menu_back := menu.visible and event.is_action_pressed(&"ui_cancel")
+	var game_pause := gameplay != null and not get_tree().paused and event.is_action_pressed(&"pause_game", false, true)
+	var gamepad_start: bool = (
+		gameplay != null and get_tree().paused
+		and event is InputEventJoypadButton
+		and event.button_index == JOY_BUTTON_START and event.pressed
+	)
+	if game_pause or gamepad_start:
+		gameplay.hud.set_gamepad_input(event is InputEventJoypadButton)
+	if (menu_back or game_pause or gamepad_start) and _go_back():
 		get_viewport().set_input_as_handled()
 
 
@@ -74,6 +86,7 @@ func _resume_game() -> void:
 	if gameplay == null:
 		return
 	menu.hide()
+	gameplay.hud.refresh_bindings()
 	gameplay.hud.show()
 	Input.emulate_mouse_from_touch = false
 	get_tree().paused = false

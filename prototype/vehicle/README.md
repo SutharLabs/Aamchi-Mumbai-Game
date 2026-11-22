@@ -41,6 +41,32 @@ Godot 4.7.2 standard console passed `--check-only` on this script. An isolated h
 
 These checks exercise the standalone movement contract, not the final neighborhood, rendered appearance, slope handling, Android touch controls, or minimum-device frame pacing. Those need the integrated prototype and real devices.
 
+## Phase 1 vehicle comparison — 22 November 2026
+
+The development PC ran the project's arcade car and the stock Godot Easy Vehicle Physics arcade setup in separate instances of the same isolated Jolt fixture. The fixture contained a flat road, a 14 cm step with a flat top and a rigid 2 m wall. Both cars kept their normal collider and tuning. Braking began at approximately 7 m/s and ended at or below 0.25 m/s. After braking, the reverse command remained held for two seconds. A separate curb trial approached at approximately 7–7.4 m/s and continued through the descent. Three fresh starts each tested sustained throttle against the wall. [Pinned upstream arcade scene](https://github.com/DAShoe1/Godot-Easy-Vehicle-Physics/blob/c392257f54f6ca537dc10bc5badad0c060f18982/addons/gevp/scenes/arcade_car.tscn)
+
+| Controller | Physics rate | Time to ~7 m/s | Brake travel | Reverse travel in 2 s | Peak body-root rise over the curb | Wall runs contained |
+|---|---:|---:|---:|---:|---:|---:|
+| Project arcade | 60 Hz | 0.90 s | 1.68 m | 8.40 m | 13.1 cm | 3/3 |
+| Raycast demo | 60 Hz | 1.80 s | 2.68 m | 2.48 m | 46.0 cm | 3/3 |
+| Raycast demo | 120 Hz | 1.65 s | 2.57 m | 2.70 m | 50.3 cm | 3/3 |
+
+All three configurations cleared the step and returned to street level. The measured body-root rise includes the rigid-body response to the step, measured relative to each car's settled starting height. The different brake and reverse distances include the controllers' default tuning and the raycast demo's automatic reverse gear selection. These results compare the current implementations in one car fixture.
+
+| Controller and rate | Callback median / p95 at 30 fixed FPS | Callback median / p95 at 60 fixed FPS | Average callback work per simulated second at 60 fixed FPS |
+|---|---:|---:|---:|
+| Project arcade, 60 Hz | 56 / 109 µs | 46 / 78 µs | 3.11 ms |
+| Raycast demo, 60 Hz | 73 / 118 µs | 69 / 121 µs | 4.90 ms |
+| Raycast demo, 120 Hz | 81 / 144 µs | 72 / 123 µs | 9.86 ms |
+
+These measurements used Godot 4.7.2 on the Intel i5-1145G7 Windows 11 development PC with 16 GB RAM. Each cell summarizes three headless runs with fixed 30 or 60 frame cadence. The handling observations matched across both cadences and repeats. Each run recorded approximately 1,400 controller callbacks at 60 Hz and 2,900 at 120 Hz. The timing table brackets each vehicle's original physics callback and reports the median of the per-run statistics. Jolt solver time is outside this particular callback timer.
+
+A separate headless straight-drive check sampled Godot's whole-engine physics monitor under a 60 FPS cap. The monitor publishes the largest tick in each one-second window, including the physics server step. Across nine sampled windows per configuration, the medians of these peaks were 0.09 ms for an empty 60 Hz fixture, 0.73 ms for the arcade car at 60 Hz, 0.96 ms for the raycast car at 60 Hz, and 0.95 ms for the raycast car at 120 Hz. The largest arcade and 120 Hz raycast readings were 31.98 ms and 10.84 ms. These wall-clock peaks varied on the shared desktop. Use them as an isolated diagnostic, with the callback table above for controller work and a populated route run for actual performance. [Godot 4.7.2 monitor implementation](https://github.com/godotengine/godot/blob/4.7.2-stable/main/main.cpp#L4675-L4762)
+
+**Controller decision.** Keep the shared 60 Hz arcade controller for the four Phase 1 vehicles. In this fixture it reached the target speed sooner, stopped in less distance, followed the step at roughly its physical height, and took less callback time. The raycast demo's suspension and drivetrain could be retuned for a future car-only evaluation. Device runs, the populated route, and handling feedback still require their own measurements.
+
+The local harness and raw logs are in the ignored `.toolchain/phase1-handling-comparison/` folder. The comparison used the pinned c392257f54f6ca537dc10bc5badad0c060f18982 archive with SHA-256 df7343e129ba109c0bfec8faa9849f095597369ab927b5756bf0fd5a5964fb3d. The fixture retained the archived MIT notice. The upstream README recommends at least 120 physics ticks per second and notes that tick rate changes handling. [Pinned MIT notice](https://raw.githubusercontent.com/DAShoe1/Godot-Easy-Vehicle-Physics/c392257f54f6ca537dc10bc5badad0c060f18982/LICENSE) · [Upstream setup guidance](https://raw.githubusercontent.com/DAShoe1/Godot-Easy-Vehicle-Physics/c392257f54f6ca537dc10bc5badad0c060f18982/README.md)
+
 ## Contemporary auto-rickshaw
 
 The second original study has a black body, yellow canopy, visibly open side entrances, a driver seat/handlebar, a rear bench, one steered front wheel and two rear wheels. It has no manufacturer badge or copied mesh/texture. Its whole-cabin collider is **1.30 × 1.65 × 2.70 m**, centered at local y=0.325, with local bottom -0.50 and top 1.15. A y=0.55 spawn puts its roof near 1.70 m above the road; the wheels use a 2.0 m front/rear spacing.

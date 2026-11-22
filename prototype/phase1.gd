@@ -19,6 +19,7 @@ const TALK_RANGE := 2.35
 const TALK_TIME := 4.8
 const EXIT_SPEED := 0.65
 const STREET_SOLIDS := 1 | 2 | 4
+const GAMEPAD_LOOK_SPEED := 680.0
 
 var world := World.new()
 var player := Walker.new()
@@ -47,7 +48,6 @@ var _message_time := 0.0
 
 
 func _ready() -> void:
-	_install_inputs()
 	_add_lighting()
 	world.name = "RanwarPracticeArea"
 	add_child(world)
@@ -114,29 +114,14 @@ func _add_lighting() -> void:
 	add_child(sun)
 
 
-func _install_inputs() -> void:
-	_bind_keys(&"move_left", [KEY_A, KEY_LEFT])
-	_bind_keys(&"move_right", [KEY_D, KEY_RIGHT])
-	_bind_keys(&"move_forward", [KEY_W, KEY_UP])
-	_bind_keys(&"move_back", [KEY_S, KEY_DOWN])
-	_bind_keys(&"run", [KEY_SHIFT])
-	_bind_keys(&"interact", [KEY_E])
-	_bind_keys(&"brake", [KEY_SPACE])
-	_bind_keys(&"recover", [KEY_R])
-
-
-func _bind_keys(action: StringName, keys: Array[int]) -> void:
-	if InputMap.has_action(action):
-		return
-	InputMap.add_action(action)
-	for key in keys:
-		var event := InputEventKey.new()
-		event.physical_keycode = key as Key
-		InputMap.action_add_event(action, event)
-
-
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"ui_cancel"):
+	if event is InputEventJoypadButton and event.pressed:
+		hud.set_gamepad_input(true)
+	elif event is InputEventJoypadMotion and absf(event.axis_value) > 0.35:
+		hud.set_gamepad_input(true)
+	elif (event is InputEventKey and event.pressed) or event is InputEventMouse:
+		hud.set_gamepad_input(false)
+	if not startup_pause_enabled and event.is_action_pressed(&"ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif not hud.touch_enabled:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -160,6 +145,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		player.direction = Basis(Vector3.UP, _yaw) * Vector3(intent.x, 0.0, intent.y)
 		player.running = Input.is_action_pressed(&"run")
+	var look := Input.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
+	if look != Vector2.ZERO:
+		_apply_look(look * GAMEPAD_LOOK_SPEED * delta)
 	_update_camera(delta)
 	_message_time = maxf(0.0, _message_time - delta)
 	var prompt := ""
