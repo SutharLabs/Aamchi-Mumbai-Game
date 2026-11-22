@@ -1,7 +1,14 @@
 # Keep the evidence and deployment inputs byte-identical across checkouts.
 assets/maps/reference/** text eol=lf
 assets/generated/**/report.json text eol=lf
-jobs/night-queue.json text eol=lf
-jobs/specs/*.json text eol=lf
 tools/*.py text eol=lf
 tools/modeling/*.py text eol=lf
+
+# These files were recorded with CRLF in the map and deployment manifests.
+assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json text eol=crlf
+assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/manifest.json text eol=crlf
+assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/reference-preview.svg text eol=crlf
+assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/roads-modern.geojson text eol=crlf
+assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/source-query.overpassql text eol=crlf
+jobs/night-queue.json text eol=crlf
+jobs/specs/*.json text eol=crlf
