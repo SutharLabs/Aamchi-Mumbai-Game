@@ -7,6 +7,9 @@ const HAIR_COLOR := Color("29242b")
 const TROUSER_COLOR := Color("42474e")
 const SHOE_COLOR := Color("3b3c3a")
 const SOLE_COLOR := Color("8b8375")
+const CHINO_COLOR := Color("a59373")
+const CANVAS_COLOR := Color("4d5658")
+const RUBBER_COLOR := Color("c1b6a0")
 const SADARA_COLOR := Color("405675")
 const SADARA_TRIM := Color("33455c")
 const DHOTAR_COLOR := Color("e2d2b1")
@@ -17,6 +20,7 @@ const CHAPPAL_COLOR := Color("825836")
 
 @export var shirt_color: Color = Color("447a75")
 @export var wears_dhotar := false
+@export var wears_overshirt := false
 
 var skeleton := Skeleton3D.new()
 var _bone_ids: Dictionary[String, int] = {}
@@ -78,7 +82,9 @@ func _add_joint(bone: String, parent_bone: String, point: Vector3) -> void:
 
 func _build_body() -> void:
 	_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var lower_color := DHOTAR_COLOR if wears_dhotar else TROUSER_COLOR
+	var lower_color := CHINO_COLOR if wears_overshirt else TROUSER_COLOR
+	if wears_dhotar:
+		lower_color = DHOTAR_COLOR
 	_tube([
 		_ring(Vector3(0, 0.826, 0), 0.0, 0.0, "Hips"),
 		_ring(Vector3(0, 0.861, 0.005), 0.144, 0.097, "Hips"),
@@ -123,6 +129,12 @@ func _build_torso() -> void:
 			_sadara_hem_ring(0.854, 0.195, 0.144, 0.46),
 			_sadara_hem_ring(0.918, 0.179, 0.123, 0.14),
 		]
+	elif wears_overshirt:
+		sections = [
+			_ring(Vector3(0, 0.890, 0.005), 0.178, 0.111, "Hips", "Spine", 0.12),
+			_ring(Vector3(0, 0.889, 0.005), 0.192, 0.134, "Hips", "Spine", 0.12),
+			_ring(Vector3(0, 0.924, 0.004), 0.187, 0.129, "Hips", "Spine", 0.22),
+		]
 	else:
 		sections = [
 			_ring(Vector3(0, 0.930, 0.005), 0.0, 0.0, "Hips", "Spine", 0.22),
@@ -140,6 +152,57 @@ func _build_torso() -> void:
 	_tube(sections, Vector3.UP, Vector3.RIGHT, 12, top_color)
 	if wears_dhotar:
 		_build_sadara_details()
+	elif wears_overshirt:
+		_build_overshirt_details()
+
+
+func _build_overshirt_details() -> void:
+	var trim := shirt_color.darkened(0.16)
+	_tube([
+		_ring(Vector3(0.005, 0.893, -0.131), 0.010, 0.003, "Hips", "Spine", 0.13),
+		_ring(Vector3(0.005, 0.924, -0.128), 0.011, 0.004, "Hips", "Spine", 0.22),
+		_ring(Vector3(0.005, 1.001, -0.115), 0.011, 0.004, "Hips", "Spine", 0.48),
+		_ring(Vector3(0.005, 1.095, -0.113), 0.011, 0.004, "Spine", "Chest", 0.21),
+		_ring(Vector3(0.005, 1.233, -0.133), 0.011, 0.004, "Chest", "Spine", 0.24),
+		_ring(Vector3(0.005, 1.316, -0.119), 0.011, 0.004, "Chest"),
+		_ring(Vector3(0.005, 1.353, -0.100), 0.011, 0.004, "Chest"),
+	], Vector3.UP, Vector3.RIGHT, 6, trim)
+	for center: Vector3 in [Vector3(0.005, 1.321, -0.124), Vector3(0.005, 1.266, -0.136)]:
+		var raised := center + Vector3.FORWARD * 0.002
+		var top := center + Vector3.UP * 0.005
+		var bottom := center + Vector3.DOWN * 0.005
+		var left := center + Vector3.LEFT * 0.005
+		var right := center + Vector3.RIGHT * 0.005
+		_front_panel(top, left, raised, RUBBER_COLOR)
+		_front_panel(left, bottom, raised, RUBBER_COLOR)
+		_front_panel(bottom, right, raised, RUBBER_COLOR)
+		_front_panel(right, top, raised, RUBBER_COLOR)
+
+	# Keep the folded collar and sewn pocket in the skinned body surface.
+	var collar := shirt_color.lightened(0.14)
+	for side: float in [-1.0, 1.0]:
+		var neck := Vector3(side * 0.042, 1.410, -0.064)
+		var shoulder := Vector3(side * 0.089, 1.384, -0.081)
+		var tip := Vector3(side * 0.078, 1.335, -0.102)
+		var lapel := Vector3(side * 0.014, 1.359, -0.104)
+		_front_panel(neck, shoulder, lapel, collar)
+		_front_panel(lapel, shoulder, tip, collar)
+	var pocket_outer := Vector3(-0.146, 1.275, -0.094)
+	var pocket_inner := Vector3(-0.067, 1.276, -0.124)
+	var pocket_lower := Vector3(-0.070, 1.209, -0.124)
+	var pocket_corner := Vector3(-0.134, 1.213, -0.097)
+	var pocket_color := shirt_color.lightened(0.10)
+	_front_panel(pocket_outer, pocket_inner, pocket_lower, pocket_color)
+	_front_panel(pocket_outer, pocket_lower, pocket_corner, pocket_color)
+
+
+func _front_panel(a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
+	var clockwise := (b - a).cross(c - a).z >= 0.0
+	var points := [a, b, c] if clockwise else [a, c, b]
+	for point: Vector3 in points:
+		var neck_weight := clampf((point.y - 1.37) / 0.04, 0.0, 0.45)
+		_vertex(_ring(point, 0.0, 0.0, "Chest", "Neck", neck_weight),
+			0.0, Vector3.RIGHT, Vector3.BACK, color, 0.0)
 
 
 func _sadara_hem_ring(height: float, width: float, depth: float, thigh_blend: float) -> Ring:
@@ -231,14 +294,29 @@ func _build_arm(side: float, label: String) -> void:
 	if wears_dhotar:
 		_build_sadara_sleeve(side, upper, lower)
 	else:
-		_tube([
+		var shoulder_height := 0.053 if wears_overshirt else 0.069
+		var sleeve_height := 0.067 if wears_overshirt else 0.071
+		var sleeve: Array[Ring] = [
 			_ring(Vector3(side * 0.120, 1.345, 0), 0.0, 0.0, "Chest"),
-			_ring(Vector3(side * 0.155, 1.339, 0), 0.069, 0.080, "Chest", upper, 0.20),
-			_ring(Vector3(side * 0.207, 1.341, 0), 0.071, 0.072, upper, "Chest", 0.32),
+			_ring(Vector3(side * 0.155, 1.339, 0), shoulder_height, 0.080, "Chest", upper, 0.20),
+			_ring(Vector3(side * 0.207, 1.341, 0), sleeve_height, 0.072, upper, "Chest", 0.32),
 			_ring(Vector3(side * 0.276, 1.348, 0), 0.066, 0.061, upper),
-			_ring(Vector3(side * 0.314, 1.350, 0), 0.063, 0.058, upper),
-			_ring(Vector3(side * 0.315, 1.350, 0), 0.0, 0.0, upper),
-		], outward, Vector3.UP, 9, shirt_color)
+		]
+		if wears_overshirt:
+			var sleeve_edge := _ring(Vector3(side * 0.373, 1.350, 0.005), 0.064, 0.058, upper)
+			sleeve.append(sleeve_edge)
+			_tube(sleeve, outward, Vector3.UP, 9, shirt_color)
+			_tube([
+				sleeve_edge,
+				_ring(Vector3(side * 0.387, 1.350, 0.005), 0.064, 0.058, upper),
+				_ring(Vector3(side * 0.387, 1.350, 0.005), 0.056, 0.052, upper),
+			], outward, Vector3.UP, 9, shirt_color.darkened(0.09))
+		else:
+			sleeve.append_array([
+				_ring(Vector3(side * 0.314, 1.350, 0), 0.063, 0.058, upper),
+				_ring(Vector3(side * 0.315, 1.350, 0), 0.0, 0.0, upper),
+			])
+			_tube(sleeve, outward, Vector3.UP, 9, shirt_color)
 	_tube([
 		_ring(Vector3(side * 0.291, 1.350, 0), 0.0, 0.0, upper),
 		_ring(Vector3(side * 0.310, 1.350, 0), 0.054, 0.051, upper),
@@ -304,7 +382,7 @@ func _build_trouser_leg(side: float, upper: String, lower: String, foot: String)
 		_ring(Vector3(side * 0.093, 0.855, 0.006), 0.093, 0.102, upper, "Hips", 0.35),
 		_ring(Vector3(side * 0.088, 0.904, 0.006), 0.074, 0.093, upper, "Hips", 0.66),
 		_ring(Vector3(side * 0.087, 0.914, 0.006), 0.0, 0.0, "Hips"),
-	], Vector3.UP, Vector3.RIGHT, 10, TROUSER_COLOR)
+	], Vector3.UP, Vector3.RIGHT, 10, CHINO_COLOR if wears_overshirt else TROUSER_COLOR)
 
 
 func _build_dhotar_leg(side: float, upper: String, lower: String, foot: String) -> void:
@@ -340,6 +418,9 @@ func _build_footwear(side: float, foot: String, toes: String) -> void:
 	var x := side * 0.103
 	var foot_color := SKIN_TONE if wears_dhotar else SHOE_COLOR
 	var sole_color := CHAPPAL_COLOR.darkened(0.20) if wears_dhotar else SOLE_COLOR
+	if wears_overshirt and not wears_dhotar:
+		foot_color = CANVAS_COLOR
+		sole_color = RUBBER_COLOR
 	_tube([
 		_ring(Vector3(x, 0.042, 0.083), 0.0, 0.0, foot),
 		_ring(Vector3(x, 0.063, 0.061), 0.046, 0.041, foot),

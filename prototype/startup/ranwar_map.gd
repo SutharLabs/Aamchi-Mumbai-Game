@@ -7,10 +7,12 @@ const BORDER := Color("405268")
 const ROAD := Color("bbc9d0")
 const FOOTWAY := Color("72d7c2")
 const PLAYER := Color("f3c684")
+const DESTINATION := Color("f4a261")
 
 var _roads: Array[PackedVector2Array] = []
 var _footway := PackedVector2Array()
 var _position := Vector2.ZERO
+var _destination := Vector2.INF
 
 
 func _ready() -> void:
@@ -19,12 +21,14 @@ func _ready() -> void:
 	resized.connect(queue_redraw)
 
 
-func set_snapshot(roads: Array[PackedVector3Array], footway: PackedVector3Array, position: Vector3) -> void:
+func set_snapshot(roads: Array[PackedVector3Array], footway: PackedVector3Array, position: Vector3,
+		destination: Vector3 = Vector3.INF) -> void:
 	_roads.clear()
 	for road: PackedVector3Array in roads:
 		_roads.append(_north_up_path(road))
 	_footway = _north_up_path(footway)
 	_position = _north_up(position)
+	_destination = _north_up(destination) if destination.is_finite() else Vector2.INF
 	queue_redraw()
 
 
@@ -41,6 +45,8 @@ func _draw() -> void:
 			bounds = bounds.expand(point)
 	for point: Vector2 in _footway:
 		bounds = bounds.expand(point)
+	if _destination.is_finite():
+		bounds = bounds.expand(_destination)
 	var content := Rect2(Vector2(24.0, 34.0), size - Vector2(72.0, 56.0))
 	var scale_to_fit := minf(content.size.x / maxf(bounds.size.x, 1.0), content.size.y / maxf(bounds.size.y, 1.0))
 	var transform_to_panel := Transform2D(
@@ -54,6 +60,17 @@ func _draw() -> void:
 		draw_dashed_line(transform_to_panel * _footway[index - 1], transform_to_panel * _footway[index], FOOTWAY, 3.0, 6.0, true, true)
 
 	var marker := transform_to_panel * _position
+	if _destination.is_finite():
+		var pin := transform_to_panel * _destination
+		if pin.distance_squared_to(marker) < 17.0 * 17.0:
+			var offset := Vector2(18.0 if marker.x < size.x * 0.5 else -18.0,
+				14.0 if marker.y < size.y * 0.5 else -14.0)
+			draw_line(pin, marker + offset, DESTINATION, 1.0, true)
+			pin = marker + offset
+		var outline := PackedVector2Array([pin + Vector2(0.0, -8.0), pin + Vector2(8.0, 0.0),
+			pin + Vector2(0.0, 8.0), pin + Vector2(-8.0, 0.0), pin + Vector2(0.0, -8.0)])
+		draw_colored_polygon(outline.slice(0, 4), DESTINATION)
+		draw_polyline(outline, BACKGROUND, 2.0, true)
 	draw_circle(marker, 9.0, BACKGROUND, true, -1.0, true)
 	draw_circle(marker, 6.0, PLAYER, true, -1.0, true)
 	_draw_north()

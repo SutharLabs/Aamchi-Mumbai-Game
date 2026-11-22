@@ -19,6 +19,7 @@ func _run() -> void:
 	app = Start.instantiate()
 	var storage := "user://menu-probe-%s.json" % OS.get_process_id()
 	app.preferences.storage_path = storage
+	app.mission_progress_directory = "user://menu-probe-%s" % OS.get_process_id()
 	var legacy := FileAccess.open(storage, FileAccess.WRITE)
 	legacy.store_string(JSON.stringify({
 		"version": 1,

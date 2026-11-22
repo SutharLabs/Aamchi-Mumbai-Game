@@ -69,6 +69,12 @@ The fictional protagonist **Omkar Shirodkar (ओंकार शिरोडक�
 
 The [procedural character mesh](../prototype/character/player_character.gd) generates the outfit as one skinned surface with vertex colors for the existing walking and seated rigs. The source descriptions informed the construction. All garment geometry is original, with no imported source imagery, meshes or textures. The prototype outfit uses fixed skin weights, with garment and movement review on target devices still pending.
 
+### Phase 2 everyday outfit
+
+Rafiq's outfit uses a slate-blue short-sleeve button-through shirt with a folded camp collar, chest pocket and untucked hem, sand-colored chinos, and rubber-soled canvas shoes. The geometry and colors are original. It shares the existing civilian rig and captured walk. The mesh uses one vertex-colored skin surface with 2,200 triangles, compared with 2,024 for the previous civilian mesh. A rendered Ranwar check on Windows reviewed the outfit at the normal gameplay camera distance and in closer idle and walk views.
+
+Mumbai apparel listings checked on 22 November 2026 provide comparators for the camp collar, half sleeves and chinos. The listings establish contemporary garment availability. Dated Ranwar street-clothing observations and review of the outfit in motion on the target devices remain open. [Being Human camp shirt](https://www.beinghumanclothing.com/products/being-human-clothing-men-beige-self-design-camp-collar-shirt-bhmss25023-ecru-brown) · [Bombay Shirt Company half-sleeve shirts and chinos](https://bombayshirts.com/collections/essentials-travel-checklist)
+
 ## 4. Reusable base-body route
 
 MakeHuman's official [commercial-use FAQ](https://static.makehumancommunity.org/oldsite/faq/can_i_sell_models_created_with_makehuman.html) states that exported models are CC0 and can be used commercially. It is a potential original/non-celebrity base-body route if the toolchain is deliberately evaluated. Separately acquired clothing, hair, textures and community assets still need their own provenance/license records. This research did not install MakeHuman or validate a headless export pipeline.

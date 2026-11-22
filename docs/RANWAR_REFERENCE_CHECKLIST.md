@@ -1,0 +1,28 @@
+# Ranwar frontage and chawl review
+
+Desk review dated **22 November 2026**. The twelve authored frontages are candidates for the present-day Ranwar play area. Individual parcel placement, current street access and any local chawl placement await field evidence. Use the existing driving loop and Nagrana Lane for this review. The extracted road geometry provides the location baseline, and the engine layout records authored widths, setbacks and other gameplay changes. [OpenStreetMap source and ODbL attribution](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md) · [Playable layout](../prototype/world/layout.json)
+
+## Reference and placement decisions
+
+| Place | Dated evidence and design implication |
+| --- | --- |
+| Waroda, Chapel and the lanes off Veronica | David Cardoz's earlier MMR Heritage Conservation Society survey records narrow plots, pitched roofs, projecting porches, lane widenings and interruptions to the older frontage sequence. The survey date is unconfirmed. Use the forms to guide original house variants, with current conditions deciding which lots receive them. [Precinct survey, printed pp. 5–7](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf) |
+| Former St Jude's Bakery near western Waroda | Hunger Inc dates its reuse as Veronica's to 2023. The saved extract identifies the storefront at node 11301585072, near the western Waroda review segment. Check how an active shop fits a narrow residential lane and use the findings for the fictional shop variants. [Operator history](https://hungerinc.in/) · [OpenStreetMap node](https://www.openstreetmap.org/node/11301585072) |
+| Mary Lodge, 21A Chapel Road | The operator records a January 2024 refurbishment and lists the same address. This is a Chapel Road comparator for how a shop entrance meets the street. The saved location is about 64 m from the nearest modeled road centerline, so it can inform frontage design within the existing boundary. [Operator's January 2024 note](https://www.subko.coffee/blogs/locations-2/mary-lodge-bandra-w) · [Location listing](https://www.subko.coffee/pages/locations) · [OpenStreetMap node](https://www.openstreetmap.org/node/11276749958) |
+| Ranwar Village Square | The saved extract places node 9404702300 about 46 m south of the Waroda mouth of Nagrana Lane (anchor E). Compare the square's enclosure and sidewalk-to-door transitions as off-loop context. The authored junction and the walking shortcut have their own placements. [OpenStreetMap node](https://www.openstreetmap.org/node/9404702300) |
+| St Peter's, Hill Road | The parish recorded an approach from Hill Road through Gate 1 in November 2024 and announced activity in the church square in February 2026. These points give the landmark review a concrete approach, gate and forecourt to compare with the compressed exterior. [Parish 2024 route](https://stpetersbandra.com/notices-for-sunday-24th-november-2024/) · [Parish February 2026 notices](https://stpetersbandra.com/notices-for-sunday-8th-february-2026/) |
+| Chapel Road, CTS 206A | Mumbai Heritage Conservation Committee minutes record a February 2020 visit and conditional heritage clearance for a redevelopment proposal. Check its current built form if the parcel is used as an architectural reference. [Committee minutes, pp. 3–4](https://r3app.mcgm.gov.in/irj/go/km/docs/documents/Heritage%20Committee/21th%20MOM-20.02.2020.pdf#page=3) |
+
+**Chawl placement is on hold.** The Slum Rehabilitation Authority's 2024 list identifies Ranwar cluster HW_021 in Bandra-B. The record provides a cluster ID and area, with neither a building inventory nor circulation details. The named Shanta Ram Bhai Chawl entry is for Bandra-F and needs independent site and building evidence. Keep the Worli gallery and Chembur courtyard studies as separate comparisons. Resume a local placement only after verifying an in-scope building, its typology and current condition. [SRA cluster list, entries 497 and 505](https://media.sra.gov.in/sra-automation/sra-website/content/1731566774802_3204_Slum%20Cluster%202024.pdf) · [Chawl research](CHAWL_MODEL_RESEARCH.md)
+
+## Field review
+
+| Stop | Record or compare |
+| --- | --- |
+| Hill Road from A to F | Check representative shop bays, shutter and canopy depth, walkable width, curb changes and setbacks. Compare with the eight authored Hill Road lots. |
+| Western Waroda near E and the two Nagrana mouths, E and F | Check the four nearby frontage lots, roof and plinth proportions, frontage sequence, gates, any steps or bollards, and the walking connection through to Hill Road. |
+| D and C, via Waroda and Chapel | Record signs by approach and vehicle class, one-way arrows and turn restrictions. Check the change from residential frontages to shopfronts and the width where pedestrians and vehicles pass. |
+| St Peter's approach between F and B | Compare gate, compound wall, forecourt and steps from the sidewalk with the playable church approach. |
+| A verified local chawl candidate | Record street and confirmed parcel, floor count, door rhythm, shared gallery or courtyard, stair connections and service areas where access permits. Mark dimensions as measured or estimated. |
+
+For each finding record the **observation date, location or source ID, facing direction, visible feature, rights status and corresponding game lot or route change**. Use notes or sketches where photography is unwelcome. The linked material is for reference. Keep game art original and record per-file permission before using a photograph, mural, sign or other outside asset. [Asset acceptance criteria](ASSET_PRODUCTION_PLAN.md#visual-direction-and-review)

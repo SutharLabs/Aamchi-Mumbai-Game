@@ -4,6 +4,7 @@ signal play_requested
 signal resume_requested
 signal main_menu_requested
 signal quit_requested
+signal abandon_job_requested
 
 const BACKDROP := "res://startup/art/mumbai-dusk.webp"
 const MARK := "res://startup/art/amg-mark.png"
@@ -24,6 +25,8 @@ var _character_name := ""
 var _map_roads: Array[PackedVector3Array] = []
 var _map_footway := PackedVector3Array()
 var _map_position := Vector3.ZERO
+var _map_destination := Vector3.INF
+var _can_abandon_job := false
 var _page: StringName = &"top"
 var _canvas: ColorRect
 var _art: TextureRect
@@ -70,16 +73,21 @@ func show_home() -> void:
 	_paused_menu = false
 	_map_roads = []
 	_map_footway = PackedVector3Array()
+	_map_destination = Vector3.INF
+	_can_abandon_job = false
 	show()
 	_show_page(&"top")
 
 
-func show_pause(character_name: String, roads: Array[PackedVector3Array], footway: PackedVector3Array, position: Vector3) -> void:
+func show_pause(character_name: String, roads: Array[PackedVector3Array], footway: PackedVector3Array,
+		position: Vector3, destination: Vector3 = Vector3.INF, can_abandon_job: bool = false) -> void:
 	_paused_menu = true
 	_character_name = character_name
 	_map_roads = roads
 	_map_footway = footway
 	_map_position = position
+	_map_destination = destination
+	_can_abandon_job = can_abandon_job
 	show()
 	_show_page(&"top")
 
@@ -126,6 +134,8 @@ func _show_top() -> void:
 		_space(_content, 12)
 		_focus.call_deferred(_button(_content, "ResumeButton", "Resume", func(): resume_requested.emit(), true))
 		_route_button("MapButton", "Map", &"map")
+		if _can_abandon_job:
+			_button(_content, "AbandonJobButton", "Abandon job", func(): abandon_job_requested.emit())
 		_route_button("SettingsButton", "Settings", &"settings")
 		_route_button("HelpButton", "Help", &"help")
 		_route_button("CreditsButton", "Credits", &"credits")
@@ -170,10 +180,12 @@ func _show_map() -> void:
 	_focus.call_deferred(_back_button())
 	var map_view := RanwarMap.new()
 	map_view.name = "RanwarMap"
-	map_view.set_snapshot(_map_roads, _map_footway, _map_position)
+	map_view.set_snapshot(_map_roads, _map_footway, _map_position, _map_destination)
 	_content.add_child(map_view)
 	_label(_content, "Your position (gold marker)", 17, GOLD)
 	_label(_content, "Nagrana Lane (dashed walking route)", 17, RanwarMap.FOOTWAY)
+	if _map_destination.is_finite():
+		_label(_content, "Job marker (orange diamond)", 17, RanwarMap.DESTINATION)
 
 
 func _show_profiles() -> void:

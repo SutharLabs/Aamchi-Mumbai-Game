@@ -12,6 +12,8 @@ const Scooter := preload("res://vehicle/phase1_scooter.gd")
 const Walker := preload("res://player.gd")
 const Pedestrian := preload("res://character/practice_pedestrian.gd")
 const Hud := preload("res://phase1_hud.gd")
+const DeliveryRoute := preload("res://mission/ranwar_delivery_route.gd")
+const MissionProgress := preload("res://mission/mission_progress.gd")
 const PLAYER_START := World.PLAYER_START
 const CAR_START := World.VEHICLE_START
 const RICKSHAW_START := World.RICKSHAW_START
@@ -37,6 +39,8 @@ var pedestrians: Array[Pedestrian] = []
 var active_vehicle: Vehicle
 var startup_pause_enabled := false
 var look_sensitivity := 1.0
+var delivery_progress: MissionProgress
+var delivery: DeliveryRoute
 var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var driving: bool:
 	get:
@@ -59,7 +63,7 @@ func _ready() -> void:
 	player.position = PLAYER_START
 	add_child(player)
 	_add_pedestrian("Mira", "The open practice yard is just west of Hill Road.", 1.0, 0.08, Color("a4654d"))
-	_add_pedestrian("Rafiq", "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.", -1.0, 0.25, Color("50617b"))
+	_add_pedestrian("Rafiq", "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.", -1.0, 0.25, Color("50617b"), true)
 	_add_practice_vehicle(car, "PracticeCar", CAR_START)
 	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
 	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", World.MOTORCYCLE_START)
@@ -72,6 +76,11 @@ func _ready() -> void:
 	camera.far = 570.0
 	add_child(camera)
 	camera.make_current()
+	if delivery_progress != null:
+		delivery = DeliveryRoute.new()
+		delivery.name = "RanwarParcelRun"
+		add_child(delivery)
+		delivery.setup(delivery_progress, world._gully)
 	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
 	hud.interact_pressed.connect(_request_interact)
@@ -92,7 +101,7 @@ func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3) 
 	_parking_poses[vehicle] = pose
 
 
-func _add_pedestrian(speaker: String, greeting: String, side: float, offset: float, shirt: Color) -> void:
+func _add_pedestrian(speaker: String, greeting: String, side: float, offset: float, shirt: Color, wears_overshirt: bool = false) -> void:
 	var path := world.practice_pedestrian_path(side)
 	var pedestrian := Pedestrian.new()
 	pedestrian.name = speaker
@@ -102,6 +111,7 @@ func _add_pedestrian(speaker: String, greeting: String, side: float, offset: flo
 	pedestrian.path_end = path[1]
 	pedestrian.start_fraction = offset
 	pedestrian.shirt_color = shirt
+	pedestrian.wears_overshirt = wears_overshirt
 	add_child(pedestrian)
 	pedestrians.append(pedestrian)
 
@@ -169,18 +179,21 @@ func _physics_process(delta: float) -> void:
 			prompt = "Dismount" if active_vehicle.is_two_wheeler else "Get out"
 			can_interact = true
 	else:
-		var nearby := _nearby_interaction()
-		if nearby is Pedestrian:
-			prompt = "Talk to %s" % nearby.display_name
-			can_interact = true
-		elif nearby is Vehicle:
-			var entry_label := "Mount" if nearby.is_two_wheeler else "Get in"
-			prompt = "%s the %s" % [entry_label, nearby.vehicle_label.to_lower()]
-			can_interact = true
+		if delivery != null:
+			prompt = delivery.prompt_for(player.global_position)
+		if prompt.is_empty():
+			var nearby := _nearby_interaction()
+			if nearby is Pedestrian:
+				prompt = "Talk to %s" % nearby.display_name
+			elif nearby is Vehicle:
+				var entry_label := "Mount" if nearby.is_two_wheeler else "Get in"
+				prompt = "%s the %s" % [entry_label, nearby.vehicle_label.to_lower()]
+		can_interact = not prompt.is_empty()
 	if _message_time > 0.0:
 		prompt = _message
 		can_interact = false
-	hud.update_display(driving, speed, prompt, vehicle_label, can_interact)
+	var objective := delivery.objective(_actor_position()) if delivery != null else ""
+	hud.update_display(driving, speed, prompt, vehicle_label, can_interact, objective)
 
 
 func _request_interact() -> void:
@@ -248,6 +261,9 @@ func _try_interact() -> void:
 		active_vehicle = null
 		_message_time = 0.0
 		return
+	if delivery != null and not delivery.prompt_for(player.global_position).is_empty():
+		_show_message(delivery.interact(), 4.0)
+		return
 	var target := _nearby_interaction()
 	if target is Pedestrian:
 		target.begin_conversation(player.global_position, TALK_TIME)
@@ -292,6 +308,11 @@ func _show_message(message: String, duration := 2.3) -> void:
 	_message_time = duration
 
 
+func abandon_delivery() -> void:
+	if delivery != null:
+		_show_message(delivery.abandon(), 4.0)
+
+
 func _reset_run() -> void:
 	active_vehicle = null
 	for vehicle: Vehicle in _parking_poses:
@@ -306,7 +327,8 @@ func _reset_run() -> void:
 	_pitch = 0.32
 	_manual_look_time = 0.0
 	traffic.reset()
-	_show_message("Back at the starting point")
+	var message := delivery.on_recovery() if delivery != null else ""
+	_show_message(message if not message.is_empty() else "Back at the starting point")
 
 
 func _update_camera(delta: float) -> void:

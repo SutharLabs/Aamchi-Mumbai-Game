@@ -3,10 +3,12 @@ extends Node
 const Preferences := preload("res://startup/preferences.gd")
 const Menu := preload("res://startup/menu.gd")
 const Ranwar := preload("res://phase1.tscn")
+const MissionProgress := preload("res://mission/mission_progress.gd")
 
 var preferences := Preferences.new()
 var menu := Menu.new()
 var gameplay: Node3D
+var mission_progress_directory := "user://"
 
 
 func _ready() -> void:
@@ -21,6 +23,7 @@ func _ready() -> void:
 	menu.play_requested.connect(_start_game)
 	menu.resume_requested.connect(_resume_game)
 	menu.main_menu_requested.connect(_return_to_title)
+	menu.abandon_job_requested.connect(_abandon_job)
 	menu.quit_requested.connect(get_tree().quit)
 	_show_title()
 
@@ -65,6 +68,7 @@ func _start_game() -> void:
 	gameplay = Ranwar.instantiate()
 	gameplay.process_mode = Node.PROCESS_MODE_PAUSABLE
 	gameplay.startup_pause_enabled = true
+	gameplay.delivery_progress = MissionProgress.new(preferences.active_profile_id, mission_progress_directory)
 	_update_look_sensitivity()
 	gameplay.pause_requested.connect(_pause_game)
 	add_child(gameplay)
@@ -80,7 +84,13 @@ func _pause_game() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Input.emulate_mouse_from_touch = true
 	menu.show_pause(gameplay.player.display_name, gameplay.world._roads, gameplay.world._gully,
-		gameplay._actor_position())
+		gameplay._actor_position(), gameplay.delivery.target(), gameplay.delivery.can_abandon())
+
+
+func _abandon_job() -> void:
+	if gameplay != null and get_tree().paused and gameplay.delivery.can_abandon():
+		gameplay.abandon_delivery()
+		_resume_game()
 
 
 func _resume_game() -> void:

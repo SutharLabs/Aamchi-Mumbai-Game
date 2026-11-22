@@ -16,6 +16,7 @@ var start_fraction := 0.0
 var display_name := "Pedestrian"
 var greeting := "Hello."
 var shirt_color := Color("a4654d")
+var wears_overshirt := false
 var visual := Visual.new()
 var animation_player: AnimationPlayer:
 	get:
@@ -41,6 +42,7 @@ func _ready() -> void:
 	add_child(collider)
 	visual.name = "CharacterVisual"
 	visual.shirt_color = shirt_color
+	visual.wears_overshirt = wears_overshirt
 	add_child(visual)
 	reset_to_path()
 
