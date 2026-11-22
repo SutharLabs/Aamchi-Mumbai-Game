@@ -2,7 +2,7 @@
 
 Record every dependency and shipped asset. Code and content may have different licenses, including files in one repository. Inspect license files, notices, submodules, and asset credits before adoption. Keep required license texts and attribution with the project.
 
-Checked 19 November 2026. **No third-party model archive, material pack or reference-image input has been downloaded/adopted/imported into the game by the current research/model-study work.** No engine asset has passed production acceptance. The original procedural smoke exports below are project studies, not third-party acquisitions. The [asset production plan](ASSET_PRODUCTION_PLAN.md) owns acquisition order and review gates.
+Updated 22 November 2026. The Ranwar prototype uses retargeted 100STYLE motion capture on an original procedural humanoid. The separate model, material and reference-image catalogues remain research inputs. [Asset production plan](ASSET_PRODUCTION_PLAN.md)
 
 ## Candidate registers - not acquired or adopted
 
@@ -19,11 +19,12 @@ CC BY content needs its actual creator/source/license/change record; see [CC BY 
 
 ## Adopted third-party code and shipping assets
 
-One map-data acquisition is recorded for reference/evaluation; no shipping engine/model/code adoption is claimed. The [stack report](../research/TECH_STACK_SELECTION.md) records researched engine/component selections; no runtime addon or engine binary was acquired by that research.
+The Ranwar playtest includes the map-based blockout and the 100STYLE animation excerpts below. [Engine and component selections](../research/TECH_STACK_SELECTION.md)
 
 | Item / file | Source URL | Version / commit | Code license | Asset license | Obligations | Changes | Adopted? |
 |---|---|---|---|---|---|---|---|
 | Ranwar modern OSM reference | [OSM license](https://www.openstreetmap.org/copyright); [local package/manifest](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md) | Database 20 Nov 2026, 01:19:21 UTC; raw hash/checksums retained | Map data, not runtime code | ODbL 1.0; no imagery rights | Attribution/license and applicable derivative-database/Produced Work data offer; local ATTRIBUTION.md records details | Raw XML unchanged; GeoJSON/layout/preview separately traceable | Acquired reference/evaluation; no engine/shipping acceptance |
+| 100STYLE `Neutral_ID.bvh`, `Neutral_FW.bvh`, `Neutral_FR.bvh` | [Ian Mason's 100STYLE dataset](https://www.ianxmason.com/100style/) and [Zenodo archive](https://doi.org/10.5281/zenodo.8127870) | Publisher's neutral XSens recordings at 60 fps | Motion data | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Give creator credit, link source and license, and identify adaptations. [Packaged notice](../prototype/character/motion/100STYLE-ATTRIBUTION.txt) | Extracted, trimmed, looped, made in-place and retargeted at 30 Hz to the original humanoid | `phase1_motions.tres` plays idle, walk and jog in the Windows prototype |
 
 ## Original procedural geometry - separate provenance record
 

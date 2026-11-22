@@ -11,6 +11,8 @@ const VEHICLE_START := Vector3(0.0, 0.55, 0.0)
 const RICKSHAW_START := Vector3(-3.4, 0.55, 0.0)
 const MOTORCYCLE_START := Vector3(-6.2, 0.55, 1.0)
 const SCOOTER_START := Vector3(-8.7, 0.55, 1.5)
+const SIDEWALK_WIDTH := 2.3
+const SIDEWALK_HEIGHT := 0.12
 const ROAD_WIDTHS: Array[float] = [14.0, 10.0, 8.0, 8.0]
 const ROAD_NAMES: Array[String] = ["Hill Road", "St Peter's Road", "Waroda Road east", "Waroda Road west"]
 const ROAD_SOURCE: Array = [
@@ -56,6 +58,18 @@ func _project(coordinate: Vector2) -> Vector3:
 	var relative := coordinate - ORIGIN
 	var local_meters := Vector2(relative.x * EAST_METERS, relative.y * NORTH_METERS)
 	return Vector3(local_meters.x * AXIS_FORWARD.y - local_meters.y * AXIS_FORWARD.x, 0.0, -local_meters.dot(AXIS_FORWARD))
+
+
+func practice_pedestrian_path(side: float) -> PackedVector3Array:
+	var start := _roads[0][0]
+	var forward := (_roads[0][1] - start).normalized()
+	var across := Vector3(-forward.z, 0.0, forward.x)
+	var path_start := start + across * side * ((ROAD_WIDTHS[0] + SIDEWALK_WIDTH) * 0.5)
+	# The gully-mouth clearance leaves the eastern frontage at ground level.
+	path_start.y = SIDEWALK_HEIGHT if side < 0.0 else 0.0
+	var near := path_start + forward * 11.0
+	var far := path_start + forward * 28.0
+	return PackedVector3Array([near, far] if side > 0.0 else [far, near])
 
 
 func _build_materials() -> void:
@@ -128,11 +142,11 @@ func _build_roads() -> void:
 				var sidewalk_start := from + along * 9.0
 				var sidewalk_end := to - along * 9.0
 				for side: float in [-1.0,1.0]:
-					var offset := across * side * (width*0.5+1.15)
+					var offset := across * side * ((width + SIDEWALK_WIDTH) * 0.5)
 					var midpoint := (sidewalk_start+sidewalk_end) * 0.5 + offset
 					if _distance_to_path(midpoint,_gully) < (length-18.0)*0.5+2.0:
 						continue
-					_strip("Sidewalk",sidewalk_start+offset,sidewalk_end+offset,2.3,0.12,0.12,"paving",true)
+					_strip("Sidewalk",sidewalk_start+offset,sidewalk_end+offset,SIDEWALK_WIDTH,SIDEWALK_HEIGHT,SIDEWALK_HEIGHT,"paving",true)
 					var edge := across * side * (width*0.5+0.12)
 					_strip("Curb",sidewalk_start+edge,sidewalk_end+edge,0.22,0.14,0.14,"curb",true)
 			if width >= 10.0:

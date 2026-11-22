@@ -1,0 +1,16 @@
+Motion capture adapted from The 100STYLE Dataset
+Ian Mason, Sebastian Starke, and Taku Komura (2022)
+
+Dataset page
+https://www.ianxmason.com/100style/
+
+Dataset archive
+https://doi.org/10.5281/zenodo.8127870
+
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+
+Aamchi Mumbai Game adapted Neutral_ID.bvh, Neutral_FW.bvh and Neutral_FR.bvh.
+The adaptations extract and trim loops, smooth the loop seams, normalize the
+heading, remove horizontal root translation, retarget to the game skeleton and
+resample the tracks for the in-game idle, walk and jog.

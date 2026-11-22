@@ -3,6 +3,8 @@ assets/maps/reference/** text eol=lf
 assets/generated/**/report.json text eol=lf
 tools/*.py text eol=lf
 tools/modeling/*.py text eol=lf
+tools/mocap/*.py text eol=lf
+prototype/character/motion/phase1_motions.tres text eol=lf
 
 # These files were recorded with CRLF in the map and deployment manifests.
 assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json text eol=crlf

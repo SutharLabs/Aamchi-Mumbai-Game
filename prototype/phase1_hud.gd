@@ -85,7 +85,7 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		_mode.text = mode
 	if _prompt.text != prompt:
 		_prompt.text = prompt
-	var help := "WASD / Arrows  Move     Mouse  Look     E  Interact     R  Reset"
+	var help := "WASD  Move     Shift  Jog     Mouse  Look     E  Interact     R  Reset"
 	if driving:
 		help = "WASD / Arrows  Drive     Space  Brake     E  Exit when stopped     R  Reset"
 	if touch_enabled:

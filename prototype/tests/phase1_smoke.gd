@@ -16,13 +16,15 @@ func _run() -> void:
 	await _frames(30)
 	_expect(game.player.is_on_floor(), "player settles on the starting street")
 	_expect(not game.driving, "starts on foot")
+	await _check_locomotion()
 	await _tap(&"interact")
 	_expect(not game.driving, "interaction out of reach is ignored")
 	var start: Vector3 = game.player.position
-	await _hold(&"move_forward", 54)
+	await _hold(&"move_forward", 124)
 	_expect(game.player.position.z < start.z - 1.5, "keyboard movement approaches car")
 	await _tap(&"interact")
 	_expect(game.driving and not game.player.visible and game.car.driver_active, "enter transfers control once")
+	_expect(not game.player.visual.animation_player.active, "walking animation pauses while driving")
 	var parked: Vector3 = game.car.position
 	await _hold(&"move_forward", 90)
 	_expect(game.car.position.z < parked.z - 4.0 and game.car.get_speed_mps() > 2.0, "car accelerates forward")
@@ -43,6 +45,7 @@ func _run() -> void:
 	await _frames(3)
 	await _tap(&"interact")
 	_expect(not game.driving and game.player.visible and not game.car.driver_active, "exit transfers back to walking")
+	_expect(game.player.visual.animation_player.active and game.player.visual.animation_player.current_animation == &"idle", "exiting resumes on-foot idle")
 	var exit_delta: Vector3 = game.player.position - game.car.position
 	var side_axis: Vector3 = game.car.global_basis.x
 	_expect(exit_delta.dot(side_axis) > 1.0, "second-side exit succeeds when first side is blocked")
@@ -74,6 +77,41 @@ func _run() -> void:
 		print("Preview: ", ProjectSettings.globalize_path("user://phase1-preview.png"))
 	print("Phase 1 smoke: ", failures, " failures (", checks, " checks)")
 	quit(0 if failures == 0 else 1)
+
+
+func _check_locomotion() -> void:
+	var animation: AnimationPlayer = game.player.visual.animation_player
+	var skeleton: Skeleton3D = game.player.visual.skeleton
+	_expect(animation.current_animation == &"idle" and animation.current_animation_position > 0.0, "captured idle plays at rest")
+	var pedestrian: Node3D = game.pedestrians[0]
+	var pedestrian_start := pedestrian.position
+	var clear_pedestrian_paths := true
+	var space := game.get_world_3d().direct_space_state
+	for walker: Node3D in game.pedestrians:
+		for point: Vector3 in [walker.path_start, walker.path_end]:
+			var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP, point - Vector3.UP, 1)
+			var support := space.intersect_ray(ray)
+			if support.is_empty() or absf(support.position.y - point.y) > 0.02:
+				clear_pedestrian_paths = false
+		var start := Transform3D(Basis.IDENTITY, walker.path_start + Vector3.UP * 0.05)
+		if game.player.test_move(start, walker.path_end - walker.path_start):
+			clear_pedestrian_paths = false
+	_expect(clear_pedestrian_paths, "both pedestrian routes stay grounded and clear of obstacles")
+	var thigh := skeleton.find_bone("LeftUpperLeg")
+	Input.action_press(&"move_right")
+	await _frames(20)
+	var pose := skeleton.get_bone_pose_rotation(thigh)
+	await _frames(16)
+	_expect(animation.current_animation == &"walk" and absf(pose.dot(skeleton.get_bone_pose_rotation(thigh))) < 0.999, "captured walk moves the player's leg bones")
+	_expect(pedestrian.position.distance_to(pedestrian_start) > 0.35 and pedestrian.animation_player.current_animation == &"walk", "Hill Road pedestrian walks using the shared captured clip")
+	Input.action_press(&"run")
+	await _frames(18)
+	_expect(animation.current_animation == &"run" and game.player.get_real_velocity().length() > 1.8, "Shift selects the captured jog at movement speed")
+	Input.action_release(&"run")
+	Input.action_release(&"move_right")
+	await _frames(22)
+	_expect(animation.current_animation == &"idle", "locomotion returns to idle on release")
+	await _tap(&"recover")
 
 
 func _check_route_clearance() -> void:

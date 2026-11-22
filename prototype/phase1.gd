@@ -7,6 +7,7 @@ const Rickshaw := preload("res://vehicle/phase1_rickshaw.gd")
 const Motorcycle := preload("res://vehicle/phase1_motorcycle.gd")
 const Scooter := preload("res://vehicle/phase1_scooter.gd")
 const Walker := preload("res://player.gd")
+const Pedestrian := preload("res://character/practice_pedestrian.gd")
 const Hud := preload("res://phase1_hud.gd")
 const PLAYER_START := World.PLAYER_START
 const CAR_START := World.VEHICLE_START
@@ -22,6 +23,7 @@ var motorcycle := Motorcycle.new()
 var scooter := Scooter.new()
 var camera := Camera3D.new()
 var hud := Hud.new()
+var pedestrians: Array[Pedestrian] = []
 var active_vehicle: Vehicle
 var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var driving: bool:
@@ -44,6 +46,8 @@ func _ready() -> void:
 	player.name = "Walker"
 	player.position = PLAYER_START
 	add_child(player)
+	_add_pedestrian("HillRoadWalker", 1.0, 0.08, Color("a4654d"))
+	_add_pedestrian("HillRoadReturnWalker", -1.0, 0.25, Color("50617b"))
 	_add_practice_vehicle(car, "PracticeCar", CAR_START)
 	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
 	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", World.MOTORCYCLE_START)
@@ -70,6 +74,18 @@ func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3) 
 	_parking_poses[vehicle] = pose
 
 
+func _add_pedestrian(node_name: String, side: float, offset: float, shirt: Color) -> void:
+	var path := world.practice_pedestrian_path(side)
+	var pedestrian := Pedestrian.new()
+	pedestrian.name = node_name
+	pedestrian.path_start = path[0]
+	pedestrian.path_end = path[1]
+	pedestrian.start_fraction = offset
+	pedestrian.shirt_color = shirt
+	add_child(pedestrian)
+	pedestrians.append(pedestrian)
+
+
 func _add_lighting() -> void:
 	var lighting := WorldEnvironment.new()
 	lighting.environment = Environment.new()
@@ -91,6 +107,7 @@ func _install_inputs() -> void:
 	_bind_keys(&"move_right", [KEY_D, KEY_RIGHT])
 	_bind_keys(&"move_forward", [KEY_W, KEY_UP])
 	_bind_keys(&"move_back", [KEY_S, KEY_DOWN])
+	_bind_keys(&"run", [KEY_SHIFT])
 	_bind_keys(&"interact", [KEY_E])
 	_bind_keys(&"brake", [KEY_SPACE])
 	_bind_keys(&"recover", [KEY_R])
@@ -130,6 +147,7 @@ func _physics_process(delta: float) -> void:
 		active_vehicle.set_controls(-intent.y, intent.x, Input.is_action_pressed(&"brake") or hud.brake_held)
 	else:
 		player.direction = Basis(Vector3.UP, _yaw) * Vector3(intent.x, 0.0, intent.y)
+		player.running = Input.is_action_pressed(&"run")
 	_update_camera(delta)
 	_message_time = maxf(0.0, _message_time - delta)
 	var prompt := "Walk up to a parked vehicle"
