@@ -3,6 +3,7 @@
 ## Modern OSM-derived polylines: see README.md and layout.json beside this script.
 
 const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
+const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
 const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
@@ -43,6 +44,7 @@ var _roads: Array[PackedVector3Array] = []
 var _gully := PackedVector3Array()
 var _lots: Array[Vector3] = []
 var _materials: Dictionary = {}
+var _visual_chunks := RanwarVisualChunks.new()
 
 
 func _ready() -> void:
@@ -66,10 +68,17 @@ func _ready() -> void:
 	_build_gully()
 	_build_recovery_yard()
 	_build_st_peters()
+	_visual_chunks.name = "BackgroundFrontageVisuals"
+	add_child(_visual_chunks)
 	_build_frontages()
+	_visual_chunks.start("--stream-visual-chunks" in OS.get_cmdline_user_args(), PLAYER_START)
 	_build_vehicle_bays()
 	_build_boundary()
 	_build_markers()
+
+
+func visual_residency_stats() -> Dictionary:
+	return _visual_chunks.stats()
 
 
 func _project(coordinate: Vector2) -> Vector3:
@@ -294,22 +303,31 @@ func _build_frontages() -> void:
 						if inner_lane_sample:
 							inner_lane_count += 1
 					else:
-						_box("Frontage",point+Vector3(0,height*0.5,0),Vector3(12,height,13),wall_color,true,angle)
-						_box("RoofCap",point+Vector3(0,height+0.15,0),Vector3(12.6,0.3,13.6),"roof",false,angle)
-						var facing := point-across*side*6.15
-						_box("Porch",facing+Vector3(0,2.1,0),Vector3(9,0.18,2.4),"dark",false,angle)
+						_add_background_frontage(point, point - across * side * 6.15, angle, height, wall_color)
 					building_count += 1
 				distance += 24.0
 
 
-func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int) -> void:
-	# Preserve the existing solid wall envelope and keep trim out of the traversal lane.
+func _frontage_body(point: Vector3, angle: float, height: float) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = "Frontage"
 	body.position = point + Vector3.UP * height * 0.5
 	body.rotation.y = angle
 	add_child(body)
 	_add_box_collision(body, Vector3(12, height, 13))
+	return body
+
+
+func _add_background_frontage(point: Vector3, facing: Vector3, angle: float, height: float, wall_name: String) -> void:
+	# The collider remains resident in both visual modes.
+	_frontage_body(point, angle, height)
+	_visual_chunks.register_box(point, "Facade", point + Vector3.UP * height * 0.5, Vector3(12, height, 13), angle, _materials[wall_name])
+	_visual_chunks.register_box(point, "RoofCap", point + Vector3.UP * (height + 0.15), Vector3(12.6, 0.3, 13.6), angle, _materials["roof"])
+	_visual_chunks.register_box(point, "Porch", facing + Vector3.UP * 2.1, Vector3(9, 0.18, 2.4), angle, _materials["dark"])
+
+
+func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int) -> void:
+	var body := _frontage_body(point, angle, height)
 	var wall := _materials[wall_name] as StandardMaterial3D
 	var visible_frontage := RanwarFrontage.create(height, wall.albedo_color, storefront, variant, _materials["frontage_kit"])
 	visible_frontage.rotation.y = -side * PI * 0.5

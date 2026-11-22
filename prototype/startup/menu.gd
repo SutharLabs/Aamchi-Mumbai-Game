@@ -10,6 +10,7 @@ const MARK := "res://startup/art/amg-mark.png"
 const DEVANAGARI := "res://startup/art/NotoSansDevanagari.ttf"
 const CREDITS := "res://startup/credits_data.gd"
 const Controls := preload("res://startup/control_bindings.gd")
+const RanwarMap := preload("res://startup/ranwar_map.gd")
 const NAVY := Color("0c1725")
 const PANEL := Color("182638")
 const BORDER := Color("405268")
@@ -20,6 +21,9 @@ const GOLD := Color("f3c684")
 var preferences: Node
 var _paused_menu := false
 var _character_name := ""
+var _map_roads: Array[PackedVector3Array] = []
+var _map_footway := PackedVector3Array()
+var _map_position := Vector3.ZERO
 var _page: StringName = &"top"
 var _canvas: ColorRect
 var _art: TextureRect
@@ -64,13 +68,18 @@ func _ready() -> void:
 
 func show_home() -> void:
 	_paused_menu = false
+	_map_roads = []
+	_map_footway = PackedVector3Array()
 	show()
 	_show_page(&"top")
 
 
-func show_pause(character_name: String) -> void:
+func show_pause(character_name: String, roads: Array[PackedVector3Array], footway: PackedVector3Array, position: Vector3) -> void:
 	_paused_menu = true
 	_character_name = character_name
+	_map_roads = roads
+	_map_footway = footway
+	_map_position = position
 	show()
 	_show_page(&"top")
 
@@ -105,6 +114,7 @@ func _show_page(page: StringName) -> void:
 		&"settings": _show_settings()
 		&"bindings": _show_bindings()
 		&"help": _show_help()
+		&"map": _show_map()
 		&"credits": _show_credits()
 		_: _show_top()
 
@@ -115,6 +125,7 @@ func _show_top() -> void:
 		_label(_content, _character_name, 19, MUTED)
 		_space(_content, 12)
 		_focus.call_deferred(_button(_content, "ResumeButton", "Resume", func(): resume_requested.emit(), true))
+		_route_button("MapButton", "Map", &"map")
 		_route_button("SettingsButton", "Settings", &"settings")
 		_route_button("HelpButton", "Help", &"help")
 		_route_button("CreditsButton", "Credits", &"credits")
@@ -152,6 +163,17 @@ func _show_top() -> void:
 	_route_button("HelpButton", "Help", &"help")
 	_route_button("CreditsButton", "Credits", &"credits")
 	_button(_content, "QuitButton", "Quit", func(): quit_requested.emit())
+
+
+func _show_map() -> void:
+	_page_header("Ranwar map")
+	_focus.call_deferred(_back_button())
+	var map_view := RanwarMap.new()
+	map_view.name = "RanwarMap"
+	map_view.set_snapshot(_map_roads, _map_footway, _map_position)
+	_content.add_child(map_view)
+	_label(_content, "Your position (gold marker)", 17, GOLD)
+	_label(_content, "Nagrana Lane (dashed walking route)", 17, RanwarMap.FOOTWAY)
 
 
 func _show_profiles() -> void:
@@ -488,6 +510,8 @@ func _position_content() -> void:
 	var left := clampf(size.x * 0.052, 22.0, 80.0)
 	var top := clampf(size.y * 0.063, 16.0, 48.0)
 	var preferred_width := 460.0 if _page == &"top" else 510.0
+	if _page == &"map":
+		preferred_width = 620.0
 	_scroll.position = Vector2(left, top)
 	_scroll.size = Vector2(minf(preferred_width, size.x - left * 2.0), size.y - top * 2.0)
 

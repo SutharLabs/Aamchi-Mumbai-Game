@@ -25,6 +25,7 @@ const TRAFFIC_ENTRY_ROAD := 3 # West Waroda Road.
 
 var world := World.new()
 var traffic := Traffic.new()
+var ambient_traffic_enabled := true
 var player := Walker.new()
 var car := Car.new()
 var rickshaw := Rickshaw.new()
@@ -65,7 +66,8 @@ func _ready() -> void:
 	_add_practice_vehicle(scooter, "PracticeScooter", World.SCOOTER_START)
 	traffic.name = "AmbientTraffic"
 	add_child(traffic)
-	traffic.start(world.lane_graph.loop_for_road(TRAFFIC_ENTRY_ROAD), 26.0)
+	if ambient_traffic_enabled:
+		traffic.start(world.lane_graph.loop_for_road(TRAFFIC_ENTRY_ROAD), 26.0, camera)
 	camera.fov = 68.0
 	camera.far = 570.0
 	add_child(camera)

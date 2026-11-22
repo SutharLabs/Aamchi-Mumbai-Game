@@ -1,12 +1,12 @@
 # Aamchi Mumbai Game · Phase 1 playtest
 
-Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable vehicles start in marked bays near the starting point. From the car, head left past the auto-rickshaw to find the motorcycle and scooter. The route includes a walking shortcut and an open handling yard. One ambient hatchback follows the Ranwar roads and yields when the lane is blocked. [Route and source notes](world/README.md)
+Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable vehicles start in marked bays near the starting point. From the car, head left past the auto-rickshaw to find the motorcycle and scooter. The route includes a walking shortcut and an open handling yard. Up to two ambient hatchbacks follow the Ranwar roads and yield when the lane is blocked. [Route and source notes](world/README.md)
 
 Play as **Omkar Shirodkar (ओंकार शिरोडकर)**, wearing an indigo sadara, an ivory dhotar and Kolhapuri-style chappals. His original skinned mesh uses the captured idle, walk and jog clips. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
 
 Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. Use the editor to try changes from the current checkout. The earlier **0.0.2** local playtest packages are retained under `../builds/dev/0.0.2/`. [Published 0.0.1 playtest](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1)
 
-The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profiles store a local display name and the active selection. The game stores volume, fullscreen, camera sensitivity and control bindings in `user://preferences.json`. On desktop, open **Settings → Control bindings** to remap keyboard keys or gamepad buttons and axes, or restore defaults. The pause menu shows Omkar's name and offers Resume, Settings, Help, Credits and Main menu. Open **Help → Controls** in either menu for the platform-specific guide. Gameplay shows short interaction prompts, feedback and vehicle speed when relevant. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
+The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profiles store a local display name and the active selection. The game stores volume, fullscreen, camera sensitivity and control bindings in `user://preferences.json`. On desktop, open **Settings → Control bindings** to remap keyboard keys or gamepad buttons and axes, or restore defaults. Open **Pause → Map** to see the Ranwar driving loop, the Nagrana Lane walking shortcut and your position on foot or in a vehicle. Open **Help → Controls** in either menu for the platform-specific guide. Gameplay shows short interaction prompts, feedback and vehicle speed when relevant. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
 
 | Default input | Action |
 |---|---|
@@ -34,22 +34,24 @@ From the repository root with the downloaded portable editor and its matching st
 $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe'
 & $editor --headless --path prototype --editor --import
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
-& $editor --headless --path prototype --fixed-fps 60 --quit-after 5500 --script res://tests/phase1_smoke.gd -- --touch-preview
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 6500 --script res://tests/phase1_smoke.gd -- --touch-preview
 ```
 
-The startup smoke exercises menu navigation, profile reload, settings, Help, credits and pause. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. When preparing an explicitly requested release, include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices. [Project license](../LICENSE)
+The startup smoke exercises menu navigation, profile reload, settings, Help, credits, pause and the Ranwar map. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. When preparing an explicitly requested release, include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices. [Project license](../LICENSE)
 
 The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle models. The two-wheelers have distinct skinned rider poses, with hands following the steering grips and visual lean on upright arcade collision bodies. The user reported a successful Android 0.0.1 run. Detailed native-touch, minimum-spec performance and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)
 
 ## Ranwar route benchmark
 
-Run the car lap with real rendering for a repeatable developer baseline. Close competing renders, record the machine and driver, and use the same resolution, FPS limit and scene for each comparison. The harness reports wall-clock frame times and peak engine allocation after warm-up. Its physics statistic summarizes Godot's peak tick duration across one-second windows.
+Run the car lap with real rendering for a repeatable developer baseline. Close competing renders, record the machine and driver, and use the same resolution, FPS limit and scene for each comparison. The harness disables ambient traffic to keep the route repeatable. It reports scene setup and wall-clock frame times, long frames, engine allocation, sampled draw calls and the number of active backdrop meshes. Its physics statistic summarizes Godot's peak tick duration across one-second windows.
 
 ```powershell
 & $editor --path prototype --disable-vsync --max-fps 60 --resolution 1280x720 --script res://tests/phase1_route_benchmark.gd
 ```
 
-For the Windows 10 minimum-device check, use a matching exported build at 1280x720 on the low preset and measure uncapped after warm-up. Repeated runs on the named Windows and Android devices should also cover riding all four vehicles, curb crossings, exits and recovery by hand. Record frame time and memory along with route, device and OS, and note touch issues and sustained phone behavior. [Device acceptance and fresh-player checks](../docs/PHASE_PROGRESS.md#remaining-work-to-close-g1)
+For a quick streaming comparison, run this command twice with `--time-scale 2` among the Godot options, appending `-- --stream-visual-chunks` to the second run. Record both separately and retain the same settings. [Ranwar streaming experiment and results](world/README.md#visual-streaming-experiment)
+
+For the Windows 10 minimum-device check, use a matching exported build at 1280x720 on the low preset and measure uncapped after warm-up at normal gameplay speed with traffic enabled. Repeated runs on the named Windows and Android devices should also cover riding all four vehicles, curb crossings, exits and recovery by hand. Record frame time and memory along with route, device and OS, and note touch issues and sustained phone behavior. [Device acceptance and fresh-player checks](../docs/PHASE_PROGRESS.md#remaining-work-to-close-g1)
 
 ## Local debug exports
 

@@ -3,6 +3,7 @@ extends SceneTree
 const Start := preload("res://startup/startup.tscn")
 const Preferences := preload("res://startup/preferences.gd")
 const Controls := preload("res://startup/control_bindings.gd")
+const RanwarMap := preload("res://startup/ranwar_map.gd")
 var _failures := 0
 var _checks := 0
 var _capture_enabled := false
@@ -138,6 +139,22 @@ func _run() -> void:
 	_expect(_has_label(app.gameplay.player.display_name), "pause shows the protagonist's name")
 	_expect(not app.gameplay.hud.visible, "pause menu hides the gameplay HUD")
 	await _capture("startup-paused.png")
+	_press("MapButton")
+	await _settle()
+	var map_view := app.menu.find_child("RanwarMap", true, false) as RanwarMap
+	var world: Node3D = app.gameplay.world
+	_expect(map_view != null and paused and map_view._roads.size() == world._roads.size()
+		and map_view._footway.size() == world._gully.size(), "pause map shows the projected road and footway")
+	_expect(map_view != null and map_view._position.is_equal_approx(map_view._north_up(app.gameplay.player.global_position)),
+		"map shows the walking actor's paused position")
+	_expect(root.gui_get_focus_owner() == _button("BackButton"), "map focuses Back")
+	await _capture("startup-map.png")
+	if touch_preview:
+		_tap_menu_button(_button("BackButton"))
+	else:
+		_key(KEY_ESCAPE)
+	await _settle()
+	_expect(_button("ResumeButton") != null and paused, "Back returns to the paused menu")
 	_press("HelpButton")
 	await _settle()
 	_expect(_has_label("Controls") and paused, "Help is reachable while paused")
@@ -248,6 +265,18 @@ func _check_gamepad_gameplay() -> void:
 	_joy_axis(JOY_AXIS_LEFT_Y, 0.0)
 	_joy_axis(JOY_AXIS_LEFT_X, 0.0)
 	_joy_axis(JOY_AXIS_TRIGGER_LEFT, 0.0)
+	_joy_menu(JOY_BUTTON_START)
+	await _settle()
+	_press("MapButton")
+	await _settle()
+	var driving_map := app.menu.find_child("RanwarMap", true, false) as RanwarMap
+	_expect(driving_map != null and game.driving
+		and driving_map._position.is_equal_approx(driving_map._north_up(game.car.global_position)),
+		"map follows the active car while driving")
+	_joy_menu(JOY_BUTTON_B)
+	await _settle()
+	_joy_menu(JOY_BUTTON_B)
+	await _settle()
 	await _joy_game(JOY_BUTTON_A)
 	_expect(not game.driving, "gamepad Interact exits after stopping")
 	await _joy_game(JOY_BUTTON_Y)
@@ -325,6 +354,18 @@ func _press(node_name: String) -> void:
 		button.pressed.emit()
 	else:
 		_expect(false, "missing action " + node_name)
+
+
+func _tap_menu_button(button: Button) -> void:
+	if button == null:
+		_expect(false, "missing touch target")
+		return
+	for pressed: bool in [true, false]:
+		var touch := InputEventScreenTouch.new()
+		touch.position = button.get_viewport_transform() * button.get_global_transform() * (button.size * 0.5)
+		touch.pressed = pressed
+		Input.parse_input_event(touch)
+		Input.flush_buffered_events()
 
 
 func _key(key: Key) -> void:

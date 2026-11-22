@@ -79,7 +79,8 @@ func _pause_game() -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Input.emulate_mouse_from_touch = true
-	menu.show_pause(gameplay.player.display_name)
+	menu.show_pause(gameplay.player.display_name, gameplay.world._roads, gameplay.world._gully,
+		gameplay._actor_position())
 
 
 func _resume_game() -> void:

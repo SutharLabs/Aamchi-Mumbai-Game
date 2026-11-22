@@ -18,7 +18,7 @@ Map data from **OpenStreetMap contributors**, under **ODbL 1.0**. Retain the raw
 
 ## Map and asset placement
 
-The current playable area covers the Ranwar pocket of Bandra West. The road and footway mesh uses selected bends and junctions from the saved OpenStreetMap extract. All 30 coordinate entries used by the game were checked against nodes on the corresponding five saved ways. The St Peter's Church site comes from its mapped footprint, with a designed setback and simplified building dimensions. The five fictional shops and seven village-house frontages are placed in authored lots along those streets. The shop parcels, practice bays, handling yard, street widths and curb geometry are authored gameplay elements. Current parcel and street-condition checks are tracked separately. [Source map and acquisition](../../research/BANDRA_REFERENCE_AREA_AND_MAP.md)
+The current playable area covers the Ranwar pocket of Bandra West. The road and footway mesh uses selected bends and junctions from the saved OpenStreetMap extract. All 30 coordinate entries used by the game were checked against nodes on the corresponding five saved ways. The St Peter's Church site comes from its mapped footprint, with a designed setback and simplified building dimensions. The five fictional shops and seven village-house frontages are placed in authored lots along those streets. The shop parcels, practice bays, handling yard, street widths and curb geometry are authored gameplay elements. **Pause → Map** draws the same projected roads and Nagrana Lane footway with the paused position of Omkar or his active vehicle. Current parcel and street-condition checks are tracked separately. [Source map and acquisition](../../research/BANDRA_REFERENCE_AREA_AND_MAP.md)
 
 ## Left-hand lane graph
 
@@ -40,11 +40,38 @@ The Godot 4.7.2 lane probe passed 22 checks, including directions and junction l
 
 One hatchback begins on the western Waroda lane, clear of the player and practice bays, and drives the left-hand circuit. It uses the existing arcade chassis, adjusts speed for bends and sweeps the chassis ahead to brake for people, parked vehicles and traffic obstacles. It waits for the lane to clear before resuming. Reset returns the pilot to its starting position when that space is clear, using the actual collision shape to check the spawn.
 
-The ambient smoke check covers one-car startup, player clearance, wait/resume, the full circuit and safe reset. Run the test with the pinned Godot editor from the repository root.
+A second hatchback can join on a clear lane 85–180 m from the camera, at least 30 m from the pilot and outside the buffered view. The traffic manager checks twice per second. The extra car can retire offscreen beyond 225 m, or when it has been blocked for eight seconds and is offscreen and at least 85 m away. The two-car cap bounds the pilot's traffic cost.
+
+The ambient smoke covers startup, bounded population, lane and view clearance, distance-based retirement, player yielding, full-circuit driving and safe reset. Run the test with the pinned Godot editor from the repository root.
 
 ```powershell
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 19500 --script res://tests/ambient_traffic_smoke.gd
 ```
+
+## Visual streaming experiment
+
+The default Ranwar scene builds all 183 generic backdrop meshes. To try distance-based streaming, start the game with the user argument `-- --stream-visual-chunks`. The opt-in mode groups the same backdrop in 96 m cells, loads around the camera within 160 m and retains cells out to 224 m to avoid repeated loading near an edge. During ordinary movement it activates at most one cell per 0.2-second update. Camera cuts can activate multiple cells immediately, and distant scenery can visibly appear or disappear. The roads, shared lane graph, ground and backdrop collision, twelve authored frontages and church stay loaded.
+
+The smoke test verified that Godot releases mesh references on unload, building collision survives, and visuals return on re-entry. The rendered comparison used Godot 4.7.2 Compatibility on Windows 11 with an Intel i5-1145G7, Iris Xe and 15.7 GiB RAM. Each run completed the same 21 waypoints at 1280×720, capped at 60 FPS, with 2× simulation speed and ambient traffic disabled.
+
+| Measurement | Resident | Streamed |
+| --- | ---: | ---: |
+| Scene setup wall time | 353.0 ms | 241.7 ms |
+| Active backdrop meshes, lowest sample to peak | 183–183 | 39–168 |
+| Sampled draw calls, p95 | 612 | 571 |
+| Frame time, p95 | 17.03 ms | 17.04 ms |
+| Longest frame | 42.08 ms | 42.64 ms |
+| Peak Godot-tracked allocation | 94.57 MiB | 94.47 MiB |
+
+This comparison supports keeping the resident scene as the default for the current neighborhood. Draw workload fell, while frame times and tracked allocation stayed close. Godot's allocation measurement covers the engine allocator. Target-device memory, GPU use and sustained traversal still need separate measurements. The cause of the long frame recorded in E-28 remains open. [Benchmark command](../README.md#ranwar-route-benchmark) · [Performance tracker](../../docs/PHASE_PROGRESS.md#phase-2--mumbai-neighborhood-and-performance-proof)
+
+Run the focused visual-streaming smoke check with the pinned Godot editor.
+
+```powershell
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 2400 --script res://tests/visual_streaming_smoke.gd -- --stream-visual-chunks
+```
+
+For larger authored districts, Godot can request a bundled scene in the background and poll its status across frames. Retrieve it when the load completes because retrieving too early can block. Add or remove active scene-tree nodes on the main thread, budget their activation and release live references when a cell leaves the cache. Visibility ranges can keep simplified silhouettes visible across longer sightlines. The Ranwar experiment builds procedural visuals on demand on the main thread. [Godot background loading](https://docs.godotengine.org/en/stable/tutorials/io/background_loading.html) · [Thread-safe APIs](https://docs.godotengine.org/en/stable/tutorials/performance/thread_safe_apis.html) · [Resource lifetime](https://docs.godotengine.org/en/stable/classes/class_resource.html) · [Visibility ranges](https://docs.godotengine.org/en/stable/tutorials/3d/visibility_ranges.html)
 
 ## Handling area
 
