@@ -3,6 +3,7 @@
 ## Modern OSM-derived polylines: see README.md and layout.json beside this script.
 
 const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
+const RanwarLaneFinish := preload("res://world/ranwar_lane_finish.gd")
 const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
@@ -107,7 +108,7 @@ func _build_materials() -> void:
 		"roof": Color("885d4c"), "dark": Color("28383e"),
 		"cream": Color("d9c9a7"), "ochre": Color("bd9f66"),
 		"mint": Color("93aba0"), "rose": Color("b58e83"),
-		"blue": Color("879da9"), "gully": Color("6a9e98"),
+		"blue": Color("879da9"), "gully": Color("8b8980"),
 		"bay": Color("344247"), "bay_cyan": Color("32d7d2"),
 		"white_paint": Color("f1ede2")
 	}
@@ -194,20 +195,36 @@ func _build_roads() -> void:
 
 
 func _build_gully() -> void:
+	var finish := SurfaceTool.new()
+	finish.begin(Mesh.PRIMITIVE_TRIANGLES)
+	finish.set_smooth_group(-1)
 	for index in range(_gully.size()-1):
 		_strip("NagranaFootway",_gully[index],_gully[index+1],2.4,0.03,0.025,"gully",false)
 		var direction: Vector3 = (_gully[index+1]-_gully[index]).normalized()
 		var across := Vector3(-direction.z,0,direction.x)
+		var start_across := _gully_paving_corner(index, across)
+		var end_across := _gully_paving_corner(index + 1, across)
 		var distance := 0.0
 		var length: float = _gully[index].distance_to(_gully[index+1])
 		while distance < length:
 			var part_end := minf(distance+2.0,length)
-			var midpoint := _gully[index]+direction*(distance+part_end)*0.5
+			var panel_start := _gully[index] + direction * distance
+			var panel_end := _gully[index] + direction * part_end
 			# Clip walls out of the driving carriageways at both mouths.
-			if _outside_carriageway(midpoint,2.0):
+			if _outside_carriageway(panel_start.lerp(panel_end, 0.5), 2.0):
+				var panel_start_across := start_across if is_zero_approx(distance) else across
+				var panel_end_across := end_across if is_equal_approx(part_end, length) else across
+				RanwarLaneFinish.add_panel(finish, panel_start, panel_end, across, panel_start_across, panel_end_across)
 				for side: float in [-1.0,1.0]:
-					_strip("GullyWall",_gully[index]+direction*distance+across*side*1.55,_gully[index]+direction*part_end+across*side*1.55,0.35,1.4,1.4,"cream",true)
+					_strip("GullyWall",panel_start+across*side*1.55,panel_end+across*side*1.55,0.35,1.4,1.4,"cream",true)
 			distance = part_end
+	finish.generate_normals()
+	finish.index()
+	var finish_mesh := MeshInstance3D.new()
+	finish_mesh.name = "NagranaPavingAndWallFinish"
+	finish_mesh.mesh = finish.commit()
+	finish_mesh.material_override = _materials["frontage_kit"]
+	add_child(finish_mesh)
 	# Physical filters reinforce the on-foot-only route; clear gap is 1.1 m.
 	for endpoint: int in [0,_gully.size()-1]:
 		var point: Vector3 = _gully[endpoint]
@@ -217,6 +234,16 @@ func _build_gully() -> void:
 		var inset := 7.0 if endpoint == 0 else 10.0
 		for side: float in [-1.0,1.0]:
 			_box("FootwayBollard",point+direction*inset+across*side*0.7+Vector3(0,0.5,0),Vector3(0.3,1.0,0.3),"barrier",true)
+
+
+func _gully_paving_corner(index: int, across: Vector3) -> Vector3:
+	if index == 0 or index == _gully.size() - 1:
+		return across
+	var approach := (_gully[index] - _gully[index - 1]).normalized()
+	var departure := (_gully[index + 1] - _gully[index]).normalized()
+	var direction := (approach + departure).normalized()
+	var corner := Vector3(-direction.z, 0.0, direction.x)
+	return corner / maxf(0.75, corner.dot(across))
 
 
 func _build_recovery_yard() -> void:
@@ -273,6 +300,7 @@ func _build_frontages() -> void:
 	var palette: Array[String] = ["cream","ochre","mint","rose","blue"]
 	var building_count := 0
 	var inner_lane_count := 0
+	var gallery_placed := false
 	for road_index in range(_roads.size()):
 		var points: PackedVector3Array = _roads[road_index]
 		for index in range(points.size()-1):
@@ -296,10 +324,13 @@ func _build_frontages() -> void:
 					var angle := atan2(along.x,along.z)
 					var wall_color := palette[building_count % palette.size()]
 					var hill_sample := building_count < SHOP_LABELS.size()
-					var inner_lane_sample := road_index == 3 and inner_lane_count < 4 and point.distance_to(_gully[0]) < 85.0
+					var mouth_distance := point.distance_to(_gully[0])
+					var inner_lane_sample := road_index == 3 and inner_lane_count < 4 and mouth_distance < 85.0
 					if hill_sample or inner_lane_sample:
 						var storefront := hill_sample and (tall or building_count % 2 == 0)
-						_add_ranwar_frontage(point, side, angle, height, wall_color, storefront, building_count)
+						var photo_gallery := inner_lane_sample and not storefront and not gallery_placed and mouth_distance < 65.0
+						_add_ranwar_frontage(point, side, angle, height, wall_color, storefront, building_count, photo_gallery)
+						gallery_placed = gallery_placed or photo_gallery
 						if inner_lane_sample:
 							inner_lane_count += 1
 					else:
@@ -326,10 +357,10 @@ func _add_background_frontage(point: Vector3, facing: Vector3, angle: float, hei
 	_visual_chunks.register_box(point, "Porch", facing + Vector3.UP * 2.1, Vector3(9, 0.18, 2.4), angle, _materials["dark"])
 
 
-func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int) -> void:
+func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int, photo_gallery: bool) -> void:
 	var body := _frontage_body(point, angle, height)
 	var wall := _materials[wall_name] as StandardMaterial3D
-	var visible_frontage := RanwarFrontage.create(height, wall.albedo_color, storefront, variant, _materials["frontage_kit"])
+	var visible_frontage := RanwarFrontage.create(height, wall.albedo_color, storefront, variant, _materials["frontage_kit"], photo_gallery)
 	visible_frontage.rotation.y = -side * PI * 0.5
 	visible_frontage.position.y = -height * 0.5
 	body.add_child(visible_frontage)
@@ -340,7 +371,7 @@ func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: flo
 		if variant < 3:
 			_add_shop_label(body, "DIGITAL PAYMENTS", body.to_local(point + normal * 6.30 + Vector3.UP * 1.78), side * PI * 0.5, 0.009)
 	else:
-		RanwarFrontage.add_verandah_collisions(body, visible_frontage.transform, variant)
+		RanwarFrontage.add_verandah_collisions(body, visible_frontage.transform, variant, photo_gallery)
 
 
 func _add_shop_label(body: Node3D, caption: String, at: Vector3, yaw: float, pixel_size: float = 0.020) -> void:

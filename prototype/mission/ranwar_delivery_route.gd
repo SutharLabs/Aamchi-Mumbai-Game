@@ -2,6 +2,7 @@ extends Node3D
 
 const Delivery := preload("res://mission/ranwar_delivery.gd")
 const Progress := preload("res://mission/mission_progress.gd")
+const Career := preload("res://mission/ranwar_career.gd")
 const BOARD := Vector3(-9.0, 0.0, 5.0)
 const ON_FOOT_RANGE := 1.8
 const MARKER_COLOR := Color("f4a261")
@@ -52,7 +53,7 @@ func prompt_for(position: Vector3) -> String:
 		Delivery.PICKUP: return "Pick up the parcel"
 		Delivery.DROPOFF: return "Leave the parcel"
 		Delivery.FAILED: return "Retry parcel run"
-		_: return "Start Ranwar Parcel Run"
+		_: return "Start Ranwar Parcel Run · ₹%d" % Career.PARCEL_PAY
 
 
 func objective(position: Vector3) -> String:
@@ -82,7 +83,7 @@ func interact() -> String:
 	match flow.state:
 		Delivery.PICKUP: return "Job active. Pick up at the Hill Road end of Nagrana Lane."
 		Delivery.DROPOFF: return "Parcel collected. Follow Nagrana Lane to Waroda Road."
-		Delivery.COMPLETED: return "Parcel delivered. Receipt saved to your profile."
+		Delivery.COMPLETED: return "Parcel delivered · +₹%d. New lead from Mira." % Career.PARCEL_PAY
 		_: return ""
 
 

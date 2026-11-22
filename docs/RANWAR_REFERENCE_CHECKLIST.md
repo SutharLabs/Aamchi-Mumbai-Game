@@ -15,6 +15,16 @@ Desk review dated **22 November 2026**. The twelve authored frontages are candid
 
 **Chawl placement is on hold.** The Slum Rehabilitation Authority's 2024 list identifies Ranwar cluster HW_021 in Bandra-B. The record provides a cluster ID and area, with neither a building inventory nor circulation details. The named Shanta Ram Bhai Chawl entry is for Bandra-F and needs independent site and building evidence. Keep the Worli gallery and Chembur courtyard studies as separate comparisons. Resume a local placement only after verifying an in-scope building, its typology and current condition. [SRA cluster list, entries 497 and 505](https://media.sra.gov.in/sra-automation/sra-website/content/1731566774802_3204_Slum%20Cluster%202024.pdf) · [Chawl research](CHAWL_MODEL_RESEARCH.md)
 
+## Image-guided streetscape pilot
+
+The playable pilot adapts the timber gallery, diamond-pattern grilles and exterior return stair from Chandan Nandrajog's single **28 October 2006** Chapel Road photograph. The mesh uses original colour, scale, roofing and wall details within an existing authored Waroda lot, about **57 m from the Nagrana Lane mouth**. The historic image establishes an architectural form. Its date and viewpoint leave current site condition, depth and the original parcel unverified. The photograph is credited in the game. [Photograph and recorded capture date](https://commons.wikimedia.org/wiki/File:Bandra_old_house.jpg) · [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)
+
+The Commons files near the Nagrana entrance also include a **26 August 2018** wide rooftop photograph from an upper floor of Holy Family Hospital. It records a nearby view from one position. A current, overlapping street-level set for the selected frontage remains to be acquired. [Frederick Noronha's geotagged photograph](https://commons.wikimedia.org/wiki/File:Bandra,_a_bird%27s_eye_view.jpg)
+
+Google's Street View rules prohibit taking imagery out of the embedded viewer and creating data by extracting or tracing it. The Maps Platform terms also restrict creating content from Google Maps data. Licensed source photography and the existing OpenStreetMap route provide the production inputs for this game. [Google Geo Guidelines](https://about.google/brand-resource-center/products-and-services/geo-guidelines/) · [Google Maps Platform terms, §3.2.3](https://cloud.google.com/maps-platform/terms)
+
+For multi-view reconstruction, collect a dated sequence of rights-cleared photos around one selected façade and the adjacent lane. Photograph the front and both visible corners from multiple positions, with the same feature in at least three overlapping images and consistent lens settings and lighting. Record a scale measurement and the location for alignment to the map. Owner-approved originals are suitable inputs. Mapillary's CC BY-SA imagery is a candidate when the actual sequence, attribution, capture date and applicable terms can be verified. Check the sparse reconstruction before baking and simplifying a mesh for the game's geometry budget. [COLMAP capture guidance](https://colmap.github.io/tutorial) · [Mapillary imagery licence](https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data)
+
 ## Field review
 
 | Stop | Record or compare |

@@ -4,6 +4,8 @@ const Start := preload("res://startup/startup.tscn")
 const Delivery := preload("res://mission/ranwar_delivery.gd")
 const Route := preload("res://mission/ranwar_delivery_route.gd")
 const Progress := preload("res://mission/mission_progress.gd")
+const Career := preload("res://mission/ranwar_career.gd")
+const Game := preload("res://phase1.gd")
 const RanwarMap := preload("res://startup/ranwar_map.gd")
 
 var _app: Node
@@ -77,12 +79,15 @@ func _run() -> void:
 	_expect(reached_waroda, "Omkar traverses Nagrana from Hill Road toward Waroda through both bollard gaps")
 	await _interact()
 	_expect(_game.delivery.flow.state == Delivery.COMPLETED and not _game.delivery.target().is_finite(), "walking handoff completes the job and removes the objective")
+	_expect(_game.career.cash == Career.PARCEL_PAY and _game.career.has_lead()
+		and _game.story_target().is_equal_approx(_game._mira.global_position), "completion pays once and directs the player to Mira")
 	var receipt: Dictionary = _game.delivery.flow.snapshot()
 	await _interact()
 	_expect(_game.delivery.flow.snapshot() == receipt and not _game.delivery.can_abandon(), "repeat interaction leaves the single receipt intact")
 	await _title()
 	await _play()
 	_expect(_game.delivery.flow.state == Delivery.COMPLETED and _game.delivery.flow.snapshot() == receipt, "completion receipt survives return to title and reopening the level")
+	_expect(_game.career.cash == Career.PARCEL_PAY, "the payout survives reload without being issued twice")
 
 	await _title()
 	_press("ProfilesButton")
@@ -96,6 +101,7 @@ func _run() -> void:
 	await _settle_menu()
 	await _play()
 	_expect(_game.delivery.flow.state == Delivery.OFFER, "the new profile begins with its own unstarted offer")
+	_expect(_game.career.cash == 0 and not _game.career.has_lead(), "a separate profile has neither the payout nor the lead")
 	await _place_player(_game.delivery.target())
 	await _interact()
 	await _pause()
@@ -131,7 +137,85 @@ func _run() -> void:
 	await _settle_menu()
 	await _play()
 	_expect(_game.delivery.flow.snapshot() == receipt, "the original profile keeps its receipt after the other profile abandons")
+	await _check_career()
 	_finish()
+
+
+func _check_career() -> void:
+	await _place_player(_game._mira.global_position + Vector3.LEFT * 1.2)
+	await _interact()
+	_expect(_game.career.lead_seen and not _game.story_target().is_finite(), "talking to Mira logs the lead and removes its marker")
+
+	var wall := _game.world.get_node("ImpactWall") as Node3D
+	await _place_player(_game.car.global_position + Vector3.BACK * 2.45)
+	await _interact()
+	var damage_before: float = _game.career.health
+	_game.car.reset_to(Transform3D(Basis.IDENTITY, wall.position + Vector3(0.0, -0.15, 11.0)))
+	await _accelerate(110)
+	_expect(_game.driving and _game.career.health < damage_before and _game.career.wanted == 0,
+		"a physical wall impact damages the player without reporting a collision with a person")
+	var injured_health: float = _game.career.health
+	await _title()
+	await _play()
+	_expect(is_equal_approx(_game.career.health, injured_health), "returning to the title does not heal the same session")
+	await _place_player(Game.FIRST_AID)
+	await _interact()
+	_expect(_game.career.health == Career.MAX_HEALTH and _game.career.cash == 440, "first aid heals and spends the ₹60 price")
+	await _frames(60)
+	_game.career.damage(200.0)
+	await _frames(6)
+	_expect(not _game.driving and _game.career.health == Career.MAX_HEALTH and _game.career.cash == 340,
+		"incapacitation respawns on foot and debits the clinic fee")
+
+	await _frames(96)
+	await _place_player(_game.car.global_position + Vector3.BACK * 2.45)
+	await _interact()
+	_game.car.reset_to(Transform3D(Basis.IDENTITY, Vector3(-42.0, 0.55, -18.0)))
+	var pedestrian: Node3D = _game._mira
+	pedestrian.set_physics_process(false)
+	pedestrian.global_position = Vector3(-42.0, 0.07, -31.0)
+	await _frames(3)
+	await _accelerate(110)
+	pedestrian.set_physics_process(true)
+	_expect(_game.career.wanted >= 1, "a physical collision with a pedestrian triggers a police response")
+	await _title()
+	await _play()
+	_expect(_game.career.wanted >= 1, "returning to the title does not clear the alert")
+	await _pause()
+	await _capture("ranwar-player-status.png")
+	_press("ResumeButton")
+	await _frames(4)
+	await _recover()
+	_expect(not _game.driving and _game.career.wanted == 0 and _game.career.cash == 190,
+		"recovering while wanted records detention and the fine")
+	await _title()
+	await _play()
+	_expect(_game.career.cash == 190 and _game.career.lead_seen and _game.career.wanted == 0, "spending and story survive reload")
+
+	await _frames(96)
+	_game._yaw = PI
+	_game.career.report_collision()
+	var patrol: Node3D
+	for tick in 110:
+		await physics_frame
+		patrol = _game.traffic.police_vehicle()
+		if patrol != null:
+			break
+	_expect(patrol != null, "an active session alert dispatches a visible patrol actor")
+	if patrol != null:
+		# Hold the vehicle stationary to isolate the roadside detention timer.
+		patrol.set_physics_process(false)
+		await _place_player(patrol.global_position + patrol.global_basis.x * 3.0 - Vector3.UP * patrol.global_position.y)
+		await _frames(160)
+		_expect(_game.career.wanted == 0 and _game.career.cash == 40 and _game.traffic.police_vehicle() == null,
+			"remaining stopped beside the real patrol triggers detention, debits the fine and clears the car")
+
+
+func _accelerate(frames: int) -> void:
+	Input.action_press(&"move_forward")
+	await _frames(frames)
+	Input.action_release(&"move_forward")
+	await _frames(4)
 
 
 func _check_vehicle_handoffs(pickup: Vector3) -> void:
@@ -285,6 +369,9 @@ func _finish() -> void:
 		_remove_fixture(path)
 		_remove_fixture(path + ".bak")
 		_remove_fixture(path + Progress.RECEIPT_SUFFIX)
+		var career_path := _test_directory.path_join("career-progress-%s.json" % id)
+		_remove_fixture(career_path)
+		_remove_fixture(career_path + ".bak")
 	if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_test_directory)):
 		_expect(DirAccess.remove_absolute(ProjectSettings.globalize_path(_test_directory)) == OK, "isolated mission fixtures removed")
 	_remove_fixture(_settings)

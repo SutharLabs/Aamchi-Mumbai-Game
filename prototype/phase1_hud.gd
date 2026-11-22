@@ -14,6 +14,7 @@ var move_axis := Vector2.ZERO
 var brake_held := false
 var _status_panel: PanelContainer
 var _objective := Label.new()
+var _condition := Label.new()
 var _speed := Label.new()
 var _prompt_row := HBoxContainer.new()
 var _interact_key := Label.new()
@@ -45,6 +46,10 @@ func _ready() -> void:
 	_objective.add_theme_color_override("font_color", Color("ffe0bc"))
 	_objective.add_theme_font_size_override("font_size", 17)
 	details.add_child(_objective)
+	_condition.name = "PlayerCondition"
+	_condition.add_theme_color_override("font_color", Color("ffb8a6"))
+	_condition.add_theme_font_size_override("font_size", 17)
+	details.add_child(_condition)
 	_speed.add_theme_color_override("font_color", Color("deebef"))
 	_speed.add_theme_font_size_override("font_size", 17)
 	details.add_child(_speed)
@@ -115,14 +120,18 @@ func _card() -> PanelContainer:
 	return panel
 
 
-func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String, can_interact: bool, objective: String = "") -> void:
+func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String, can_interact: bool,
+		objective: String = "", condition: String = "") -> void:
 	var speed_text := "%s  ·  %d km/h" % [vehicle_label, roundi(speed * 3.6)] if driving else ""
 	var show_key := can_interact and not touch_enabled
-	var changed := _speed.text != speed_text or _prompt.text != prompt or _interact_key.visible != show_key or _objective.text != objective
+	var changed := (_speed.text != speed_text or _prompt.text != prompt or _interact_key.visible != show_key
+		or _objective.text != objective or _condition.text != condition)
 	if _speed.text != speed_text:
 		_speed.text = speed_text
 	if _objective.text != objective:
 		_objective.text = objective
+	if _condition.text != condition:
+		_condition.text = condition
 	if _prompt.text != prompt:
 		_prompt.text = prompt
 		var font := _prompt.get_theme_font("font")
@@ -131,9 +140,10 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		_prompt.custom_minimum_size.x = minf(ceilf(text_width) + 1.0, PROMPT_WIDTH)
 	_speed.visible = driving
 	_objective.visible = not objective.is_empty()
+	_condition.visible = not condition.is_empty()
 	_prompt_row.visible = not prompt.is_empty()
 	_interact_key.visible = show_key
-	_status_panel.visible = driving or _prompt_row.visible or _objective.visible
+	_status_panel.visible = driving or _prompt_row.visible or _objective.visible or _condition.visible
 	if changed and _status_panel.visible:
 		_status_panel.reset_size.call_deferred()
 

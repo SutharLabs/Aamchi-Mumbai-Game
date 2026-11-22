@@ -1,4 +1,6 @@
 extends CharacterBody3D
+
+signal impacted(vehicle: CharacterBody3D, collider: Object, closing_speed: float)
 ## Shared lightweight Phase 1 arcade movement. Front is local -Z.
 ## Subclasses construct their original body/shape in their own _init().
 
@@ -138,8 +140,16 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = maxf(velocity.y - GRAVITY * delta, -TERMINAL_FALL_SPEED)
 
+	var approach := Vector3(velocity.x, 0.0, velocity.z)
 	if not grounded or not _try_step(velocity * delta):
 		move_and_slide()
+		if approach.length_squared() >= 25.0 and impacted.has_connections():
+			for index in get_slide_collision_count():
+				var contact := get_slide_collision(index)
+				var closing_speed := -approach.dot(contact.get_normal())
+				if absf(contact.get_normal().y) < 0.65 and closing_speed >= 5.0:
+					impacted.emit(self, contact.get_collider(), closing_speed)
+					break
 	# Consume the collision-adjusted speed so a frontal impact does not retain
 	# an invisible high speed that instantly reappears after leaving the wall.
 	_signed_speed = clampf(velocity.dot(forward), -max_reverse_speed, max_forward_speed)
@@ -164,6 +174,9 @@ func _try_step(motion: Vector3) -> bool:
 	var normal := _step_contact.get_normal()
 	if hit != null and (hit.collision_layer & PERSON_LAYER) != 0 and direction.dot(normal) < -0.1:
 		# Stop before a frontal contact. Sliding the chassis into a capsule can push it aside.
+		var closing_speed := -(Vector3(velocity.x, 0.0, velocity.z)).dot(normal)
+		if closing_speed >= 5.0:
+			impacted.emit(self, hit, closing_speed)
 		velocity.x = 0.0
 		velocity.z = 0.0
 		return false

@@ -19,6 +19,14 @@ const SECTIONS: Array[Dictionary] = [
 		],
 	},
 	{
+		"title": "Chapel Road photo reference",
+		"body": "Bandra old house.jpg by Chandan Nandrajog, 28 October 2006, CC BY 2.0. Aamchi Mumbai Game adapted the gallery and stair forms into a simplified 3D streetscape study.",
+		"links": [
+			{"label": "Chapel Road photograph", "url": "https://commons.wikimedia.org/wiki/File:Bandra_old_house.jpg"},
+			{"label": "CC BY 2.0", "url": "https://creativecommons.org/licenses/by/2.0/"},
+		],
+	},
+	{
 		"title": "Motion capture",
 		"body": "The 100STYLE Dataset by Ian Mason, Sebastian Starke and Taku Komura (2022), licensed under CC BY 4.0. Aamchi Mumbai Game trimmed, looped, normalized, resampled and retargeted clips for idle, walking and jogging.",
 		"links": [

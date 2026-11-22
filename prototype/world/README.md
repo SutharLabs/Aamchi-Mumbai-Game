@@ -42,10 +42,12 @@ One hatchback begins on the western Waroda lane, clear of the player and practic
 
 A second hatchback can join on a clear lane 85–180 m from the camera, at least 30 m from the pilot and outside the buffered view. The traffic manager checks twice per second. The extra car can retire offscreen beyond 225 m, or when it has been blocked for eight seconds and is offscreen and at least 85 m away. The two-car cap bounds the pilot's traffic cost.
 
-The ambient smoke covers startup, bounded population, lane and view clearance, distance-based retirement, player yielding, full-circuit driving and safe reset. Run the test with the pinned Godot editor from the repository root.
+Civilian and patrol hatchbacks use seated, right-hand drivers posed against the existing steering wheel. An active police alert can add one marked patrol that follows the same directed circuit and slows near the player. The police response and civilian cap are tracked independently. [Player consequences](../../research/GTA_GAMEPLAY_REFERENCES.md)
+
+The ambient smoke covers startup, driver fit, bounded population, lane and view clearance, yielding, patrol dispatch and approach, full-circuit driving and safe reset. Run the test with the pinned Godot editor from the repository root.
 
 ```powershell
-& $editor --headless --path prototype --fixed-fps 60 --quit-after 19500 --script res://tests/ambient_traffic_smoke.gd
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 19950 --script res://tests/ambient_traffic_smoke.gd
 ```
 
 ## Visual streaming experiment
@@ -81,7 +83,9 @@ The open asphalt yard is west of the spawn. A seven-meter-wide test ramp along x
 
 The Phase 2 frontage checkpoint dresses the first eight Hill Road lots and four western Waroda Road lots within 85 metres of the inner Nagrana mouth. Five mixed-use storefronts use painted fictional signs, shutters, shallow canopies and service details. Seven village-house variants use raised plinths, verandah columns, balustrades, shuttered windows and pitched tile profiles. The house forms draw on the precinct survey and heritage inventory rechecked on 22 November 2026. They are original typology studies at gameplay placements. Present-day parcel matching for individual houses remains open. [MMR-HCS Bandra precinct survey, Vol. I, printed p. 5](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf) · [MMR-HCS heritage inventory, entries 612 and 619](https://mmrhcs.org.in/images/documents/projects/heritage-listning/01-Heritage-List.pdf)
 
-Each rendered frontage batches its opaque geometry into one surface with a shared vertex-color material. The twelve models contain 8,966 triangles in total. Shop lettering remains a separate 3D label. A verandah adds simple colliders for its plinth, entrance step, posts and rails inside the existing lot setback. The frontage sample's geometry probe confirmed original collider parity, plinth support and no added frontage overlap along the vehicle loop or Nagrana footway. Windows Compatibility renders were reviewed on the Iris Xe development PC. Actual minimum-device measurements remain open.
+Each rendered frontage batches its opaque geometry into one surface with a shared vertex-color material. The twelve models now contain 9,442 triangles in total. Shop lettering remains a separate 3D label. A verandah adds simple colliders for its plinth, entrance step, posts and rails inside the existing lot setback. The frontage sample's geometry probe confirmed original collider parity, plinth support and no added frontage overlap along the vehicle loop or Nagrana footway. Windows Compatibility renders were reviewed on the Iris Xe development PC. Actual minimum-device measurements remain open.
+
+The Waroda timber gallery study includes a projecting upper gallery, diamond-pattern grilles and an exterior return stair. The model adapts a licensed 2006 Chapel Road photo to an existing gameplay lot about 57 m from Nagrana Lane's Waroda entrance. The original lot dimensions remain authored. The stair and gallery are exterior details behind railings. Two rail colliders were added within the porch. Nagrana's existing corridor now has concrete joints, drain covers and plaster skirting batched into one 560-triangle surface. A Windows Compatibility probe confirmed unchanged road and footway paths, preserved original collision shapes and reviewed matched before-and-after captures. [Photo provenance and current capture requirements](../../docs/RANWAR_REFERENCE_CHECKLIST.md#image-guided-streetscape-pilot)
 
 Neutral wayfinding identifies Ranwar / Bandra West and the existing route approaches. St Peter's parish history documents the nearby landmark's background. [St Peter's parish history](https://stpetersbandra.com/about-us/history/)
 

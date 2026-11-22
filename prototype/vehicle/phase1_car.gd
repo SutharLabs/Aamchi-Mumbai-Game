@@ -4,9 +4,11 @@ extends "res://vehicle/phase1_vehicle.gd"
 const BodyMesh := preload("res://vehicle/vehicle_body_mesh.gd")
 const AXLE := 1.215
 const WHEEL_WIDTH := 0.19
+const FRONT_SEAT_OFFSET := 0.35
+const STEERING_POSE := Transform3D(Basis(Vector3.RIGHT, 1.25), Vector3(FRONT_SEAT_OFFSET, 0.64, -0.48))
 
 
-func _init() -> void:
+func _init(patrol: bool = false) -> void:
 	super()
 	name = "Phase1Car"
 	vehicle_label = "Car"
@@ -14,14 +16,14 @@ func _init() -> void:
 	preferred_exit_side = 1.0
 	follow_distance = 6.9
 	_build_collision(Vector3(1.64, 0.92, 3.8), Vector3(0.0, -0.04, 0.0))
-	_build_bodywork()
+	_build_bodywork(patrol)
 
 
-func _build_bodywork() -> void:
-	var paint := _material(Color("233741"))
+func _build_bodywork(patrol: bool) -> void:
+	var paint := _material(Color("d7e1e3") if patrol else Color("233741"))
 	paint.roughness = 0.36
 	paint.metallic = 0.12
-	var roof := _material(Color("cc9b3e"))
+	var roof := _material(Color("273858") if patrol else Color("cc9b3e"))
 	roof.roughness = 0.41
 	var glass := _material(Color("63879745"))
 	glass.roughness = 0.22
@@ -51,11 +53,26 @@ func _build_bodywork() -> void:
 	_build_cabin(roof, glass, trim)
 	_build_cabin_interior()
 	_build_fascias(trim, satin)
+	if patrol:
+		_build_patrol_details(trim)
 	for side: float in [-1.0, 1.0]:
 		_build_door_details(side, paint, trim, satin)
 		for axle: float in [-AXLE, AXLE]:
 			var wheel := _add_wheel_at(Vector3(side * 0.769, -0.18, axle), tire, satin, axle < 0.0, wheel_radius, WHEEL_WIDTH)
 			BodyMesh.dress_wheel(wheel, wheel_radius, WHEEL_WIDTH, tire, satin, black, 6)
+
+
+func _build_patrol_details(trim: Material) -> void:
+	var stripe := _material(Color("283e67"))
+	for side: float in [-1.0, 1.0]:
+		_add_box("PatrolStripe", Vector3(0.026, 0.094, 1.17), Vector3(side * 0.816, 0.28, -0.03), stripe)
+	_add_box("PatrolLightbase", Vector3(0.72, 0.050, 0.19), Vector3(0.0, 1.126, 0.13), trim)
+	for side: float in [-1.0, 1.0]:
+		var lens := _material(Color("e48842") if side < 0.0 else Color("4269b5"))
+		lens.emission_enabled = true
+		lens.emission = lens.albedo_color
+		lens.emission_energy_multiplier = 0.35
+		_add_box("PatrolRoofLens", Vector3(0.32, 0.069, 0.16), Vector3(side * 0.168, 1.176, 0.13), lens)
 
 
 func _body_ring(z: float, width: float, bottom: float, shoulder: float) -> PackedVector3Array:
@@ -112,7 +129,7 @@ func _build_cabin_interior() -> void:
 	block.size = Vector3(1.18, 0.15, 0.26)
 	surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(0.0, 0.48, -0.75)))
 	for side: float in [-1.0, 1.0]:
-		var seat_x := side * 0.35
+		var seat_x := side * FRONT_SEAT_OFFSET
 		block.size = Vector3(0.43, 0.11, 0.42)
 		surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(seat_x, 0.45, 0.08)))
 		block.size = Vector3(0.43, 0.38, 0.11)
@@ -120,17 +137,16 @@ func _build_cabin_interior() -> void:
 		block.size = Vector3(0.25, 0.12, 0.10)
 		surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(seat_x, 0.86, 0.28)))
 
-	block.size = Vector3(0.08, 0.095, 0.13)
-	surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(0.35, 0.585, -0.622)))
+	block.size = Vector3(0.08, 0.095, 0.22)
+	surface.append_from(block, 0, Transform3D(Basis.IDENTITY, Vector3(FRONT_SEAT_OFFSET, 0.585, -0.579)))
 	var wheel := TorusMesh.new()
 	wheel.inner_radius = 0.134
 	wheel.outer_radius = 0.170
 	wheel.rings = 12
 	wheel.ring_segments = 6
-	var steering_pose := Transform3D(Basis(Vector3.RIGHT, 1.25), Vector3(0.35, 0.64, -0.57))
-	surface.append_from(wheel, 0, steering_pose)
+	surface.append_from(wheel, 0, STEERING_POSE)
 	block.size = Vector3(0.28, 0.035, 0.032)
-	surface.append_from(block, 0, steering_pose)
+	surface.append_from(block, 0, STEERING_POSE)
 	BodyMesh.part(self, "RightHandDriveInterior", surface.commit(), _material(Color("514943")))
 
 

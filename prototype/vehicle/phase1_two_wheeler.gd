@@ -3,6 +3,7 @@ extends "res://vehicle/phase1_vehicle.gd"
 
 const Geometry := preload("res://vehicle/vehicle_body_mesh.gd")
 const Character := preload("res://character/player_character.gd")
+const LimbPose := preload("res://character/limb_pose.gd")
 const PROFILE_SIDES := 12
 
 var rider := Node3D.new()
@@ -53,7 +54,7 @@ func _ready() -> void:
 			rig.find_bone(label + "Foot")
 		)
 		var knee := Vector3(side * (0.26 if _step_through else 1.05), 0.05, -1.0)
-		_pose_limb(leg, ankle - rider.position, knee, Quaternion.IDENTITY)
+		LimbPose.aim(rig, leg, ankle - rider.position, knee, Quaternion.IDENTITY)
 	_pose_grip()
 	_add_helmet()
 
@@ -110,33 +111,8 @@ func _pose_grip() -> void:
 		var side := -1.0 if i == 0 else 1.0
 		var wrist := _cockpit.transform * Vector3(side * _grip_half_width, 0.006, _grip_sweep + 0.042)
 		var facing := _cockpit.basis * Vector3.FORWARD
-		_pose_limb(_arm_joints[i], wrist - rider.position, Vector3(side * 0.65, -1.0, 0.2),
+		LimbPose.aim(rig, _arm_joints[i], wrist - rider.position, Vector3(side * 0.65, -1.0, 0.2),
 			Quaternion(side * Vector3.RIGHT, facing))
-
-
-func _pose_limb(joints: Vector3i, goal: Vector3, pole: Vector3, endpoint_rotation: Quaternion) -> void:
-	var rig: Skeleton3D = _rider_model.skeleton
-	var start := rig.get_bone_global_pose(joints.x).origin
-	var upper := rig.get_bone_rest(joints.y).origin
-	var lower := rig.get_bone_rest(joints.z).origin
-	var upper_length := upper.length()
-	var lower_length := lower.length()
-	var offset := goal - start
-	var reach := clampf(offset.length(), absf(upper_length - lower_length) + 0.001, upper_length + lower_length - 0.001)
-	var axis := offset.normalized()
-	var bend := (pole - axis * pole.dot(axis)).normalized()
-	var bend_along := (upper_length * upper_length - lower_length * lower_length + reach * reach) / (2.0 * reach)
-	var joint := start + axis * bend_along + bend * sqrt(maxf(0.0, upper_length * upper_length - bend_along * bend_along))
-	var finish := start + axis * reach
-	_set_global_rotation(joints.x, Quaternion(upper.normalized(), (joint - start).normalized()))
-	_set_global_rotation(joints.y, Quaternion(lower.normalized(), (finish - joint).normalized()))
-	_set_global_rotation(joints.z, endpoint_rotation)
-
-
-func _set_global_rotation(bone: int, target: Quaternion) -> void:
-	var rig: Skeleton3D = _rider_model.skeleton
-	var parent := rig.get_bone_global_pose(rig.get_bone_parent(bone)).basis.get_rotation_quaternion()
-	rig.set_bone_pose_rotation(bone, (parent.inverse() * target).normalized())
 
 
 func _add_helmet() -> void:

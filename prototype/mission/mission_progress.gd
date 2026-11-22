@@ -9,6 +9,7 @@ const RECEIPT_SUFFIX := ".receipt"
 
 var _profile_id: String
 var _path := ""
+var _career_path := ""
 
 
 func _init(profile_id: String, directory: String = "user://") -> void:
@@ -20,6 +21,7 @@ func _init(profile_id: String, directory: String = "user://") -> void:
 	if directory != "user://" and (directory != "user://" + folder or not folder.is_valid_filename() or folder.begins_with(".")):
 		return
 	_path = directory.path_join("mission-progress-%s.json" % profile_id)
+	_career_path = directory.path_join("career-progress-%s.json" % profile_id)
 
 
 func load_snapshot() -> Dictionary:
@@ -34,6 +36,49 @@ func load_snapshot() -> Dictionary:
 func has_incompatible_save() -> bool:
 	return not _path.is_empty() and _has_protected_document(
 		_read_document(_path), _read_document(_path + ".bak"), _read_document(_path + RECEIPT_SUFFIX))
+
+
+func load_career() -> Dictionary:
+	if _career_path.is_empty():
+		return {}
+	var current := _validated_career(_read_document(_career_path))
+	return current if not current.is_empty() else _validated_career(_read_document(_career_path + ".bak"))
+
+
+func save_career(spent: int, lead_seen: bool) -> bool:
+	if _career_path.is_empty():
+		return false
+	var path_backup := _career_path + ".bak"
+	var current_doc := _read_document(_career_path)
+	var backup_doc := _read_document(path_backup)
+	if _protected_document(current_doc) or _protected_document(backup_doc):
+		return false
+	var current := _validated_career(current_doc)
+	if current.is_empty():
+		current = _validated_career(backup_doc)
+	if spent < int(current.get("spent", 0)) or (current.get("lead_seen", false) and not lead_seen):
+		return false
+	var document := {"version": VERSION, "profile_id": _profile_id, "career": {"spent": spent, "lead_seen": lead_seen}}
+	if _validated_career(document).is_empty() or DirAccess.make_dir_recursive_absolute(
+			ProjectSettings.globalize_path(_career_path.get_base_dir())) != OK:
+		return false
+	if not _write_atomic(_career_path, document):
+		return false
+	if not _write_atomic(path_backup, document):
+		push_warning("Career progress was saved. The backup could not be refreshed.")
+	return true
+
+
+func _validated_career(document: Dictionary) -> Dictionary:
+	if document.size() != 3 or document.get("profile_id") != _profile_id or not _supported_version(document.get("version")):
+		return {}
+	var career: Variant = document.get("career")
+	if not career is Dictionary or career.size() != 2 or not career.get("lead_seen") is bool:
+		return {}
+	var spent: Variant = career.get("spent")
+	if not (spent is int or spent is float) or not is_finite(float(spent)) or spent < 0 or spent > 1000000 or spent != floorf(float(spent)):
+		return {}
+	return {"spent": int(spent), "lead_seen": career["lead_seen"]}
 
 
 func save_snapshot(snapshot: Dictionary) -> bool:

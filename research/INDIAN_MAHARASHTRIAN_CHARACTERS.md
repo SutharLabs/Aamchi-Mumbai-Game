@@ -75,6 +75,14 @@ Rafiq's outfit uses a slate-blue short-sleeve button-through shirt with a folded
 
 Mumbai apparel listings checked on 22 November 2026 provide comparators for the camp collar, half sleeves and chinos. The listings establish contemporary garment availability. Dated Ranwar street-clothing observations and review of the outfit in motion on the target devices remain open. [Being Human camp shirt](https://www.beinghumanclothing.com/products/being-human-clothing-men-beige-self-design-camp-collar-shirt-bhmss25023-ecru-brown) · [Bombay Shirt Company half-sleeve shirts and chinos](https://bombayshirts.com/collections/essentials-travel-checklist)
 
+### Phase 3 character shape refinement
+
+Rockstar's published GTA V views informed three visual priorities for the original cast. A character needs a distinct silhouette at the normal camera distance, recognizable facial planes in a close view, and clothing that retains its shape in motion. Those are observations from public imagery. The underlying production meshes and rendering techniques remain outside the evidence. [Rockstar gameplay screenshots](https://www.rockstargames.com/newswire/article/o349k552514831/new-grand-theft-auto-v-screenshots.html) · [Rockstar protagonist artwork](https://www.rockstargames.com/newswire/article/25o2411819aok8/original-gtav-artwork-michael-franklin-trevor.html)
+
+Omkar, Mira and Rafiq each have an original head profile and hairline. The nose bridge is part of the continuous face mesh, with recessed eye sockets and modeled brow, lip and ear contours. The rounded sleeve roots transfer skin weights across the shoulder and the garment rings carry subtle folds. The rig, acquired motion clips and original attire are retained. Each body still uses one opaque vertex-colored skinned surface. Omkar uses 4,192 triangles, Mira 2,866 and Rafiq 3,072. [Character source](../prototype/character/player_character.gd) · [Godot SurfaceTool documentation](https://docs.godotengine.org/en/stable/classes/class_surfacetool.html)
+
+The same-configuration Windows Compatibility renders covered Omkar in idle, walk and jog and Rafiq from the normal Ranwar gameplay camera and in closer idle and walking views. The wardrobe probe verified the selected outfit, bone IDs, normalized weights, continuing animation and the pedestrian collision layers. Art acceptance and populated-scene performance on Android and minimum-spec Windows remain open.
+
 ## 4. Reusable base-body route
 
 MakeHuman's official [commercial-use FAQ](https://static.makehumancommunity.org/oldsite/faq/can_i_sell_models_created_with_makehuman.html) states that exported models are CC0 and can be used commercially. It is a potential original/non-celebrity base-body route if the toolchain is deliberately evaluated. Separately acquired clothing, hair, textures and community assets still need their own provenance/license records. This research did not install MakeHuman or validate a headless export pipeline.

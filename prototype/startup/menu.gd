@@ -27,6 +27,7 @@ var _map_footway := PackedVector3Array()
 var _map_position := Vector3.ZERO
 var _map_destination := Vector3.INF
 var _can_abandon_job := false
+var _session_status := ""
 var _page: StringName = &"top"
 var _canvas: ColorRect
 var _art: TextureRect
@@ -75,12 +76,13 @@ func show_home() -> void:
 	_map_footway = PackedVector3Array()
 	_map_destination = Vector3.INF
 	_can_abandon_job = false
+	_session_status = ""
 	show()
 	_show_page(&"top")
 
 
 func show_pause(character_name: String, roads: Array[PackedVector3Array], footway: PackedVector3Array,
-		position: Vector3, destination: Vector3 = Vector3.INF, can_abandon_job: bool = false) -> void:
+		position: Vector3, destination: Vector3 = Vector3.INF, can_abandon_job: bool = false, session_status: String = "") -> void:
 	_paused_menu = true
 	_character_name = character_name
 	_map_roads = roads
@@ -88,6 +90,7 @@ func show_pause(character_name: String, roads: Array[PackedVector3Array], footwa
 	_map_position = position
 	_map_destination = destination
 	_can_abandon_job = can_abandon_job
+	_session_status = session_status
 	show()
 	_show_page(&"top")
 
@@ -131,6 +134,8 @@ func _show_top() -> void:
 	if _paused_menu:
 		_label(_content, "Paused", 54, CREAM)
 		_label(_content, _character_name, 19, MUTED)
+		if not _session_status.is_empty():
+			_label(_content, _session_status, 17, GOLD)
 		_space(_content, 12)
 		_focus.call_deferred(_button(_content, "ResumeButton", "Resume", func(): resume_requested.emit(), true))
 		_route_button("MapButton", "Map", &"map")
@@ -185,7 +190,7 @@ func _show_map() -> void:
 	_label(_content, "Your position (gold marker)", 17, GOLD)
 	_label(_content, "Nagrana Lane (dashed walking route)", 17, RanwarMap.FOOTWAY)
 	if _map_destination.is_finite():
-		_label(_content, "Job marker (orange diamond)", 17, RanwarMap.DESTINATION)
+		_label(_content, "Objective (orange diamond)", 17, RanwarMap.DESTINATION)
 
 
 func _show_profiles() -> void:

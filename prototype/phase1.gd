@@ -14,6 +14,8 @@ const Pedestrian := preload("res://character/practice_pedestrian.gd")
 const Hud := preload("res://phase1_hud.gd")
 const DeliveryRoute := preload("res://mission/ranwar_delivery_route.gd")
 const MissionProgress := preload("res://mission/mission_progress.gd")
+const Delivery := preload("res://mission/ranwar_delivery.gd")
+const Career := preload("res://mission/ranwar_career.gd")
 const PLAYER_START := World.PLAYER_START
 const CAR_START := World.VEHICLE_START
 const RICKSHAW_START := World.RICKSHAW_START
@@ -24,6 +26,8 @@ const EXIT_SPEED := 0.65
 const STREET_SOLIDS := 1 | 2 | 4
 const GAMEPAD_LOOK_SPEED := 680.0
 const TRAFFIC_ENTRY_ROAD := 3 # West Waroda Road.
+const FIRST_AID := Vector3(-13.4, 0.0, 5.0)
+const MIRA_LEAD := "Mira: The parcel held receipts from the print shop. The same delivery name appears three times. I’ll ask Asha about tomorrow’s ledger."
 
 var world := World.new()
 var traffic := Traffic.new()
@@ -41,6 +45,8 @@ var startup_pause_enabled := false
 var look_sensitivity := 1.0
 var delivery_progress: MissionProgress
 var delivery: DeliveryRoute
+var career: Career
+var _mira: Pedestrian
 var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var driving: bool:
 	get:
@@ -62,7 +68,7 @@ func _ready() -> void:
 	player.name = "Walker"
 	player.position = PLAYER_START
 	add_child(player)
-	_add_pedestrian("Mira", "The open practice yard is just west of Hill Road.", 1.0, 0.08, Color("a4654d"))
+	_mira = _add_pedestrian("Mira", "The open practice yard is just west of Hill Road.", 1.0, 0.08, Color("a4654d"))
 	_add_pedestrian("Rafiq", "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.", -1.0, 0.25, Color("50617b"), true)
 	_add_practice_vehicle(car, "PracticeCar", CAR_START)
 	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
@@ -70,6 +76,8 @@ func _ready() -> void:
 	_add_practice_vehicle(scooter, "PracticeScooter", World.SCOOTER_START)
 	traffic.name = "AmbientTraffic"
 	add_child(traffic)
+	if delivery_progress != null:
+		traffic.child_entered_tree.connect(_watch_impact)
 	if ambient_traffic_enabled:
 		traffic.start(world.lane_graph.loop_for_road(TRAFFIC_ENTRY_ROAD), 26.0, camera)
 	camera.fov = 68.0
@@ -81,6 +89,10 @@ func _ready() -> void:
 		delivery.name = "RanwarParcelRun"
 		add_child(delivery)
 		delivery.setup(delivery_progress, world._gully)
+		if career == null:
+			career = Career.new(delivery_progress)
+		career.parcel_completed = delivery.flow.state == Delivery.COMPLETED
+		_add_first_aid_sign()
 	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
 	hud.interact_pressed.connect(_request_interact)
@@ -99,9 +111,11 @@ func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3) 
 	add_child(vehicle)
 	vehicle.reset_to(pose)
 	_parking_poses[vehicle] = pose
+	if delivery_progress != null:
+		_watch_impact(vehicle)
 
 
-func _add_pedestrian(speaker: String, greeting: String, side: float, offset: float, shirt: Color, wears_overshirt: bool = false) -> void:
+func _add_pedestrian(speaker: String, greeting: String, side: float, offset: float, shirt: Color, wears_overshirt: bool = false) -> Pedestrian:
 	var path := world.practice_pedestrian_path(side)
 	var pedestrian := Pedestrian.new()
 	pedestrian.name = speaker
@@ -114,6 +128,7 @@ func _add_pedestrian(speaker: String, greeting: String, side: float, offset: flo
 	pedestrian.wears_overshirt = wears_overshirt
 	add_child(pedestrian)
 	pedestrians.append(pedestrian)
+	return pedestrian
 
 
 func _add_lighting() -> void:
@@ -149,9 +164,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _reset_requested or Input.is_action_just_pressed(&"recover") or _actor_position().y < -8.0:
-		_reset_run()
-	elif _interact_requested or Input.is_action_just_pressed(&"interact"):
+	if not _resolve_recovery(delta) and (_interact_requested or Input.is_action_just_pressed(&"interact")):
 		_try_interact()
 	_reset_requested = false
 	_interact_requested = false
@@ -179,12 +192,13 @@ func _physics_process(delta: float) -> void:
 			prompt = "Dismount" if active_vehicle.is_two_wheeler else "Get out"
 			can_interact = true
 	else:
-		if delivery != null:
-			prompt = delivery.prompt_for(player.global_position)
+		prompt = _special_interaction()
 		if prompt.is_empty():
 			var nearby := _nearby_interaction()
 			if nearby is Pedestrian:
 				prompt = "Talk to %s" % nearby.display_name
+				if nearby == _mira and career != null and career.has_lead():
+					prompt = "Ask Mira about the parcel"
 			elif nearby is Vehicle:
 				var entry_label := "Mount" if nearby.is_two_wheeler else "Get in"
 				prompt = "%s the %s" % [entry_label, nearby.vehicle_label.to_lower()]
@@ -193,7 +207,117 @@ func _physics_process(delta: float) -> void:
 		prompt = _message
 		can_interact = false
 	var objective := delivery.objective(_actor_position()) if delivery != null else ""
-	hud.update_display(driving, speed, prompt, vehicle_label, can_interact, objective)
+	if objective.is_empty() and career != null and career.has_lead():
+		objective = "Talk to Mira on Hill Road · %d m" % roundi(_actor_position().distance_to(_mira.global_position))
+	hud.update_display(driving, speed, prompt, vehicle_label, can_interact, objective, _condition_status())
+
+
+func story_target() -> Vector3:
+	var destination := delivery.target() if delivery != null else Vector3.INF
+	if not destination.is_finite() and career != null and career.has_lead():
+		return _mira.global_position
+	return destination
+
+
+func session_status() -> String:
+	if career == null:
+		return ""
+	var status := "₹%d  ·  Health %d%%" % [career.cash, ceili(career.health)]
+	if career.wanted > 0:
+		status += "  ·  Police alert %d" % career.wanted
+	if career.lead_seen:
+		status += "\nLead logged · Tomorrow’s ledger"
+	return status
+
+
+func _condition_status() -> String:
+	if career == null:
+		return ""
+	var parts := PackedStringArray()
+	if career.health < Career.MAX_HEALTH:
+		parts.append("Health %d%%" % ceili(career.health))
+	if career.wanted > 0:
+		parts.append("Police alert %d" % career.wanted)
+	return "  ·  ".join(parts)
+
+
+func _special_interaction() -> String:
+	if delivery == null:
+		return ""
+	var job := delivery.prompt_for(player.global_position)
+	if not job.is_empty():
+		return job
+	if _at_first_aid() and career.health < Career.MAX_HEALTH and career.wanted == 0:
+		return "First aid · ₹%d" % Career.TREATMENT_PRICE
+	return ""
+
+
+func _at_first_aid() -> bool:
+	return player.global_position.distance_squared_to(FIRST_AID) <= 2.2 * 2.2
+
+
+func _add_first_aid_sign() -> void:
+	var sign := Label3D.new()
+	sign.name = "FirstAidSign"
+	sign.text = "FIRST AID"
+	sign.font_size = 48
+	sign.pixel_size = 0.0035
+	sign.modulate = Color("b8f2d0")
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign.position = FIRST_AID + Vector3.UP * 1.45
+	add_child(sign)
+
+
+func _watch_impact(node: Node) -> void:
+	if node is Vehicle:
+		node.impacted.connect(_on_vehicle_impact)
+
+
+func _on_vehicle_impact(vehicle: Vehicle, collider: Object, speed: float) -> void:
+	if career == null:
+		return
+	if vehicle == active_vehicle:
+		if (collider is Pedestrian or (collider is Vehicle and collider.driver_active)) and career.report_collision():
+			_show_message("Traffic collision reported · Police alert %d" % career.wanted, 3.0)
+		if speed >= 7.0:
+			career.damage(13.0 + (speed - 7.0) * 6.0)
+	elif collider == player and not driving:
+		career.damage(20.0 + (speed - 5.0) * 8.0)
+
+
+func _resolve_recovery(delta: float) -> bool:
+	var requested := _reset_requested or Input.is_action_just_pressed(&"recover")
+	var fell := _actor_position().y < -8.0
+	if career == null:
+		if requested or fell:
+			_reset_run()
+		return requested or fell
+	if career.health <= 0.0 or fell:
+		_reset_run(&"clinic")
+		return true
+	if requested:
+		_reset_run(&"detained" if career.wanted > 0 else &"")
+		return true
+	var previous_alert := career.wanted
+	var patrol := traffic.police_vehicle()
+	var seen := false
+	var stopped_near := false
+	if previous_alert > 0 and patrol != null:
+		var actor := _actor_position()
+		var distance_squared := actor.distance_squared_to(patrol.global_position)
+		if distance_squared < 42.0 * 42.0:
+			var sight := PhysicsRayQueryParameters3D.create(patrol.global_position + Vector3.UP,
+				actor + Vector3.UP, 1)
+			seen = get_world_3d().direct_space_state.intersect_ray(sight).is_empty()
+			var speed := active_vehicle.get_speed_mps() if driving else player.get_real_velocity().length()
+			stopped_near = seen and distance_squared < 8.0 * 8.0 and speed < 1.2
+	if career.step(delta, seen, stopped_near):
+		_reset_run(&"detained")
+		return true
+	traffic.set_police_alert(career.wanted, _actor_position())
+	if previous_alert > 0 and career.wanted == 0:
+		_show_message("Police alert cleared", 2.8)
+	return false
 
 
 func _request_interact() -> void:
@@ -262,12 +386,24 @@ func _try_interact() -> void:
 		_message_time = 0.0
 		return
 	if delivery != null and not delivery.prompt_for(player.global_position).is_empty():
-		_show_message(delivery.interact(), 4.0)
+		var message := delivery.interact()
+		career.parcel_completed = delivery.flow.state == Delivery.COMPLETED
+		_show_message(message, 4.0)
+		return
+	if career != null and _at_first_aid() and career.health < Career.MAX_HEALTH and career.wanted == 0:
+		var message := "First aid costs ₹%d." % Career.TREATMENT_PRICE
+		if career.cash >= Career.TREATMENT_PRICE:
+			message = "Treated · −₹%d" % Career.TREATMENT_PRICE if career.treat() else "Treatment could not be saved."
+		_show_message(message, 3.0)
 		return
 	var target := _nearby_interaction()
 	if target is Pedestrian:
-		target.begin_conversation(player.global_position, TALK_TIME)
-		_show_message("%s: %s" % [target.display_name, target.greeting], TALK_TIME)
+		if target == _mira and career != null and career.has_lead():
+			target.begin_conversation(player.global_position, 8.0)
+			_show_message(MIRA_LEAD if career.record_lead() else "Mira’s lead could not be saved. Try again.", 8.0)
+		else:
+			target.begin_conversation(player.global_position, TALK_TIME)
+			_show_message("%s: %s" % [target.display_name, target.greeting], TALK_TIME)
 		return
 	var vehicle := target as Vehicle
 	if vehicle == null:
@@ -313,7 +449,7 @@ func abandon_delivery() -> void:
 		_show_message(delivery.abandon(), 4.0)
 
 
-func _reset_run() -> void:
+func _reset_run(reason: StringName = &"") -> void:
 	active_vehicle = null
 	for vehicle: Vehicle in _parking_poses:
 		vehicle.set_driver_active(false)
@@ -328,7 +464,18 @@ func _reset_run() -> void:
 	_manual_look_time = 0.0
 	traffic.reset()
 	var message := delivery.on_recovery() if delivery != null else ""
-	_show_message(message if not message.is_empty() else "Back at the starting point")
+	if career != null and reason != &"":
+		var treatment := reason == &"clinic"
+		var fee := career.charge(Career.CLINIC_FEE if treatment else Career.POLICE_FINE)
+		career.respawn()
+		var outcome := "Clinic recovery" if treatment else "Detained"
+		if fee > 0:
+			outcome += " · −₹%d" % fee
+		elif fee < 0:
+			outcome += " · Fee could not be saved"
+		_show_message("%s. %s" % [outcome, message] if not message.is_empty() else outcome, 4.8)
+	else:
+		_show_message(message if not message.is_empty() else "Back at the starting point")
 
 
 func _update_camera(delta: float) -> void:

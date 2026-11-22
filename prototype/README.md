@@ -30,7 +30,11 @@ To try the curb crossing, drive slowly across the raised west-side curb on Hill 
 
 Launch with **F5 → Play**. Walk to the orange job marker by the vehicle bays and interact. Pick up the parcel on foot at the Hill Road end of Nagrana Lane, then follow the lane to the Waroda Road end to drop it off. You can use any practice vehicle to reach the lane, then leave it to make the handoff. The HUD shows the current destination and distance. **Pause → Map** shows an orange diamond for the next stop.
 
-**Recover** returns you to the starting point and interrupts an active job. Interact at the job board to retry the last objective. To start over, choose **Pause → Abandon job**. Objective changes save automatically to the active profile. **Main menu → Play** reopens the saved stage at the starting point. The profile keeps one completion receipt after delivery.
+Deliver the parcel to earn **₹500** and unlock **Mira’s lead** on Hill Road. Follow the orange marker and talk to Mira to learn about the print-shop ledger. The payout is awarded once per profile, and the cash balance and story lead appear in the pause menu. Existing completed parcel runs receive the payout when loaded.
+
+**Recover** returns you to the starting point and interrupts an active job. Interact at the job board to retry the last objective. To start over, choose **Pause → Abandon job**. Objective changes save automatically to the active profile. **Main menu → Play** reopens the saved stage at the starting point.
+
+High-speed impacts can injure Omkar. First aid near the vehicle bays costs **₹60** and restores health. Incapacitation returns Omkar to the recovery point and charges up to **₹100**. Hard collisions with pedestrians or moving traffic can draw a marked patrol. A nearby patrol can detain you while stopped, and **Recover** during an alert also invokes detention. The fine is up to **₹150**. Returning to the title keeps health and alert state for the running session. [Gameplay research and full rules](../research/GTA_GAMEPLAY_REFERENCES.md)
 
 ## Local smoke checks
 
@@ -41,7 +45,7 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --editor --import
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 6500 --script res://tests/phase1_smoke.gd -- --touch-preview
-& $editor --headless --path prototype --fixed-fps 60 --quit-after 4650 --script res://tests/ranwar_parcel_playtest.gd -- --touch-preview
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 6200 --script res://tests/ranwar_parcel_playtest.gd -- --touch-preview
 ```
 
 The startup smoke exercises menu navigation, profile reload, settings, Help, credits, pause and the Ranwar map. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. The parcel playtest uses isolated profiles and exercises the title-to-delivery loop, checkpoint reload and the shortcut in both directions. `--touch-preview` enables the overlay on a desktop build. When preparing an explicitly requested release, include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices. [Project license](../LICENSE)
