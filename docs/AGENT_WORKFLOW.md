@@ -15,6 +15,7 @@ Read [AGENTS.md](../AGENTS.md), [README.md](../README.md), [PROJECT_RECORD.md](P
 | How do I safely operate the remote queue? | [OVERNIGHT_MODELING.md](OVERNIGHT_MODELING.md) and `tools/remote_night.py` |
 | What was the last observed remote condition? | [OVERNIGHT_HANDOFF.md](OVERNIGHT_HANDOFF.md), its dated receipts, then a new remote `status` |
 | What licenses and local identity evidence support a candidate? | Owning research files, [reference register](../assets/references/REFERENCE_REGISTER.md), [THIRD_PARTY.md](THIRD_PARTY.md) |
+| Where can changes be committed, synced and pushed to GitHub? | [Mandatory repository rules](../AGENTS.md#mandatory-git-commit-and-push-workflow) and the procedure below |
 
 Do not turn a historical observation into current status. A launch receipt is not a completed model; a technical export is not an accepted asset; an asset is not a playable mission; a runnable scene is not an exported low-spec game.
 
@@ -28,7 +29,7 @@ The human owns scope, creative direction, driving feel, neighborhood identity, f
 | World and assets | One reference packet, one inspected archive, one model correction or one authored content file | Selected subject/year/role, rights and a defined production gate |
 | QA and research | One regression route, license check, source verification or independent code/art review | Reproducible input/build and explicit expected evidence |
 
-Assign owned files before work begins. Only one owner changes shared architecture, engine/dependency versions, save schemas, road graph formats or active queue sources at a time. Never have two workers write the same model output directory. Use isolated branches/worktrees after project version control is established; it is not yet a verified capability in this workspace. Until then, enforce explicit disjoint file ownership and preserve reviewable patches/backups.
+Assign owned files before work begins. Only one owner changes shared architecture, engine/dependency versions, save schemas, road graph formats or active queue sources at a time. Never have two workers write the same model output directory. Use task branches or isolated worktrees based on the current GitHub baseline. The integrating owner follows the publication procedure below for completed changes.
 
 A second agent can review code or a render. Human review remains necessary for handling feel, garment/architectural fidelity and the final combined experience. A knowledgeable Mumbai/Maharashtrian reviewer may be required for a specific unresolved identity question; absence of that review keeps the study unapproved.
 
@@ -47,13 +48,47 @@ Prefer one visible, reviewable outcome. A worker returns changed paths, actual v
 
 Before implementing, search the owning research/catalogue and suitable existing code. Inspect the actual repository/archive and license before adoption. Record a reuse-versus-adapt-versus-author decision by total accepted-result cost, including cleanup, integration and rework. Do not count uninspected catalogue entries as installed assets.
 
+## Git commit, synchronization and publishing
+
+The sole GitHub publishing workspace is **`/home/ubuntu/workspace/Aamchi-Mumbai-Game` on the Ubuntu VM**. The epyc24 workspace is **`/tmp/Aamchi-Mumbai-Game`**. Both remote workspaces track the same project source on `main`. Windows and epyc24 can develop, test and exchange commits. The Ubuntu VM holds the GitHub write credential. Use the [canonical GitHub repository](https://github.com/SutharLabs/Aamchi-Mumbai-Game) as `origin`.
+
+1. **Prepare the commit.** Check the branch, current GitHub `main` and worktree status. Stage the intended paths, inspect `git diff --cached`, and run `git diff --cached --check` plus the tests appropriate to the changes. Commit the reviewed result on the task branch. Keep private keys, tokens, generated build artifacts and local toolchains out of commits.
+2. **Sync both remote checkouts.** Verify the receiving worktree is clean before integrating. Transfer the reviewed commit to a task branch on epyc24 and fast-forward its `main` to that commit. Transfer the same commit to Ubuntu using Git. If the epyc24-to-Ubuntu SSH route times out, create a Git bundle from epyc24 and relay it through Windows. Verify the transferred bundle before fetching its `refs/heads/main` into `refs/remotes/epyc24/main` on Ubuntu. Fast-forward Ubuntu `main` to that ref. Keep the Ubuntu login key and the GitHub write credential on their respective machines.
+3. **Publish from Ubuntu.** For an authorized publication, confirm both remote `main` branches are clean and at the same intended commit. Fetch fresh GitHub `main` and verify it is an ancestor of the intended commit. Push with a normal fast-forward update. If a checkout is dirty, branches diverge, auth fails or GitHub rejects the update, preserve both histories and resolve the named issue before trying again. Force pushes and resets over existing work are prohibited.
+4. **Verify the result.** Read GitHub's `refs/heads/main` directly. Compare the full commit ID with `main` on Ubuntu and epyc24. Fetch the published `main` on the development checkouts to refresh their tracking refs. Confirm both remote worktrees are clean and their tracked files' SHA-256 hashes match. Preserve `.gitattributes` so map and job checksums survive platform changes. Report the published commit and checks actually done.
+
+Use the following command from the **Ubuntu VM** after the synchronization check. The command uses the VM's existing Git credential store through a read-only helper for this push. It exits if the repository, branch, cleanliness, imported epyc24 commit or fast-forward check fails.
+
+```sh
+(
+    set -eu
+    cd /home/ubuntu/workspace/Aamchi-Mumbai-Game
+    repo=https://github.com/SutharLabs/Aamchi-Mumbai-Game.git
+    test "$(git remote get-url origin)" = "$repo"
+    test "$(git remote get-url --push origin)" = "$repo"
+    test "$(git branch --show-current)" = main
+    test -z "$(git status --porcelain)"
+    commit=$(git rev-parse HEAD)
+    test "$commit" = "$(git rev-parse refs/remotes/epyc24/main)"
+    export GIT_TERMINAL_PROMPT=0
+    git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+    git merge-base --is-ancestor origin/main "$commit"
+    git -c credential.helper= \
+        -c 'credential.helper=!f() { if [ "$1" = get ]; then git credential-store get; fi; }; f' \
+        push --porcelain origin refs/heads/main:refs/heads/main
+    published=$(git ls-remote --exit-code origin refs/heads/main | cut -f1)
+    test "$published" = "$commit"
+    printf 'Verified GitHub main at %s\n' "$published"
+)
+```
+
 ## Day and night cycle
 
 1. **Review:** the human plays the latest known-good build when one exists, reviews new art and selects the next bottleneck. Track technical completions separately from A0-A5 asset acceptance.
 2. **Prepare:** agents write small ready tasks and durable specs, check provenance, run focused local validation and preserve a rollback point. Clarify only dependencies that actually prevent progress; continue independent work.
 3. **Run bounded work:** interactive agents handle reasoning/code/research during their available sessions. The detached supervisor executes reviewed Blender scripts at night with saved limits/checkpoints. It does not invent additional tasks.
 4. **Collect and assess:** run remote status/collect, inspect evidence, read failed logs and review the combined output. A busy shared lock is idle time, not a model failure.
-5. **Integrate:** accept a bounded number of changes, run relevant import/play/save/performance checks and update the owning progress/asset records. Pause new variants if review backlog grows.
+5. **Integrate:** accept a bounded number of changes, run relevant import/play/save/performance checks and update the owning progress/asset records. Follow the [Git workflow](#git-commit-synchronization-and-publishing) for publication. Pause new variants if review backlog grows.
 
 The remote node runs one heavy model job at a time using its shared heavy-work lock. Do not start parallel Blender jobs to bypass that lock. Broader agent concurrency can still cover independent references, code review or task preparation without competing for that machine.
 
@@ -61,7 +96,7 @@ The remote node runs one heavy model job at a time using its shared heavy-work l
 
 A minimal status-and-review prompt is sufficient when the workspace records are intact:
 
-> Open C:\Suresh\Software\MumbaiStreetGame. Read AGENTS.md and docs/OVERNIGHT_HANDOFF.md, then use the runbook to query and collect the remote night queue. Review completed models against their specs and A0-A5 gates. Preserve state and historical receipts. Report concrete defects and update the handoff; do not deploy changes before inspecting the running worker.
+> Open C:\Suresh\Software\Aamchi-Mumbai-Game. Read AGENTS.md and docs/OVERNIGHT_HANDOFF.md, then use the runbook to query and collect the remote night queue. Review completed models against their specs and A0-A5 gates. Preserve state and historical receipts. Report concrete defects and update the handoff; do not deploy changes before inspecting the running worker.
 
 The agent should then:
 
