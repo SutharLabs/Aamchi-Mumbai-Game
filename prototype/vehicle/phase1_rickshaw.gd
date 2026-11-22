@@ -10,6 +10,7 @@ var _driver := DriverBody.new()
 
 
 func _init() -> void:
+	super()
 	name = "Phase1Rickshaw"
 	vehicle_label = "Auto-rickshaw"
 	exit_side_offset = 1.30

@@ -7,6 +7,7 @@ const WHEEL_WIDTH := 0.19
 
 
 func _init() -> void:
+	super()
 	name = "Phase1Car"
 	vehicle_label = "Car"
 	exit_side_offset = 1.48

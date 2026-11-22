@@ -16,6 +16,7 @@ const MAX_CURB_RISE: float = 0.25
 const STEP_PROBE_MARGIN: float = 0.006
 const STEP_EDGE_CLEARANCE: float = 0.055
 const WORLD_LAYER: int = 1
+const PERSON_LAYER: int = 2
 var wheel_radius: float = 0.32
 var vehicle_label: String = "Vehicle"
 var is_two_wheeler: bool = false
@@ -40,9 +41,9 @@ var _step_contact := KinematicCollision3D.new()
 
 func _init() -> void:
 	name = "Phase1Vehicle"
-	# Physics layer bit values: world=1, walking player=2, vehicle=4.
+	# Physics layer bit values: world=1, people=2, vehicle=4.
 	collision_layer = 4
-	collision_mask = WORLD_LAYER | 2 | 4
+	collision_mask = WORLD_LAYER | PERSON_LAYER | 4
 	floor_snap_length = 0.28
 	floor_max_angle = deg_to_rad(34.0)
 	floor_stop_on_slope = true
@@ -156,11 +157,17 @@ func _try_step(motion: Vector3) -> bool:
 	var across_edge := motion + direction * STEP_EDGE_CLEARANCE
 	if not test_move(start, across_edge, _step_contact, safe_margin):
 		return false
-	var floor_dot := cos(floor_max_angle)
-	var wall_normal := _step_contact.get_normal().y
-	if wall_normal < -0.05 or wall_normal >= floor_dot or not _is_static_world_contact():
-		return false
 	if _step_contact.get_travel().dot(direction) > motion.length() + safe_margin:
+		return false
+	var hit := _step_contact.get_collider() as CollisionObject3D
+	var normal := _step_contact.get_normal()
+	if hit != null and (hit.collision_layer & PERSON_LAYER) != 0 and direction.dot(normal) < -0.1:
+		# Stop before a frontal contact. Sliding the chassis into a capsule can push it aside.
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return false
+	var floor_dot := cos(floor_max_angle)
+	if normal.y < -0.05 or normal.y >= floor_dot or not _is_static_world_contact():
 		return false
 
 	# Sweep the full chassis upward, over the curb and down to support. Each

@@ -5,6 +5,7 @@ const WALK_SPEED := 1.12
 const RUN_SPEED := 2.18
 const BODY_HEIGHT := 1.68
 const BODY_RADIUS := 0.31
+const STREET_SOLIDS := 1 | 2 | 4
 
 var body_shape := CapsuleShape3D.new()
 var visual := Visual.new()
@@ -15,7 +16,7 @@ var direction := Vector3.ZERO
 
 func _ready() -> void:
 	collision_layer = 2
-	collision_mask = 1 | 4
+	collision_mask = STREET_SOLIDS
 	floor_snap_length = 0.22
 	body_shape.radius = BODY_RADIUS
 	body_shape.height = BODY_HEIGHT
@@ -31,7 +32,7 @@ func set_on_foot(enabled: bool) -> void:
 	active = enabled
 	visible = enabled
 	collision_layer = 2 if enabled else 0
-	collision_mask = 1 | 4 if enabled else 0
+	collision_mask = STREET_SOLIDS if enabled else 0
 	velocity = Vector3.ZERO
 	direction = Vector3.ZERO
 	running = false

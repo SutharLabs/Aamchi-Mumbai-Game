@@ -17,6 +17,7 @@ func _run() -> void:
 	_expect(game.player.is_on_floor(), "player settles on the starting street")
 	_expect(not game.driving, "starts on foot")
 	await _check_locomotion()
+	await _check_pedestrians()
 	await _tap(&"interact")
 	_expect(not game.driving, "interaction out of reach is ignored")
 	var start: Vector3 = game.player.position
@@ -62,6 +63,7 @@ func _run() -> void:
 	await _check_two_wheeler(game.scooter, "scooter")
 	if game.hud.touch_enabled:
 		await _check_touch()
+		await _check_touch_pedestrian()
 		await _check_touch_rickshaw()
 		await _check_touch_two_wheeler(game.motorcycle, "motorcycle")
 		await _check_touch_two_wheeler(game.scooter, "scooter")
@@ -89,6 +91,8 @@ func _check_locomotion() -> void:
 	var pedestrian_start := pedestrian.position
 	var clear_pedestrian_paths := true
 	var space := game.get_world_3d().direct_space_state
+	var walking_mask: int = game.player.collision_mask
+	game.player.collision_mask = 1 | 4
 	for walker: Node3D in game.pedestrians:
 		for point: Vector3 in [walker.path_start, walker.path_end]:
 			var ray := PhysicsRayQueryParameters3D.create(point + Vector3.UP, point - Vector3.UP, 1)
@@ -98,6 +102,7 @@ func _check_locomotion() -> void:
 		var start := Transform3D(Basis.IDENTITY, walker.path_start + Vector3.UP * 0.05)
 		if game.player.test_move(start, walker.path_end - walker.path_start):
 			clear_pedestrian_paths = false
+	game.player.collision_mask = walking_mask
 	_expect(clear_pedestrian_paths, "both pedestrian routes stay grounded and clear of obstacles")
 	var thigh := skeleton.find_bone("LeftUpperLeg")
 	Input.action_press(&"move_right")
@@ -113,6 +118,55 @@ func _check_locomotion() -> void:
 	Input.action_release(&"move_right")
 	await _frames(22)
 	_expect(animation.current_animation == &"idle", "locomotion returns to idle on release")
+	await _tap(&"recover")
+
+
+func _check_pedestrians() -> void:
+	var pedestrian: CharacterBody3D = game.pedestrians[0]
+	game.player.global_position = pedestrian.global_position + Vector3(1.50, 0.06, 0.0)
+	game._message_time = 0.0
+	await _frames(8)
+	_expect(game.hud._prompt.text == "Talk to %s" % pedestrian.display_name, "walking near a pedestrian shows the Talk prompt")
+	var obstacle := StaticBody3D.new()
+	var collider := CollisionShape3D.new()
+	var slab := BoxShape3D.new()
+	slab.size = Vector3(0.12, 1.0, 1.2)
+	collider.shape = slab
+	obstacle.add_child(collider)
+	obstacle.position = game.player.global_position.lerp(pedestrian.global_position, 0.5) + Vector3.UP
+	game.add_child(obstacle)
+	await _frames(3)
+	await _tap(&"interact")
+	_expect(game._message_time <= 0.0, "a wall blocks talking through it")
+	obstacle.queue_free()
+	await _frames(3)
+	await _tap(&"interact")
+	_expect(game._message == "%s: %s" % [pedestrian.display_name, pedestrian.greeting], "interact starts the pedestrian's dialogue")
+	var chatting_position := pedestrian.global_position
+	await _frames(20)
+	_expect(pedestrian.global_position.distance_to(chatting_position) < 0.04 and pedestrian.animation_player.current_animation == &"idle", "pedestrian pauses walking during the conversation")
+
+	var contact := KinematicCollision3D.new()
+	var walking_probe := Transform3D(Basis.IDENTITY, chatting_position + Vector3(1.5, 0.065, 0.0))
+	_expect(game.player.test_move(walking_probe, Vector3.LEFT * 1.5, contact) and contact.get_collider() == pedestrian, "pedestrians block the walking player")
+	game.player.set_on_foot(false)
+	# Isolate the vehicle contact from curbs and buildings near the dialogue route.
+	var yard_contact := Vector3(-20.0, 0.02, -18.0)
+	var approach := Transform3D(Basis.IDENTITY, yard_contact + Vector3(0.0, 0.55, 5.5))
+	pedestrian.global_position = yard_contact
+	pedestrian.begin_conversation(approach.origin, 4.0)
+	await _frames(6)
+	for vehicle: Node3D in [game.car, game.rickshaw, game.motorcycle, game.scooter]:
+		var blocked: bool = vehicle.test_move(approach, Vector3.FORWARD * 5.5, contact)
+		_expect(blocked and contact.get_collider() == pedestrian, "%s collision detects pedestrians" % vehicle.vehicle_label)
+
+	game.car.reset_to(approach)
+	game.car.set_driver_active(true)
+	await _frames(10)
+	game.car.set_controls(0.22, 0.0, false)
+	await _frames(155)
+	_expect(game.car.global_position.z > yard_contact.z + 1.9 and game.car.global_position.z < yard_contact.z + 3.0 and game.car.get_speed_mps() < 0.2,
+		"a moving car stops against the pedestrian without passing through")
 	await _tap(&"recover")
 
 
@@ -149,7 +203,7 @@ func _check_street_curbs() -> void:
 	var hill_road: PackedVector3Array = game.world._roads[0]
 	var along := (hill_road[1] - hill_road[0]).normalized()
 	var west := Vector3(along.z, 0.0, -along.x)
-	var road_center := hill_road[0] + along * 23.0
+	var road_center := hill_road[0] + along * 35.0
 	var heading := Basis(Vector3.UP, atan2(-west.x, -west.z))
 	for vehicle: Node3D in [game.car, game.rickshaw, game.motorcycle, game.scooter]:
 		var parking: Transform3D = vehicle.global_transform
@@ -324,6 +378,19 @@ func _check_touch() -> void:
 	_touch(surface, 2, reset_button.get_center(), false)
 	await _frames(4)
 	_expect(absf(game.player.position.z - 5.0) < 0.1, "touch reset runs through the HUD signal")
+
+
+func _check_touch_pedestrian() -> void:
+	var pedestrian: CharacterBody3D = game.pedestrians[0]
+	game.player.global_position = pedestrian.global_position + Vector3(1.5, 0.06, 0.0)
+	await _frames(7)
+	var surface: Control = game.hud._touch_surface
+	var interact_point: Vector2 = game.hud._button_rect(0).get_center()
+	_touch(surface, 5, interact_point, true)
+	_touch(surface, 5, interact_point, false)
+	await _frames(3)
+	_expect(not game.driving and game._message.begins_with("%s: " % pedestrian.display_name), "touch Interact talks to a nearby pedestrian")
+	await _tap(&"recover")
 
 
 func _check_touch_rickshaw() -> void:

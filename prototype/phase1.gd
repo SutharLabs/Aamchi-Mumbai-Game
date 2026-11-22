@@ -15,7 +15,10 @@ const PLAYER_START := World.PLAYER_START
 const CAR_START := World.VEHICLE_START
 const RICKSHAW_START := World.RICKSHAW_START
 const ENTER_RANGE := 3.2
+const TALK_RANGE := 2.35
+const TALK_TIME := 4.8
 const EXIT_SPEED := 0.65
+const STREET_SOLIDS := 1 | 2 | 4
 
 var world := World.new()
 var player := Walker.new()
@@ -51,8 +54,8 @@ func _ready() -> void:
 	player.name = "Walker"
 	player.position = PLAYER_START
 	add_child(player)
-	_add_pedestrian("HillRoadWalker", 1.0, 0.08, Color("a4654d"))
-	_add_pedestrian("HillRoadReturnWalker", -1.0, 0.25, Color("50617b"))
+	_add_pedestrian("Mira", "The open practice yard is just west of Hill Road.", 1.0, 0.08, Color("a4654d"))
+	_add_pedestrian("Rafiq", "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.", -1.0, 0.25, Color("50617b"))
 	_add_practice_vehicle(car, "PracticeCar", CAR_START)
 	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
 	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", World.MOTORCYCLE_START)
@@ -81,10 +84,12 @@ func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3) 
 	_parking_poses[vehicle] = pose
 
 
-func _add_pedestrian(node_name: String, side: float, offset: float, shirt: Color) -> void:
+func _add_pedestrian(speaker: String, greeting: String, side: float, offset: float, shirt: Color) -> void:
 	var path := world.practice_pedestrian_path(side)
 	var pedestrian := Pedestrian.new()
-	pedestrian.name = node_name
+	pedestrian.name = speaker
+	pedestrian.display_name = speaker
+	pedestrian.greeting = greeting
 	pedestrian.path_start = path[0]
 	pedestrian.path_end = path[1]
 	pedestrian.start_fraction = offset
@@ -157,7 +162,7 @@ func _physics_process(delta: float) -> void:
 		player.running = Input.is_action_pressed(&"run")
 	_update_camera(delta)
 	_message_time = maxf(0.0, _message_time - delta)
-	var prompt := "Walk up to a parked vehicle"
+	var prompt := Hud.APPROACH_PROMPT
 	var speed := 0.0
 	var vehicle_label := ""
 	if driving:
@@ -168,8 +173,10 @@ func _physics_process(delta: float) -> void:
 		else:
 			prompt = "Stop before getting out" if speed > EXIT_SPEED else "Get out"
 	else:
-		var nearby := _nearby_vehicle()
-		if nearby != null:
+		var nearby := _nearby_interaction()
+		if nearby is Pedestrian:
+			prompt = "Talk to %s" % nearby.display_name
+		elif nearby is Vehicle:
 			var entry_label := "Mount" if nearby.is_two_wheeler else "Get in"
 			prompt = "%s the %s" % [entry_label, nearby.vehicle_label.to_lower()]
 	if _message_time > 0.0:
@@ -206,6 +213,26 @@ func _nearby_vehicle() -> Vehicle:
 	return best
 
 
+func _nearby_interaction() -> PhysicsBody3D:
+	var best: PhysicsBody3D = _nearby_vehicle()
+	var distance_limit := TALK_RANGE * TALK_RANGE
+	if best != null:
+		distance_limit = minf(distance_limit, player.global_position.distance_squared_to(best.global_position))
+	for pedestrian in pedestrians:
+		var distance := player.global_position.distance_squared_to(pedestrian.global_position)
+		if distance < distance_limit and _can_reach(pedestrian, Vector3.UP):
+			best = pedestrian
+			distance_limit = distance
+	return best
+
+
+func _can_reach(target: PhysicsBody3D, offset: Vector3) -> bool:
+	var reach := PhysicsRayQueryParameters3D.create(
+		player.global_position + Vector3.UP, target.global_position + offset, STREET_SOLIDS)
+	reach.exclude = [player.get_rid(), target.get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(reach).is_empty()
+
+
 func _try_interact() -> void:
 	if driving:
 		if active_vehicle.get_speed_mps() > EXIT_SPEED:
@@ -222,13 +249,15 @@ func _try_interact() -> void:
 		active_vehicle = null
 		_message_time = 0.0
 		return
-	var vehicle := _nearby_vehicle()
+	var target := _nearby_interaction()
+	if target is Pedestrian:
+		target.begin_conversation(player.global_position, TALK_TIME)
+		_show_message("%s: %s" % [target.display_name, target.greeting], TALK_TIME)
+		return
+	var vehicle := target as Vehicle
 	if vehicle == null:
 		return
-	var reach := PhysicsRayQueryParameters3D.create(
-		player.global_position + Vector3.UP, vehicle.global_position + Vector3.UP * 0.3, 1 | 4)
-	reach.exclude = [vehicle.get_rid()]
-	if not get_world_3d().direct_space_state.intersect_ray(reach).is_empty():
+	if not _can_reach(vehicle, Vector3.UP * 0.3):
 		_show_message("Move closer to the vehicle from a clear side")
 		return
 	player.set_on_foot(false)
@@ -253,15 +282,15 @@ func _find_exit(vehicle: Vehicle) -> Vector3:
 		var clearance := PhysicsShapeQueryParameters3D.new()
 		clearance.shape = player.body_shape
 		clearance.transform = Transform3D(Basis.IDENTITY, feet + Vector3.UP * Walker.BODY_HEIGHT * 0.5)
-		clearance.collision_mask = 1 | 4
+		clearance.collision_mask = STREET_SOLIDS
 		if space.intersect_shape(clearance, 1).is_empty():
 			return feet
 	return Vector3.INF
 
 
-func _show_message(message: String) -> void:
+func _show_message(message: String, duration := 2.3) -> void:
 	_message = message
-	_message_time = 2.3
+	_message_time = duration
 
 
 func _reset_run() -> void:
@@ -269,6 +298,8 @@ func _reset_run() -> void:
 	for vehicle: Vehicle in _parking_poses:
 		vehicle.set_driver_active(false)
 		vehicle.reset_to(_parking_poses[vehicle])
+	for pedestrian in pedestrians:
+		pedestrian.reset_to_path()
 	player.global_position = PLAYER_START
 	player.rotation = Vector3.ZERO
 	player.set_on_foot(true)

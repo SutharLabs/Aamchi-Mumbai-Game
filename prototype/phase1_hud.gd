@@ -5,6 +5,8 @@ signal reset_pressed
 signal pause_pressed
 signal look_dragged(relative: Vector2)
 
+const APPROACH_PROMPT := "Approach a pedestrian or parked vehicle"
+
 var touch_enabled := false
 var pause_enabled := false
 var move_axis := Vector2.ZERO
@@ -57,7 +59,7 @@ func _ready() -> void:
 	_help.add_theme_color_override("font_color", Color("deebef"))
 	_help.add_theme_font_size_override("font_size", 15)
 	details.add_child(_help)
-	update_display(false, 0.0, "Walk up to a parked vehicle", "")
+	update_display(false, 0.0, APPROACH_PROMPT, "")
 	if touch_enabled:
 		_touch_surface = Control.new()
 		canvas.add_child(_touch_surface)
