@@ -28,6 +28,7 @@ func _init() -> void:
 	_build_collision(Vector3(1.30, 1.65, 2.70), Vector3(0.0, 0.325, 0.0))
 	_build_bodywork()
 	_driver.name = "SeatedDriver"
+	_driver.wears_dhotar = true
 	_driver.scale = Vector3.ONE * DRIVER_SCALE
 	_driver.position = Vector3(0.0, 0.245 - 0.90 * DRIVER_SCALE, -0.185)
 	_driver.hide()

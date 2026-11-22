@@ -5,15 +5,17 @@ signal reset_pressed
 signal pause_pressed
 signal look_dragged(relative: Vector2)
 
-const APPROACH_PROMPT := "Approach a pedestrian or parked vehicle"
+const PROMPT_WIDTH := 342.0
 
 var touch_enabled := false
 var pause_enabled := false
 var move_axis := Vector2.ZERO
 var brake_held := false
-var _mode := Label.new()
+var _status_panel: PanelContainer
+var _speed := Label.new()
+var _prompt_row := HBoxContainer.new()
+var _interact_key := Label.new()
 var _prompt := Label.new()
-var _help := Label.new()
 var _touch_surface: Control
 var _move_finger := -1
 var _look_finger := -1
@@ -27,39 +29,29 @@ func _ready() -> void:
 	add_child(canvas)
 	canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var panel := PanelContainer.new()
-	panel.position = Vector2(22, 20)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var decoration := StyleBoxFlat.new()
-	decoration.bg_color = Color("132433e8")
-	decoration.border_color = Color("d8a145")
-	decoration.border_width_left = 4
-	decoration.corner_radius_top_right = 8
-	decoration.corner_radius_bottom_right = 8
-	decoration.content_margin_left = 16.0
-	decoration.content_margin_right = 17.0
-	decoration.content_margin_top = 12.0
-	decoration.content_margin_bottom = 12.0
-	panel.add_theme_stylebox_override("panel", decoration)
-	canvas.add_child(panel)
+	_status_panel = _card()
+	_status_panel.position = Vector2(18, 18)
+	canvas.add_child(_status_panel)
 	var details := VBoxContainer.new()
 	details.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	details.add_theme_constant_override("separation", 4)
-	panel.add_child(details)
-	var title := Label.new()
-	title.text = "Aamchi Mumbai Game"
-	title.add_theme_font_size_override("font_size", 25)
-	details.add_child(title)
-	_mode.add_theme_color_override("font_color", Color("b6c7d6"))
-	_mode.add_theme_font_size_override("font_size", 16)
-	details.add_child(_mode)
+	_status_panel.add_child(details)
+	_speed.add_theme_color_override("font_color", Color("deebef"))
+	_speed.add_theme_font_size_override("font_size", 17)
+	details.add_child(_speed)
+	details.add_child(_prompt_row)
+	_prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prompt_row.add_theme_constant_override("separation", 8)
+	_interact_key.text = "E"
+	_interact_key.add_theme_color_override("font_color", Color("deebef"))
+	_interact_key.add_theme_font_size_override("font_size", 17)
+	_prompt_row.add_child(_interact_key)
 	_prompt.add_theme_color_override("font_color", Color("ffd07a"))
-	_prompt.add_theme_font_size_override("font_size", 19)
-	details.add_child(_prompt)
-	_help.add_theme_color_override("font_color", Color("deebef"))
-	_help.add_theme_font_size_override("font_size", 15)
-	details.add_child(_help)
-	update_display(false, 0.0, APPROACH_PROMPT, "")
+	_prompt.add_theme_font_size_override("font_size", 17)
+	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_prompt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_prompt_row.add_child(_prompt)
+	update_display(false, 0.0, "", "", false)
 	if touch_enabled:
 		_touch_surface = Control.new()
 		canvas.add_child(_touch_surface)
@@ -67,25 +59,54 @@ func _ready() -> void:
 		_touch_surface.mouse_filter = Control.MOUSE_FILTER_STOP
 		_touch_surface.gui_input.connect(_touch_input)
 		_touch_surface.draw.connect(_draw_touch)
+	elif pause_enabled:
+		var pause_card := _card()
+		pause_card.name = "PauseHint"
+		canvas.add_child(pause_card)
+		var pause_hint := Label.new()
+		pause_hint.text = "Esc  Pause"
+		pause_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		pause_hint.add_theme_font_size_override("font_size", 15)
+		pause_card.add_child(pause_hint)
+		pause_card.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		pause_card.offset_left = -112.0
+		pause_card.offset_top = 18.0
+		pause_card.offset_right = -18.0
+		pause_card.offset_bottom = 18.0 + pause_card.get_combined_minimum_size().y
 
 
-func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String) -> void:
-	var mode := "Ranwar practice route  /  On foot"
-	if driving:
-		mode = "%s  /  %d km/h" % [vehicle_label, roundi(speed * 3.6)]
-	if _mode.text != mode:
-		_mode.text = mode
+func _card() -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var decoration := StyleBoxFlat.new()
+	decoration.bg_color = Color("132433e8")
+	decoration.set_corner_radius_all(5)
+	decoration.content_margin_left = 10.0
+	decoration.content_margin_right = 10.0
+	decoration.content_margin_top = 5.0
+	decoration.content_margin_bottom = 5.0
+	panel.add_theme_stylebox_override("panel", decoration)
+	return panel
+
+
+func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String, can_interact: bool) -> void:
+	var speed_text := "%s  ·  %d km/h" % [vehicle_label, roundi(speed * 3.6)] if driving else ""
+	var show_key := can_interact and not touch_enabled
+	var changed := _speed.text != speed_text or _prompt.text != prompt or _interact_key.visible != show_key
+	if _speed.text != speed_text:
+		_speed.text = speed_text
 	if _prompt.text != prompt:
 		_prompt.text = prompt
-	var help := "WASD  Move     Shift  Jog     Mouse  Look     E  Interact     R  Reset"
-	if driving:
-		help = "WASD / Arrows  Drive     Space  Brake     E  Exit when stopped     R  Reset"
-	if touch_enabled:
-		help = "Left stick  Drive     Right area  Look" if driving else "Left stick  Walk     Right area  Look"
-	elif pause_enabled:
-		help += "     Esc  Pause"
-	if _help.text != help:
-		_help.text = help
+		var font := _prompt.get_theme_font("font")
+		var font_size := _prompt.get_theme_font_size("font_size")
+		var text_width := font.get_string_size(prompt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		_prompt.custom_minimum_size.x = minf(ceilf(text_width) + 1.0, PROMPT_WIDTH)
+	_speed.visible = driving
+	_prompt_row.visible = not prompt.is_empty()
+	_interact_key.visible = show_key
+	_status_panel.visible = driving or _prompt_row.visible
+	if changed and _status_panel.visible:
+		_status_panel.reset_size.call_deferred()
 
 
 func _notification(what: int) -> void:

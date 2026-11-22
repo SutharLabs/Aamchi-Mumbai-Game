@@ -32,6 +32,15 @@ func _run() -> void:
 	_key(KEY_ESCAPE)
 	await _settle()
 	_expect(_button("PlayButton") != null, "Escape from credits returns home")
+	_press("HelpButton")
+	await _settle()
+	_expect(_has_label("Controls") and _has_label("On foot") and _has_label("Driving"), "title Help opens the controls guide")
+	var touch_preview := OS.has_feature("mobile") or "--touch-preview" in OS.get_cmdline_user_args()
+	_expect(_has_label("Left stick") if touch_preview else _has_label("WASD / arrows"), "Help lists the active platform controls")
+	_expect(root.gui_get_focus_owner() == _button("BackButton"), "Help focuses the Back button")
+	_press("BackButton")
+	await _settle()
+	_expect(_button("PlayButton") != null, "Help Back returns to the title")
 	_press("ProfilesButton")
 	await _settle()
 	var field := app.menu.find_child("ProfileNameInput", true, false) as LineEdit
@@ -89,13 +98,28 @@ func _run() -> void:
 	app.gameplay._apply_look(Vector2(50.0, 0.0))
 	_expect(is_equal_approx(absf(angle_difference(yaw, app.gameplay._yaw)), 50.0 * 0.0031 * 1.35), "sensitivity scales the gameplay camera")
 	var map_credit_found := false
+	var controls_list_found := false
 	for label: Label in app.gameplay.hud.find_children("*", "Label", true, false):
 		map_credit_found = map_credit_found or label.text.contains("OpenStreetMap")
+		controls_list_found = controls_list_found or label.text.contains("WASD") or label.text.contains("Left stick")
 	_expect(not map_credit_found, "map credit stays off the normal driving HUD")
+	_expect(not controls_list_found, "full controls stay off the gameplay HUD")
+	if not touch_preview:
+		var pause_hint := app.gameplay.hud.find_child("PauseHint", true, false) as PanelContainer
+		_expect(pause_hint != null and pause_hint.size.x <= 110.0 and pause_hint.position.x > pause_hint.get_parent().size.x * 0.75, "desktop Pause hint stays compact at the top right")
 	_key(KEY_ESCAPE)
 	await _settle()
 	_expect(paused and app.menu.visible and _button("ResumeButton") != null, "Escape pauses and opens menu")
+	_expect(_has_label(app.gameplay.player.display_name), "pause shows the protagonist's name")
+	_expect(not app.gameplay.hud.visible, "pause menu hides the gameplay HUD")
 	await _capture("startup-paused.png")
+	_press("HelpButton")
+	await _settle()
+	_expect(_has_label("Controls") and paused, "Help is reachable while paused")
+	await _capture("startup-help.png")
+	_key(KEY_ESCAPE)
+	await _settle()
+	_expect(_button("ResumeButton") != null and paused, "Escape closes Help before resuming play")
 	_press("CreditsButton")
 	await _settle()
 	_expect(_has_label("Map data") and paused, "credits reachable from pause")
@@ -104,7 +128,7 @@ func _run() -> void:
 	_expect(_button("ResumeButton") != null and paused, "Escape closes paused subpage first")
 	_press("ResumeButton")
 	await _settle()
-	_expect(not paused and not app.menu.visible, "resume restores play")
+	_expect(not paused and not app.menu.visible and app.gameplay.hud.visible, "resume restores play and HUD")
 	if app.gameplay.hud.touch_enabled:
 		var hud: CanvasLayer = app.gameplay.hud
 		hud.move_axis = Vector2.UP

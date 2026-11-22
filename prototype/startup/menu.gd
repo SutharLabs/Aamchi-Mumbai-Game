@@ -18,6 +18,7 @@ const GOLD := Color("f3c684")
 
 var preferences: Node
 var _paused_menu := false
+var _character_name := ""
 var _page: StringName = &"top"
 var _canvas: ColorRect
 var _art: TextureRect
@@ -63,8 +64,9 @@ func show_home() -> void:
 	_show_page(&"top")
 
 
-func show_pause() -> void:
+func show_pause(character_name: String) -> void:
 	_paused_menu = true
+	_character_name = character_name
 	show()
 	_show_page(&"top")
 
@@ -95,6 +97,7 @@ func _show_page(page: StringName) -> void:
 	match page:
 		&"profiles": _show_profiles()
 		&"settings": _show_settings()
+		&"help": _show_help()
 		&"credits": _show_credits()
 		_: _show_top()
 
@@ -102,10 +105,11 @@ func _show_page(page: StringName) -> void:
 func _show_top() -> void:
 	if _paused_menu:
 		_label(_content, "Paused", 54, CREAM)
-		_label(_content, "Playing as %s" % preferences.active_profile_name, 19, MUTED).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		_label(_content, _character_name, 19, MUTED)
 		_space(_content, 12)
 		_focus.call_deferred(_button(_content, "ResumeButton", "Resume", func(): resume_requested.emit(), true))
 		_route_button("SettingsButton", "Settings", &"settings")
+		_route_button("HelpButton", "Help", &"help")
 		_route_button("CreditsButton", "Credits", &"credits")
 		_button(_content, "MainMenuButton", "Main menu", func(): main_menu_requested.emit())
 		return
@@ -133,11 +137,12 @@ func _show_top() -> void:
 		var marathi := _label(name_meaning, "आमची मुंबई", 24, GOLD)
 		marathi.add_theme_font_override("font", load(DEVANAGARI) as Font)
 	_label(name_meaning, "Our Mumbai", 20, GOLD)
-	_label(_content, "Playing as %s" % preferences.active_profile_name, 17, MUTED).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_label(_content, "Profile  ·  %s" % preferences.active_profile_name, 17, MUTED).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_space(_content, 7)
 	_focus.call_deferred(_button(_content, "PlayButton", "Play", func(): play_requested.emit(), true))
 	_route_button("ProfilesButton", "Profiles", &"profiles")
 	_route_button("SettingsButton", "Settings", &"settings")
+	_route_button("HelpButton", "Help", &"help")
 	_route_button("CreditsButton", "Credits", &"credits")
 	_button(_content, "QuitButton", "Quit", func(): quit_requested.emit())
 
@@ -244,6 +249,50 @@ func _slider(node_name: String, caption: String, minimum: float, maximum: float,
 
 func _setting_value(value: float, percent: bool) -> String:
 	return "%d%%" % roundi(value * 100.0) if percent else "%.2f×" % value
+
+
+func _show_help() -> void:
+	_page_header("Controls")
+	_focus.call_deferred(_back_button())
+	if OS.has_feature("mobile") or "--touch-preview" in OS.get_cmdline_user_args():
+		_control_group("On foot", {
+			"Left stick": "Walk",
+			"Drag the right side": "Look around",
+			"Interact": "Talk, enter or mount",
+		})
+		_control_group("Driving", {
+			"Left stick": "Steer and control speed",
+			"Brake": "Slow down and stop",
+			"Interact": "Exit when stopped",
+		})
+		_control_group("General", {"Reset": "Return to the start", "Pause": "Open the pause menu"})
+	else:
+		_control_group("On foot", {
+			"WASD / arrows": "Walk",
+			"Shift": "Jog while moving",
+			"Mouse": "Look around",
+			"E": "Talk, enter or mount",
+		})
+		_control_group("Driving", {
+			"WASD / arrows": "Steer and control speed",
+			"Space": "Brake",
+			"E": "Exit when stopped",
+		})
+		_control_group("General", {"R": "Return to the start", "Esc": "Pause or go back"})
+
+
+func _control_group(title: String, bindings: Dictionary) -> void:
+	_label(_content, title, 22, GOLD)
+	var table := GridContainer.new()
+	table.columns = 2
+	table.add_theme_constant_override("h_separation", 18)
+	table.add_theme_constant_override("v_separation", 7)
+	_content.add_child(table)
+	for binding: String in bindings:
+		_label(table, binding, 17, CREAM)
+		var action := _label(table, bindings[binding], 17, MUTED)
+		action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
 func _show_credits() -> void:

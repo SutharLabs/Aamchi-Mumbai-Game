@@ -92,7 +92,7 @@ func _build_rider(hips: Vector3, ankles: Vector3, step_through: bool) -> void:
 	rider.position = hips
 	_ankle_point = ankles
 	_step_through = step_through
-	_rider_model.shirt_color = Color("55716b")
+	_rider_model.wears_dhotar = true
 	rider.add_child(_rider_model)
 
 

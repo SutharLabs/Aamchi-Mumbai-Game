@@ -162,26 +162,29 @@ func _physics_process(delta: float) -> void:
 		player.running = Input.is_action_pressed(&"run")
 	_update_camera(delta)
 	_message_time = maxf(0.0, _message_time - delta)
-	var prompt := Hud.APPROACH_PROMPT
+	var prompt := ""
 	var speed := 0.0
 	var vehicle_label := ""
+	var can_interact := false
 	if driving:
 		speed = active_vehicle.get_speed_mps()
 		vehicle_label = active_vehicle.vehicle_label
-		if active_vehicle.is_two_wheeler:
-			prompt = "Stop before dismounting" if speed > EXIT_SPEED else "Dismount"
-		else:
-			prompt = "Stop before getting out" if speed > EXIT_SPEED else "Get out"
+		if speed <= EXIT_SPEED:
+			prompt = "Dismount" if active_vehicle.is_two_wheeler else "Get out"
+			can_interact = true
 	else:
 		var nearby := _nearby_interaction()
 		if nearby is Pedestrian:
 			prompt = "Talk to %s" % nearby.display_name
+			can_interact = true
 		elif nearby is Vehicle:
 			var entry_label := "Mount" if nearby.is_two_wheeler else "Get in"
 			prompt = "%s the %s" % [entry_label, nearby.vehicle_label.to_lower()]
+			can_interact = true
 	if _message_time > 0.0:
 		prompt = _message
-	hud.update_display(driving, speed, prompt, vehicle_label)
+		can_interact = false
+	hud.update_display(driving, speed, prompt, vehicle_label, can_interact)
 
 
 func _request_interact() -> void:

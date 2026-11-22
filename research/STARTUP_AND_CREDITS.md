@@ -24,6 +24,10 @@ For the title art, use blue-hour light, a narrow lane, verandahs and warm window
 
 The project uses an original menu layout and puts the Credits entry in the main and pause menus. This gives players a way to reach credits while the game is paused and keeps the driving HUD clear.
 
+## Controls guide and gameplay HUD
+
+Rockstar documents separate on-foot and vehicle controls in GTA V's pause settings. Forza Horizon 5 places remapping in settings and lets players pare down HUD elements independently. Aamchi Mumbai Game puts the complete keyboard or touch guide under **Help ? Controls** from the title and pause menus. The gameplay HUD shows short contextual prompts, feedback and vehicle speed where relevant. [Rockstar Games Support](https://support.rockstargames.com/articles/4b6n5wYVseQhdCo2bNpVY5/how-to-change-vehicle-controls-in-grand-theft-auto-v) ? [Forza Horizon 5 accessibility support](https://support.forza.net/hc/en-us/articles/4409280058259-Forza-Horizon-5-Accessibility-Support)
+
 ## Attribution and distributed notices
 
 - **OpenStreetMap.** The OpenStreetMap Foundation explicitly permits a game’s credits page or menu to carry attribution. The dedicated screen credits OpenStreetMap contributors and links to copyright information, ODbL 1.0, the input extract and the adapted route. Retain the map notices and license with distributed builds and keep the extract and actual derived route publicly reachable. ODbL §4.6 addresses the data offer when a publicly used Produced Work comes from a Derivative Database. [OSMF computer-games guidance](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines#Computer_games_and_simulations) · [ODbL legal code](https://opendatacommons.org/licenses/odbl/1-0/) · [Project map attribution and data offer](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/ATTRIBUTION.md)

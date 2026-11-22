@@ -7,7 +7,7 @@ Aamchi Mumbai Game is a solo-developed, stylized open-world driving and mission 
 - **Windows x64.** Download the Windows ZIP, extract it and launch `Aamchi Mumbai Game 0.0.1.exe`. [Windows ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Windows-x64.zip)
 - **Android ARM64.** Download the signed APK to install on your phone. The Android ZIP includes the same APK and the notices. [Android APK](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Android-arm64.apk) · [Android ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Android-arm64.zip)
 
-The playtest includes walking, pedestrian conversations, driving four vehicle types and the Ranwar route. The Windows build was tested on the development PC. Native Android playtesting on the selected Redmi Note 9 Pro Max (India) is pending. [Release notes](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1) · [Phase progress](docs/PHASE_PROGRESS.md)
+The playtest includes walking, pedestrian conversations, driving four vehicle types and the Ranwar route. The Windows build was tested on the development PC. The user reported that 0.0.1 ran as expected on the selected Redmi Note 9 Pro Max (India). Detailed input and performance measurements are pending. [Release notes](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1) · [Phase progress](docs/PHASE_PROGRESS.md)
 
 ## License
 
@@ -76,7 +76,7 @@ Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://gith
 
 The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The Windows playtest opens with a Marathi-branded title menu, local profiles, settings and credits. It has four drivable vehicles and uses captured locomotion for the player and two pedestrians. The release schedule will be re-estimated after both-platform testing with the provisional ten human hours per week. [Playtest guide](prototype/README.md)
 
-**Godot 4.7.2 standard, Compatibility rendering and typed GDScript** are selected for implementation. The first development release **0.0.1** has Windows x64 and signed Android ARM64 builds. Installation and performance checks on the 8 GB Windows 10 baseline and the Android test handset remain open. [Technology selection](research/TECH_STACK_SELECTION.md) · [Playtest guide](prototype/README.md)
+**Godot 4.7.2 standard, Compatibility rendering and typed GDScript** are selected for implementation. The first development release **0.0.1** has Windows x64 and signed Android ARM64 builds. The 8 GB Windows 10 device check and detailed performance measurements on both target devices remain open. [Technology selection](research/TECH_STACK_SELECTION.md) · [Playtest guide](prototype/README.md)
 
 The first procedural Blender batch **completed all eleven jobs**. All **77 generated files are collected and match accepted checkpoint hashes**, recorded at **20 November 2026, 06:57:50 IST** in the [collection receipt](reports/remote/epyc24/asset-collection-2026-11-20.json). [Preliminary review](reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first; local architectural, cultural, rig, collision and game checks remain open. The [handoff](docs/OVERNIGHT_HANDOFF.md) preserves earlier observations. No new batch was started.
 

@@ -21,7 +21,7 @@ The user has selected the following direction. A recorded answer resolves that s
 
 | Topic | Selected direction | Remaining detail / acceptance |
 |---|---|---|
-| First-release platforms | **Windows 10 and Android 12 together** | Windows debug export launched on the development PC. The signed ARM64 Android debug APK is ready for device testing. Native Android input and minimum-device performance remain open. |
+| First-release platforms | **Windows 10 and Android 12 together** | Windows debug export launched on the development PC. The user reports that the signed Android 0.0.1 build ran as expected on the selected Redmi. Detailed native-input coverage and minimum-device measurements remain open. |
 | Windows target | **Weaker 8 GB integrated-GPU PC** | Exact CPU/GPU/RAM layout/driver/storage and test access remain open. The available **16 GB Core i5-1145G7 / Iris Xe / Windows 11** machine is a development/test device, not the accepted minimum. |
 | First area | **Bandra West** | Exact bounded neighborhood and playable route still to be selected from dated evidence |
 | Setting | **Present-day Mumbai only**, selected 22 November 2026 | Supersedes the earlier historical setting. Keep Ranwar/Bandra West, current dated references and original fictional cast/missions; no historical reconstruction gate. |
@@ -45,15 +45,15 @@ The raw OSM reference and route/preview package are acquired with ODbL notices/h
 
 | Phase | Status | Evidence available | Gate still missing |
 |---|---|---|---|
-| 0. Scope, hardware and reuse decisions | **In progress** | Scope/map/reuse decisions, collected studies and Windows/Android debug exports | Named minimum-device measurements and Android install acceptance remain open |
-| 1. Walking and driving toy | **In progress** | Four-vehicle loop, interactive pedestrians, Windows debug ZIP and signed ARM64 APK | Native Android input, minimum-device performance and fresh-player observations remain open |
+| 0. Scope, hardware and reuse decisions | **In progress** | Scope/map/reuse decisions, collected studies and Windows/Android debug exports | Basic Android run reported. Windows 10 minimum-device run and both-device measurements remain open |
+| 1. Walking and driving toy | **In progress** | Four-vehicle loop, interactive pedestrians, Windows debug ZIP and signed ARM64 APK | Detailed Android input, both-device measurements and fresh-player observations remain open |
 | 2. Mumbai neighborhood and performance proof | **Not started; partial preparation available** | Local reference catalogues, exact asset leads and original procedural-study pipeline | Complete reference packets, accepted local assets, playable map/traffic, recognizability review and exported performance proof |
 | 3. Complete vertical slice | **Not started** | Requirements and candidate tooling identified | Complete mission, all four drivable families, save/retry/UI/audio and touch/lifecycle acceptance on both platforms |
 | 4. First-release content | **Not started** | Recommended content envelope documented | Entire campaign, repeatables and ending in Windows and Android packages |
 | 5. Alpha and beta | **Not started** | Proposed QA and performance gates documented | Both-platform new-player/full-campaign/device observations and resolved release blockers |
 | 6. Release candidate and launch readiness | **Not started** | Release acceptance requirements documented | Clean install/update, measured per-platform specs, complete notices and reproducible Windows/Android candidates |
 
-The 20 November snapshots predate the playable project. The current Windows playtest includes the full initial vehicle roster on the available development PC. Windows 10 minimum hardware, native Android installation and touch, and device performance still require measurement.
+The 20 November snapshots predate the playable project. The current Windows playtest includes the full initial vehicle roster on the available development PC. The user reported a successful Android run on the selected Redmi. Detailed native touch coverage, Windows 10 minimum-hardware testing and device performance measurements remain open.
 
 ## Evidence already completed
 
@@ -80,13 +80,15 @@ The 20 November snapshots predate the playable project. The current Windows play
 | E-19 | 22 November 0.1.1 pedestrian and Windows packaging checkpoint. [Playtest guide](../prototype/README.md) | 100 gameplay checks pass at each fixed 30/60 cadence with simulated touch. Pedestrians talk, pause, yield and block all four vehicles. The versioned Windows build launched on the Iris Xe development PC. Windows Shell showed the rickshaw at 16 and 32 px on the export and a freshly extracted copy of the ZIP. |
 | E-20 | 22 November 0.1.1 Android export checkpoint. [Android debug export](../prototype/README.md#android-debug-export) | Signed ARM64 APK and notices ZIP produced with Godot 4.7.2. Verified API 24 minimum/API 36 target, package and launcher resources, v2/v3 signatures, and embedded credit texts. ADB saw no connected device. APK SHA-256 `fc39dfc92989c87b2e1560f9f682a34e4e329cfb1cae08cffd08ca580e4d9053`. |
 | E-21 | 22 November real-time Ranwar development-PC benchmark | Godot 4.7.2 Compatibility on Windows 11, Intel i5-1145G7, Iris Xe and 15.7 GiB RAM. At 1280×720 with a 60 FPS cap, an automated car drive reached all 21 route waypoints in 140.5 s. Across 8,429 frame intervals, mean FPS was 59.99, p95 was 17.03 ms and p99 was 17.27 ms. Peak tracked engine allocation was 92.51 MiB. Minimum-device measurement and observed player runs remain open. |
-| E-22 | First development release **0.0.1**, source tag `v0.0.1`. [Playtest guide](../prototype/README.md) | Windows x64 ZIP and signed Android ARM64 APK plus notices ZIP built under `builds/dev/0.0.1/`. 25 startup and 100 gameplay checks passed. Windows file/product version `0.0.1.0`, native launch and Explorer icon verified. Android version name `0.0.1`, code 2, API 24 minimum/API 36 target and v2/v3 signing verified with the same key as the earlier playtest. APK SHA-256 `9a0239253add4d900eebca97748c6df5b67a48ea205de8e352d257a302fcfee5`. Handset testing remains open. |
+| E-22 | First development release **0.0.1**, source tag `v0.0.1`. [Playtest guide](../prototype/README.md) | Windows x64 ZIP and signed Android ARM64 APK plus notices ZIP built under `builds/dev/0.0.1/`. 25 startup and 100 gameplay checks passed. Windows file/product version `0.0.1.0`, native launch and Explorer icon verified. Android version name `0.0.1`, code 2, API 24 minimum/API 36 target and v2/v3 signing verified with the same key as the earlier playtest. APK SHA-256 `9a0239253add4d900eebca97748c6df5b67a48ea205de8e352d257a302fcfee5`. Handset testing was open at this checkpoint. |
+| E-23 | User-reported **0.0.1** Android playtest on the selected Redmi Note 9 Pro Max (India) | The user reported that the Android run was performing as expected. This records a successful basic handset run. Android/MIUI version, RAM variant, per-action touch coverage, frame time, memory and sustained behavior remain to be recorded. |
+| E-24 | **0.0.2** feedback build. [Playtest guide](../prototype/README.md) | Added Omkar Shirodkar's skinned sadara, dhotar and chappals, and moved the full keyboard and touch guides to Help in the title and pause menus. Startup smoke passed 34 checks each for keyboard and simulated touch. The integrated gameplay smoke passed 100 checks at both 30 and 60 FPS. The Windows-rendered playtest also exercised both HUD modes and Help navigation. |
 
 Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, and **23 remote Linux runner tests passed**. The Windows skips concerned unavailable test symlink creation. These results validate stated runner behaviors; they provide no gameplay, animation or low-spec frame-time evidence. The [verification receipt](../reports/overnight-verification.json) preserves their scope.
 
 ## Phase 0 — scope, hardware and reuse decisions
 
-**Status: in progress.** The 22 November GitHub clone and Windows export resume setup. Area, stack, map and refinement choices are made. G0 still requires the Android build and physical minimum-device checks.
+**Status: in progress.** The 22 November GitHub clone and Windows export resume setup. Area, stack, map and refinement choices are made. Both 0.0.1 builds are published. G0 still requires minimum-device measurements.
 
 **Newly learned scope and risks.** Present-day Bandra uses dated current local references, not a reconstruction of the former era. The existing 20 November OSM baseline and modern catalogue leads are usable starting points, while locality, current appearance, rights and function still need review. Windows/Android, four player-drivable families and actual minimum-device gates remain. The available 16 GB PC cannot certify the weaker 8 GB target; Android 12 does not identify hardware. The sole founder's provisional ten hours/week includes integration/review/playtesting; no schedule saving is inferred.
 
@@ -94,21 +96,21 @@ Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, 
 |---|---|---|---|---|
 | P0-01 | **OS/capacity selected:** Windows 10, Android 12, 8 GB iGPU Windows class, some experience, ten hours/week; physical performance pending | Integration owner | Name/test physical devices when setup resumes; no further device question blocks research | E-09; E-11 |
 | P0-02 | **Reference pocket selected:** Ranwar/Waroda/Chapel Road, Bandra West, present-day | World/reference owner | Source crop, ~0.2016 km2 first greybox envelope, connected route and uncertainty ledger; final shipped boundary follows traversal tests | E-11; dated per-subject packets still required |
-| P0-03 | **Windows toolchain exercised.** Godot 4.7.2 standard with Compatibility, typed GDScript and Jolt. | Technical agent | Verified editor and templates. Windows x64 debug export launched on available Iris Xe development PC. Android tooling and named minimum-device tests remain open. | E-11, E-13 |
+| P0-03 | **Both platform toolchains exercised.** Godot 4.7.2 standard with Compatibility, typed GDScript and Jolt. | Technical agent | Verified editor and templates. Published Windows and ARM64 Android debug builds. Minimum-device measurements remain open. | E-11, E-13, E-22 |
 | P0-04 | **Reuse strategy selected:** built-in systems/official patterns; optional pinned vehicle comparison | Technical agent | Source/license research recorded; import, handling, touch and performance spikes unperformed | E-02; E-11; P0-03/P0-07 execution |
 | P0-05 | **Current-reference preparation in progress;** four drivable families and local housing direction selected | Reference/asset owner | Dated current Ranwar village-house, vehicle/building/wardrobe packets and complete local/cultural/functional acceptance remain open. The hashed historical-change ledger is preserved acquisition history, not the current production workflow. | E-03 to E-05; E-11; E-12 |
 | P0-06 | **Offline OSM acquired and topology checked; Windows blockout derived from it.** | World/tools agent | ODbL raw/query/license/attribution/hash retained; source loop 1,186.7 m and footway 70.5 m. Current locality/access and authored gameplay adaptation remain to be accepted; source snapshot unchanged. | E-11; E-13; map report |
-| P0-07 | **GitHub baseline and Windows/Android debug export presets in use.** | Integration owner | Local clone from `8544233`, branch `phase-1/prototype`, and both presets in `prototype/`. Repeat on the target hardware to verify install and launch. | E-13, E-19, E-20 |
+| P0-07 | **GitHub baseline and Windows/Android debug export presets in use.** | Integration owner | Local clone from `8544233`, branch `phase-1/prototype`, and both presets in `prototype/`. The user reported a successful Android 0.0.1 run. Verify Windows install and launch on the target PC. | E-13, E-22, E-23 |
 | P0-08 | **77 outputs collected/hash-verified; preliminary visual triage and refinement choice complete** | Asset/review owner | Eleven reports/previews plus six extra views inspected; bay/props first. Remaining 27 views, knowledgeable cultural/architectural review, rig/collision and engine acceptance open | E-10; E-12; asset plan A0-A5 |
-| P0-09 | **Both debug builds produced, with an initial development-PC benchmark.** G0 remains open. | Integration owner | Install, input and performance measurements on the named minimum devices. | E-11 to E-13, E-19 to E-21 |
+| P0-09 | **Both debug builds produced, with an initial development-PC benchmark.** G0 remains open. | Integration owner | Initial Android run reported. Detailed input and performance on the minimum devices and Windows 10 installation remain open. | E-21 to E-23 |
 
-**Remaining G0 evidence.** Install and launch both debug builds on the named target devices. Record native input and performance.
+**Remaining G0 evidence.** Identify and run the Windows build on the 8 GB Windows 10 target. Record detailed native input and performance on both devices.
 
 ## Phase 1 — walking and driving toy
 
-**Status: in progress.** The first development release **0.0.1** packages the Phase 1 walking, pedestrian, driving and recovery loop for Windows and Android. The user selected the **Redmi Note 9 Pro Max (India)** for Android testing. Device measurements and fresh-player observations remain open. [Playtest guide](../prototype/README.md) · [Device decision](PROJECT_RECORD.md)
+**Status: in progress.** The first development release **0.0.1** packages the Phase 1 walking, pedestrian, driving and recovery loop for Windows and Android. The user reported that the Android build ran as expected on the selected **Redmi Note 9 Pro Max (India)** (E-23). Device measurements and fresh-player observations remain open. [Playtest guide](../prototype/README.md) · [Device decision](PROJECT_RECORD.md)
 
-**Current implementation.** All four vehicles share the Godot character-body arcade controller with bounded curb traversal and pedestrian collision. Each has an original reference-based model. The auto shows a seated driver and the motorcycle and scooter use distinct skinned rider poses and visual lean. Mira and Rafiq give route tips and yield when their path is blocked. The road graph uses modern OSM with authored lanes and scenery. Windows smoke tests simulate separate fingers on the touch overlay. [Vehicle implementation](../prototype/vehicle/README.md)
+**Current implementation.** Omkar Shirodkar wears an original Maharashtrian outfit using the existing captured locomotion. The full controls guide is under Help in the title and pause menus. All four vehicles share the Godot character-body arcade controller with bounded curb traversal and pedestrian collision. Each has an original reference-based model. The auto shows a seated driver and the motorcycle and scooter use distinct skinned rider poses and visual lean. Mira and Rafiq give route tips and yield when their path is blocked. The road graph uses modern OSM with authored lanes and scenery. Windows smoke tests simulate separate fingers on the touch overlay. [Vehicle implementation](../prototype/vehicle/README.md)
 
 | Task ID | Remaining work | Owner role | Acceptance evidence | Dependencies |
 |---|---|---|---|---|
@@ -121,7 +123,7 @@ Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, 
 
 ### Remaining work to close G1
 
-1. **Install and launch on the target devices.** Use the 0.0.1 Windows ZIP and signed Android APK. Record the installed Android/MIUI version and RAM variant on the Redmi Note 9 Pro Max (India).
+1. **Complete the device baseline.** The user reported a successful Android 0.0.1 run. Record the installed Android/MIUI version and RAM variant of the selected Redmi Note 9 Pro Max (India). Identify the 8 GB integrated-graphics Windows 10 PC and verify install and launch there.
 2. **Run the route on both minimum devices.** Identify the target 8 GB integrated-graphics Windows 10 PC. On that PC and the Redmi, walk, enter or mount, drive across the loop and curbs, exit and recover with all four vehicle families. Verify native touch and record frame time, memory and sustained traversal on each device.
 3. **Observe fresh players and rebaseline.** Collect at least three observations with Windows and Android coverage, resolve control, camera, touch and route blockers, and update the schedule against measured effort and the provisional ten hours per week.
 
@@ -241,7 +243,7 @@ The two daytime **preflight** examples in E-07 are separate from this production
 1. Finish the open parts of **P0-01/P0-02/P0-05**: exact weaker PC and Android 12 phone hardware, Bandra boundary and contemporary subject packets. Carry forward **present-day**, compressed real geography, all-four-player-driving and the provisional **10 focused hours/week**; do not reopen these as unanswered choices.
 2. Run **P0-03/P0-04**, then **P0-06/P0-07**: prove Windows/Android export/install/native-touch input baselines and a recoverable project before production.
 3. Continue **P0-08** by collecting and reviewing the technically completed batch; record separate visual/cultural/architectural fixes. Future generation stays in the authorized night process. Do not promote technical queue completion into accepted Phase 2 content automatically.
-4. Continue the Phase 1 Windows playtest while completing the remaining **P0-09/G0** device/export evidence. Use **G1** to capture actual vehicle, input and playtest costs before changing the schedule.
+4. Continue the Phase 1 playtest while completing the remaining **P0-09/G0** device evidence. Use **G1** to capture actual vehicle, input and playtest costs before changing the schedule.
 5. Progress through **G2** and **G3** before scaling district/campaign production. Replace schedule assumptions with measured accepted work at the slice.
 
 When updating this file, cite the new build/run/review evidence and its date. Keep older receipts for provenance; do not silently turn a dated running/pending snapshot into a later success claim. Update the [handoff](OVERNIGHT_HANDOFF.md) for operational results, this tracker for task/phase acceptance, and the [roadmap](ROADMAP.md) when accepted evidence changes scope or estimates.

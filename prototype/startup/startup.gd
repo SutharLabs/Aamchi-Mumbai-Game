@@ -63,16 +63,18 @@ func _pause_game() -> void:
 	if gameplay == null or get_tree().paused:
 		return
 	gameplay.hud.clear_touch_input()
+	gameplay.hud.hide()
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Input.emulate_mouse_from_touch = true
-	menu.show_pause()
+	menu.show_pause(gameplay.player.display_name)
 
 
 func _resume_game() -> void:
 	if gameplay == null:
 		return
 	menu.hide()
+	gameplay.hud.show()
 	Input.emulate_mouse_from_touch = false
 	get_tree().paused = false
 	if not gameplay.hud.touch_enabled and DisplayServer.get_name() != "headless":

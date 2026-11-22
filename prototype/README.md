@@ -2,11 +2,11 @@
 
 Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable vehicles start in marked bays near the starting point. From the car, head left past the auto-rickshaw to find the motorcycle and scooter. The route includes a walking shortcut and an open handling yard. [Route and source notes](world/README.md)
 
-The player uses captured idle, walk and jog clips on an original skinned humanoid. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
+Play as **Omkar Shirodkar (????? ???????)**, wearing an indigo sadara, an ivory dhotar and Kolhapuri-style chappals. His original skinned mesh uses the captured idle, walk and jog clips. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
 
-Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. The first development release is **0.0.1**. Extract the Windows ZIP from `../builds/dev/0.0.1/` and run `Aamchi Mumbai Game 0.0.1.exe`. The versioned filename avoids reusing the Windows shell icon cache entry from an earlier executable.
+Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. The current source builds the **0.0.2** development playtest. Extract its Windows ZIP from `../builds/dev/0.0.2/` and run `Aamchi Mumbai Game 0.0.2.exe`. [Published 0.0.1 playtest](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1) The versioned filename avoids reusing the Windows shell icon cache entry from an earlier executable.
 
-The title menu provides Play, Profiles, Settings, Credits and Quit. Profiles store a local display name and the active selection. Master volume, fullscreen and camera sensitivity are device settings saved in `user://preferences.json`. The pause menu also offers Resume and Main menu. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
+The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profiles store a local display name and the active selection. Master volume, fullscreen and camera sensitivity are device settings saved in `user://preferences.json`. The pause menu shows Omkar's name and offers Resume, Settings, Help, Credits and Main menu. Open **Help ? Controls** in either menu for the platform-specific guide. Gameplay shows short interaction prompts, feedback and vehicle speed when relevant. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
 
 | Input | Action |
 |---|---|
@@ -34,26 +34,26 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --editor --import
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 5500 --script res://tests/phase1_smoke.gd -- --touch-preview
-New-Item -ItemType Directory -Force -Path '.\builds\dev\0.0.1' | Out-Null
-$exe = Join-Path (Get-Location) 'builds\dev\0.0.1\Aamchi Mumbai Game 0.0.1.exe'
+New-Item -ItemType Directory -Force -Path '.\builds\dev\0.0.2' | Out-Null
+$exe = Join-Path (Get-Location) 'builds\dev\0.0.2\Aamchi Mumbai Game 0.0.2.exe'
 & $editor --headless --path prototype --export-debug 'Windows Desktop' $exe
-Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/dev/0.0.1/'
-Copy-Item 'prototype/startup/art/NotoSansDevanagari-OFL.txt' 'builds/dev/0.0.1/'
+Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/dev/0.0.2/'
+Copy-Item 'prototype/startup/art/NotoSansDevanagari-OFL.txt' 'builds/dev/0.0.2/'
 ```
 
-The startup smoke exercises menu navigation, profile reload, settings, credits and pause. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. Include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices in both build packages. [Project license](../LICENSE)
+The startup smoke exercises menu navigation, profile reload, settings, Help, credits and pause. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. Include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices in both build packages. [Project license](../LICENSE)
 
-The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle models. The two-wheelers have distinct skinned rider poses, with hands following the steering grips and visual lean on upright arcade collision bodies. Physical-device touch, minimum-spec performance and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)
+The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle models. The two-wheelers have distinct skinned rider poses, with hands following the steering grips and visual lean on upright arcade collision bodies. The user reported a successful Android 0.0.1 run. Detailed native-touch, minimum-spec performance and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)
 
 ## Android debug export
 
 Use the **Android Debug** preset with the matching Godot 4.7.2 standard templates. Set the Java SDK and Android SDK paths in Godot's editor settings. This Windows build used project-local Eclipse Temurin 17 and AOSP tools for APK signing and ADB. The debug certificate stays with the local toolchain. [Godot Android export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html)
 
 ```powershell
-$apk = Join-Path (Get-Location) 'builds\dev\0.0.1\Aamchi-Mumbai-Game-0.0.1-Android-arm64.apk'
+$apk = Join-Path (Get-Location) 'builds\dev\0.0.2\Aamchi-Mumbai-Game-0.0.2-Android-arm64.apk'
 & $editor --headless --path prototype --export-debug 'Android Debug' $apk
 ```
 
-The signed **0.0.1** APK is ARM64 and declares Android API 24 as its minimum and API 36 as its target. It retains the package identifier `com.sutharlabs.aamchimumbai` and the previous playtest signing certificate. Android uses internal version code **2** for the update from the 0.1.1 playtest, which used code 1. The Android ZIP bundles the same APK with five license and attribution notices.
+The signed **0.0.2** APK is ARM64, with Android API 24 as its minimum and API 36 as its target. It retains the package identifier `com.sutharlabs.aamchimumbai` and the 0.0.1 playtest signing certificate. Internal version code **3** supports updating the 0.0.1 build, which used code 2. The Android ZIP includes the same APK, the project license and the third-party notices.
 
-The selected Android test phone is the **Redmi Note 9 Pro Max (India)**. Record its installed Android and MIUI versions and RAM variant. In a first run, check launch and landscape menus, simultaneous movement and camera touch, talking with Mira or Rafiq, and entering, driving and exiting a vehicle. Record any touch or performance issue with the location and action that triggered it. [Xiaomi India device specifications](https://www.mi.com/in/redmi-note-9-pro-max/specs)
+The selected Android test phone is the **Redmi Note 9 Pro Max (India)**. The user reported that 0.0.1 ran as expected on this phone. For the 0.0.2 follow-up, record the installed Android and MIUI versions and RAM variant. Check launch and landscape menus, Help readability, simultaneous movement and camera touch, talking with Mira or Rafiq, and entering, driving and exiting a vehicle. Record any touch or performance issue with the location and action that triggered it. [Xiaomi India device specifications](https://www.mi.com/in/redmi-note-9-pro-max/specs)

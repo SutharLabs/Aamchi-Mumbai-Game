@@ -63,6 +63,12 @@ A generic cylindrical sari cannot pass as the selected divided/back-tucked nauva
 
 For present-day Bandra West, collect dated, appropriately reusable current street references before deciding clothing frequencies. Historical costume descriptions and museums do not establish today's prevalence. Do not invent percentages; preserve regional, generational, occupational and occasion variation.
 
+### Phase 1 protagonist outfit
+
+The fictional protagonist **Omkar Shirodkar (ओंकार शिरोडकर)** wears an indigo, band-collared sadara, an ivory dhotar with front pleats, a rear tuck and rust-colored edges, and leather chappals modeled in a Kolhapuri style. The shorter drape accommodates the prototype's jogging and mounted poses. The longer tunic and borders draw on the documented garments. The palette and shape are original design choices for Omkar. [Satara Gazetteer on the sadara](https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/SATARA/people_dress.html) · [Poona Gazetteer on dhotar draping](https://gazetteers.maharashtra.gov.in/cultural.maharashtra.gov.in/english/gazetteer/Poona/PART%20III/Chap%20%283%29/Dress.htm) · [Kolhapur District chappal reference](https://kolhapur.gov.in/en/kopchappaleng/)
+
+The [procedural character mesh](../prototype/character/player_character.gd) generates the outfit as one skinned surface with vertex colors for the existing walking and seated rigs. The source descriptions informed the construction. All garment geometry is original, with no imported source imagery, meshes or textures. The prototype outfit uses fixed skin weights, with garment and movement review on target devices still pending.
+
 ## 4. Reusable base-body route
 
 MakeHuman's official [commercial-use FAQ](https://static.makehumancommunity.org/oldsite/faq/can_i_sell_models_created_with_makehuman.html) states that exported models are CC0 and can be used commercially. It is a potential original/non-celebrity base-body route if the toolchain is deliberately evaluated. Separately acquired clothing, hair, textures and community assets still need their own provenance/license records. This research did not install MakeHuman or validate a headless export pipeline.

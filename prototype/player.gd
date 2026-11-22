@@ -9,6 +9,7 @@ const STREET_SOLIDS := 1 | 2 | 4
 
 var body_shape := CapsuleShape3D.new()
 var visual := Visual.new()
+var display_name := "Omkar Shirodkar"
 var active := true
 var running := false
 var direction := Vector3.ZERO
@@ -25,6 +26,7 @@ func _ready() -> void:
 	collider.shape = body_shape
 	add_child(collider)
 	visual.name = "CharacterVisual"
+	visual.wears_dhotar = true
 	add_child(visual)
 
 

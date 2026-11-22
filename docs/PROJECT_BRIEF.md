@@ -8,7 +8,7 @@
 
 An original, stylized open-world driving and mission game based on **present-day Mumbai only**. The user changed the setting on **22 November 2026**, superseding the earlier historical setting. Start in Ranwar/Waroda/Chapel Road, Bandra West, with recognizable real streets, buildings, landmarks and vehicle families. Record geographic compression and use dated current references. Cast, story, missions and branding remain original and fictional.
 
-The selected operating systems remain **Windows 10 and Android 12**. Ranwar is the researched reference pocket; Godot 4.7.2 standard, Compatibility rendering and typed GDScript are the implementation direction. The GitHub baseline and initial Windows prototype/export are now in use; native Android, named minimum devices and measured budgets remain open in the [phase tracker](PHASE_PROGRESS.md). The sole founder directs and integrates bounded agent work.
+The selected operating systems remain **Windows 10 and Android 12**. Ranwar is the researched reference pocket; Godot 4.7.2 standard, Compatibility rendering and typed GDScript are the implementation direction. The Windows and Android 0.0.1 exports are published, and the user reported a successful basic Android run on the selected Redmi. Detailed device checks and measured budgets remain open in the [phase tracker](PHASE_PROGRESS.md). The sole founder directs and integrates bounded agent work.
 
 ## Recommended first-release scope
 

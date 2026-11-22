@@ -4,7 +4,7 @@ Updated 22 November 2026. This record brings together the agreed direction, work
 
 ## Current position
 
-The first GitHub version, `85442338c6670b486bad7264eded24e8c9c58479`, is the source baseline for the new `Aamchi-Mumbai-Game` checkout. The game is now **Aamchi Mumbai Game** and Phase 1 has started with a Godot walking and driving prototype and a local Windows export. See the [playtest guide](../prototype/README.md). Actual minimum-device performance and the Android export remain open.
+The first GitHub version, `85442338c6670b486bad7264eded24e8c9c58479`, is the source baseline for the new `Aamchi-Mumbai-Game` checkout. The game is now **Aamchi Mumbai Game** and Phase 1 has started with a Godot walking and driving prototype and a local Windows export. See the [playtest guide](../prototype/README.md). The published 0.0.1 Android build subsequently received a successful basic handset run from the user. Detailed native-input and minimum-device measurements remain open.
 
 Subsequent research selected Ranwar/Waroda/Chapel Road, acquired the actual ODbL map and selected Godot 4.7.2/Compatibility/GDScript for Windows 10/Android 12. The [06:57:50 IST collection receipt](../reports/remote/epyc24/asset-collection-2026-11-20.json) verifies all **77 generated outputs** against accepted checkpoint hashes. The [preliminary review](../reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first after eleven previews/reports and six extra views. Full art/current-reference/runtime gates remain open. At the time, the user deferred Git, recovery and repeatable exports.
 
@@ -150,7 +150,7 @@ These decisions are not permission requests for the current documentation work. 
 | OPEN-08 | Evaluate an image-to-3D tool/model and available compute | Current CPU Blender setup proves procedural generation only | Phase 2 experiment / asset workflow owner |
 | OPEN-09 | Lock actual campaign/combat scope from the slice | Prevents content production around unproven mechanics | Phase 3 / human creative and gameplay owner |
 | OPEN-10 | Rebaseline effort from observed handling, accepted-asset and mission time | Research and raw generation counts cannot predict accepted production throughput | After Phase 1 experiments and Phase 3 / human integrator |
-| OPEN-11 | Test the selected Redmi Note 9 Pro Max (India) and record the Android 12 baseline | DEC-22 records the model. Installed OS, actual RAM variant, native input, thermal behavior and measured performance still need verification. | Phase 0 / human integrator |
+| OPEN-11 | Measure the selected Redmi Note 9 Pro Max (India) baseline | The user reported a successful basic 0.0.1 run (E-23 in the [phase tracker](PHASE_PROGRESS.md)). Record the installed OS, actual RAM variant, detailed touch coverage, thermal behavior and measured performance. | Phase 0 / human integrator |
 | OPEN-12 | Reassess the provisional ten human hours/week using actual development/review/playtest work | Initial availability and some experience are recorded; revise the plan when the user's capacity changes | Phase 1 onward / human integrator |
 
 ## Risk register
