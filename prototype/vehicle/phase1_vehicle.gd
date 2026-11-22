@@ -12,6 +12,10 @@ extends CharacterBody3D
 const GRAVITY: float = 24.0
 const TERMINAL_FALL_SPEED: float = 35.0
 const FALL_RESET_Y: float = -25.0
+const MAX_CURB_RISE: float = 0.25
+const STEP_PROBE_MARGIN: float = 0.006
+const STEP_EDGE_CLEARANCE: float = 0.055
+const WORLD_LAYER: int = 1
 var wheel_radius: float = 0.32
 var vehicle_label: String = "Vehicle"
 var is_two_wheeler: bool = false
@@ -31,14 +35,15 @@ var _front_wheels: Array[Node3D] = []
 var _wheel_rolls: Array[Node3D] = []
 var _wheel_angle: float = 0.0
 var _brake_material: StandardMaterial3D
+var _step_contact := KinematicCollision3D.new()
 
 
 func _init() -> void:
 	name = "Phase1Vehicle"
 	# Physics layer bit values: world=1, walking player=2, vehicle=4.
 	collision_layer = 4
-	collision_mask = 1 | 2 | 4
-	floor_snap_length = 0.45
+	collision_mask = WORLD_LAYER | 2 | 4
+	floor_snap_length = 0.28
 	floor_max_angle = deg_to_rad(34.0)
 	floor_stop_on_slope = true
 	safe_margin = 0.025
@@ -117,7 +122,8 @@ func _physics_process(delta: float) -> void:
 	var speed_ratio: float = clampf(absf(_signed_speed) / max_forward_speed, 0.0, 1.0)
 	var speed_softening: float = lerpf(1.0, high_speed_steering_factor, speed_ratio)
 	var travel_sign: float = signf(_signed_speed)
-	if is_on_floor():
+	var grounded := is_on_floor()
+	if grounded:
 		rotate_y(-steering * turn_rate * steering_gain * speed_softening * travel_sign * delta)
 
 	var forward: Vector3 = -global_basis.z
@@ -125,18 +131,62 @@ func _physics_process(delta: float) -> void:
 	forward = forward.normalized()
 	velocity.x = forward.x * _signed_speed
 	velocity.z = forward.z * _signed_speed
-	if is_on_floor():
+	if grounded:
 		velocity.y = 0.0
 	else:
 		velocity.y = maxf(velocity.y - GRAVITY * delta, -TERMINAL_FALL_SPEED)
 
-	move_and_slide()
+	if not grounded or not _try_step(velocity * delta):
+		move_and_slide()
 	# Consume the collision-adjusted speed so a frontal impact does not retain
 	# an invisible high speed that instantly reappears after leaving the wall.
 	_signed_speed = clampf(velocity.dot(forward), -max_reverse_speed, max_forward_speed)
 	_update_wheels(delta)
 	if _brake_material != null:
 		_brake_material.emission_energy_multiplier = 1.7 if braking else 0.3
+
+
+func _try_step(motion: Vector3) -> bool:
+	if motion.length_squared() < 0.000001:
+		return false
+	var start := global_transform
+	var direction := motion.normalized()
+	# At crawl speed a single tick can be shorter than the collision margin.
+	# Probe just past the lip so the downward sweep reaches the top face.
+	var across_edge := motion + direction * STEP_EDGE_CLEARANCE
+	if not test_move(start, across_edge, _step_contact, safe_margin):
+		return false
+	var floor_dot := cos(floor_max_angle)
+	var wall_normal := _step_contact.get_normal().y
+	if wall_normal < -0.05 or wall_normal >= floor_dot or not _is_static_world_contact():
+		return false
+	if _step_contact.get_travel().dot(direction) > motion.length() + safe_margin:
+		return false
+
+	# Sweep the full chassis upward, over the curb and down to support. Each
+	# segment checks overhead clearance and other collision layers as usual.
+	var lift := Vector3.UP * MAX_CURB_RISE
+	if test_move(start, lift, null, STEP_PROBE_MARGIN, true):
+		return false
+	var raised := start.translated(lift)
+	if test_move(raised, across_edge, null, STEP_PROBE_MARGIN, true):
+		return false
+	var above_landing := raised.translated(across_edge)
+	if not test_move(above_landing, -lift, _step_contact, safe_margin):
+		return false
+	if _step_contact.get_normal().y < floor_dot or not _is_static_world_contact():
+		return false
+	var landing := above_landing.translated(_step_contact.get_travel())
+	var rise := landing.origin.y - start.origin.y
+	if rise <= STEP_PROBE_MARGIN or rise > MAX_CURB_RISE:
+		return false
+	global_transform = landing
+	return true
+
+
+func _is_static_world_contact() -> bool:
+	var surface := _step_contact.get_collider() as StaticBody3D
+	return surface != null and (surface.collision_layer & WORLD_LAYER) != 0
 
 
 func _update_longitudinal_speed(throttle: float, braking: bool, delta: float) -> void:

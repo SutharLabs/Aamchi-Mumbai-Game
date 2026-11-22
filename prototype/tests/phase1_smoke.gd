@@ -54,6 +54,8 @@ func _run() -> void:
 	_expect(not game.driving and absf(game.car.position.z) < 0.1 and absf(game.player.position.z - 5.0) < 0.1, "reset restores both actors")
 	_check_route_clearance()
 	await _check_ramp()
+	await _check_street_curbs()
+	await _check_yard_obstacles()
 	await _check_rickshaw()
 	_expect(game.motorcycle.rider.position.distance_to(game.scooter.rider.position) > 0.04, "motorcycle and scooter use distinct riding positions")
 	await _check_two_wheeler(game.motorcycle, "motorcycle")
@@ -143,8 +145,81 @@ func _check_ramp() -> void:
 	await _tap(&"recover")
 
 
+func _check_street_curbs() -> void:
+	var hill_road: PackedVector3Array = game.world._roads[0]
+	var along := (hill_road[1] - hill_road[0]).normalized()
+	var west := Vector3(along.z, 0.0, -along.x)
+	var road_center := hill_road[0] + along * 23.0
+	var heading := Basis(Vector3.UP, atan2(-west.x, -west.z))
+	for vehicle: Node3D in [game.car, game.rickshaw, game.motorcycle, game.scooter]:
+		var parking: Transform3D = vehicle.global_transform
+		var approach := road_center + west * 3.3 + Vector3.UP * 0.55
+		vehicle.reset_to(Transform3D(heading, approach))
+		vehicle.set_driver_active(true)
+		await _frames(10)
+		var road_height: float = vehicle.global_position.y
+		var peak_height := road_height
+		vehicle.set_controls(0.24, 0.0, false)
+		for tick in range(275):
+			await physics_frame
+			peak_height = maxf(peak_height, vehicle.global_position.y)
+			if (vehicle.global_position - road_center).dot(west) > 12.0:
+				break
+		var crossed: bool = (vehicle.global_position - road_center).dot(west) > 12.0
+		_expect(crossed and peak_height - road_height >= 0.11, "%s climbs the 14 cm Hill Road curb" % vehicle.vehicle_label)
+		vehicle.set_controls(0.0, 0.0, true)
+		await _frames(10)
+		_expect(crossed and vehicle.is_on_floor() and absf(vehicle.global_position.y - road_height) < 0.06, "%s comes back down to ground level after crossing the sidewalk" % vehicle.vehicle_label)
+		vehicle.set_driver_active(false)
+		vehicle.reset_to(parking)
+	await _tap(&"recover")
+
+
+func _check_yard_obstacles() -> void:
+	var curb: Node3D = game.world.get_node("CurbTest")
+	var reverse_pose := Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(curb.position.x - 3.5, 0.55, curb.position.z))
+	game.car.reset_to(reverse_pose)
+	game.car.set_driver_active(true)
+	await _frames(10)
+	var road_height: float = game.car.global_position.y
+	var peak_height := road_height
+	game.car.set_controls(-0.55, 0.0, false)
+	for tick in range(190):
+		await physics_frame
+		peak_height = maxf(peak_height, game.car.global_position.y)
+		if game.car.global_position.x > curb.position.x + 2.6:
+			break
+	_expect(game.car.global_position.x > curb.position.x + 2.6 and peak_height - road_height > 0.18, "car reverses over the taller 22 cm yard curb")
+
+	var roof := StaticBody3D.new()
+	var ceiling := CollisionShape3D.new()
+	var roof_box := BoxShape3D.new()
+	roof_box.size = Vector3(5.2, 0.24, 3.8)
+	ceiling.shape = roof_box
+	roof.position = Vector3(curb.position.x, 1.15, curb.position.z)
+	roof.add_child(ceiling)
+	game.add_child(roof)
+	game.car.reset_to(reverse_pose)
+	await _frames(10)
+	game.car.set_controls(-0.55, 0.0, false)
+	await _frames(135)
+	_expect(game.car.global_position.x < curb.position.x - 1.7 and game.car.get_speed_mps() < 0.2, "car cannot step up under a low overhang")
+	roof.queue_free()
+
+	var wall: Node3D = game.world.get_node("ImpactWall")
+	var wall_approach := Vector3(wall.position.x, 0.55, wall.position.z + 7.0)
+	game.car.reset_to(Transform3D(Basis.IDENTITY, wall_approach))
+	await _frames(10)
+	game.car.set_controls(0.65, 0.0, false)
+	await _frames(120)
+	_expect(game.car.global_position.z > wall.position.z + 1.9 and game.car.get_speed_mps() < 0.2, "the solid yard wall still stops the car")
+	await _tap(&"recover")
+
+
 func _check_rickshaw() -> void:
 	var parked: Vector3 = game.rickshaw.global_position
+	var driver := game.rickshaw.get_node("SeatedDriver") as Node3D
+	_expect(not driver.visible, "parked auto-rickshaw has an empty driver seat")
 	var collision := KinematicCollision3D.new()
 	var probe := Transform3D(Basis.IDENTITY, parked + Vector3(0.0, 0.07, 4.0))
 	var hit_vehicle: bool = game.car.test_move(probe, Vector3(0.0, 0.0, -4.0), collision)
@@ -153,6 +228,7 @@ func _check_rickshaw() -> void:
 	await _frames(6)
 	await _tap(&"interact")
 	_expect(game.active_vehicle == game.rickshaw and game.rickshaw.driver_active and not game.car.driver_active, "nearest auto-rickshaw takes control while the car stays parked")
+	_expect(driver.is_visible_in_tree(), "entering the auto-rickshaw shows the seated driver")
 	await _hold(&"move_forward", 72)
 	_expect(game.rickshaw.position.z < parked.z - 2.5 and game.rickshaw.get_speed_mps() > 1.8, "auto-rickshaw accelerates")
 	var heading: float = game.rickshaw.rotation.y
@@ -166,6 +242,7 @@ func _check_rickshaw() -> void:
 	_expect(game.rickshaw.get_speed_mps() < 0.2, "auto-rickshaw brakes to a halt")
 	await _tap(&"interact")
 	_expect(not game.driving and game.player.visible, "stopped auto-rickshaw can be exited")
+	_expect(not driver.visible, "exiting the auto-rickshaw hides the seated driver")
 	await _tap(&"recover")
 	var centered: Vector2 = Vector2(game.rickshaw.position.x, game.rickshaw.position.z)
 	_expect(centered.distance_to(Vector2(parked.x, parked.z)) < 0.1 and absf(game.car.position.z) < 0.1 and not game.driving, "reset parks the car and auto-rickshaw at their original bays")

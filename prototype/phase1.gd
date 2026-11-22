@@ -31,6 +31,7 @@ var driving: bool:
 		return active_vehicle != null
 var _yaw := 0.0
 var _pitch := 0.32
+var _camera_target_height := 0.0
 var _manual_look_time := 0.0
 var _interact_requested := false
 var _reset_requested := false
@@ -276,13 +277,18 @@ func _update_camera(delta: float) -> void:
 	if driving and _manual_look_time <= 0.0:
 		_yaw = lerp_angle(_yaw, active_vehicle.rotation.y, minf(delta * 4.5, 1.0))
 	var target := _actor_position() + Vector3.UP * (1.10 if driving else 1.30)
+	if driving:
+		_camera_target_height = lerpf(_camera_target_height, target.y, 1.0 - exp(-delta * 12.0))
+	else:
+		_camera_target_height = target.y
+	var focus := Vector3(target.x, _camera_target_height, target.z)
 	var distance := active_vehicle.follow_distance if driving else 4.8
 	var offset := Vector3(sin(_yaw) * cos(_pitch), sin(_pitch), cos(_yaw) * cos(_pitch))
-	var desired := target + offset * distance
+	var desired := focus + offset * distance
 	var query := PhysicsRayQueryParameters3D.create(target, desired, 1)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		var point: Vector3 = hit.position
-		desired = target + offset * maxf(0.18, target.distance_to(point) - 0.24)
+		desired = target + (desired - target).normalized() * maxf(0.18, target.distance_to(point) - 0.24)
 	camera.global_position = desired
-	camera.look_at(target)
+	camera.look_at(focus)

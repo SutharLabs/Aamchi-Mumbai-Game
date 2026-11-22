@@ -2,7 +2,7 @@
 
 `phase1_car.gd`, `phase1_rickshaw.gd`, `phase1_motorcycle.gd`, and `phase1_scooter.gd` each construct a vehicle with an original procedural body and collision shape. They share movement, reset and input through `phase1_vehicle.gd`. The motorcycle and scooter also share rider geometry and visual lean through `phase1_two_wheeler.gd`.
 
-The car faces local **-Z**. A spawn origin around **y = 0.55 m** places the chassis just above a flat road at y = 0. Collision is a 1.64 × 0.92 × 3.80 m box centered at local y = -0.04 m: local bounds x ±0.82, y -0.50…0.42, z ±1.90 m. The visual roof extends above the collider, to local y ≈0.95. Wheels extend to approximately x ±0.93.
+The vehicles face local **−Z**. A spawn origin around **y = 0.55 m** places the chassis just above a flat road at y = 0. The car uses a 1.64 × 0.92 × 3.80 m collider centered at local y = −0.04 m. The roof and other fine details use separate render geometry.
 
 API:
 
@@ -17,9 +17,25 @@ Physics layers use **1** for the world, **2** for the walking player and **4** f
 
 Initial tuning: 18 m/s forward (64.8 km/h), 5 m/s reverse, 8 m/s² acceleration, 16 m/s² braking, 2.8 m/s² coasting drag. Steering is speed-scaled, softer at high speed, reversed while backing, and disabled at rest/in air. Gravity, floor snap, and `move_and_slide()` provide grounded collision without a drivetrain/suspension simulation. A fall below y=-25 returns to the last known reset pose.
 
-Meaningful acceptance cases: positive throttle travels along local -Z; right steering turns toward local +X; backing reverses steering response; braking from maximum speed stops in roughly 1.13 s / 10.1 m on flat ground before collision effects; walls remove retained forward speed; blocked contacts remain finite; reset clears motion and driver deactivation parks the car. Repeat at 30/60 rendering FPS with the same physics rate, over slopes and the planned narrow passages. The car body remains an arcade placeholder. Production art needs a sourced current Mumbai vehicle reference and its own acceptance check.
+Positive throttle travels along local −Z and right steering turns toward local +X. Backing reverses the steering response. A frontal collision removes retained forward speed, vehicle reset clears motion, and deactivation parks the vehicle. The shared controller uses an upright collision body for each of the four families.
 
-## Focused check receipt — 22 November 2026
+## Curb handling
+
+The original chassis stopped at the vertical face of an ordinary curb. The shared controller now checks a short lookahead during grounded travel. A nearby static-world face can trigger an upward sweep, a sweep across the edge, and a downward sweep onto a supported surface. The full chassis stays subject to clearance checks, with a maximum rise of 25 cm and a 28 cm floor snap for descents. A tall wall, a blocked landing, a low ceiling or a peer vehicle stays solid. The chase camera eases the height change across the step. [Godot motion sweeps](https://docs.godotengine.org/en/stable/classes/class_physicsbody3d.html#class-physicsbody3d-method-test-move) · [Godot floor snap](https://docs.godotengine.org/en/stable/classes/class_characterbody3d.html#class-characterbody3d-property-floor-snap-length)
+
+The regression route crosses the existing 14 cm Hill Road curb and returns to ground level. The handling yard provides a 22 cm reverse crossing, a low-overhang test fixture and a solid wall. The yard ramp remains part of the smoke test. An automated drive also completed a lap through all 21 Ranwar road waypoints. [World layout](../world/README.md) · [Playtest guide](../README.md)
+
+## Current vehicle art
+
+The render meshes use original shaped profiles, rounded tires, fitted glazing and separate paint, rubber, fabric or metal surfaces. Review them against the [visual direction](../../docs/ASSET_PRODUCTION_PLAN.md#visual-direction-and-review).
+
+- **Car.** A tall urban hatchback with crowned roof, shaped arches, sloped glass and a 2.43 m visual wheelbase. The parked model has 4,900 triangles across 55 mesh instances. [Maruti Suzuki WagonR shape and proportions](https://www.marutisuzuki.com/arena/wagon-r)
+- **Auto-rickshaw.** An open-sided passenger auto with a curved yellow canopy, round cowl, visible bench and a 1.99 m visual wheelbase. The parked model has 6,420 triangles across 70 mesh instances. Entering it shows a seated driver using the player rig, adding 2,024 triangles. The export-market open-sided RE brochure supplies a 2.0 m reference wheelbase. [Bajaj RE India](https://www.bajajauto.com/three-wheelers/re) · [Bajaj open-sided RE brochure](https://www.bajajauto.com/en-co/-/media/globalbajajauto/common-media/brochure/3wheelers/bajaj-re-4s-petrol-without-door-xl-brochure.pdf)
+- **Motorcycle and scooter.** The motorcycle has an exposed engine, shaped fuel tank and rounded mudguards. The scooter has a curved rear shell, open footwell and rounded front apron. Both have fitted rims, steering-linked front components and a skinned helmeted rider with hand placement tied to the grips. Motorcycle geometry uses 6,420 triangles parked and 8,704 ridden. Scooter geometry uses 4,680 triangles parked and 6,964 ridden. [Hero Splendor+](https://www.heromotocorp.com/en-in/motorcycles/splendor-plus.html) · [Suzuki Access](https://www.suzukimotorcycle.co.in/product-details/all-new-access-125-bluetooth-enabled/features)
+
+The design uses unbranded procedural meshes. The Iris Xe review covered front, side and rear or three-quarter views. Populated-scene and minimum-device performance still require measurement.
+
+## Baseline controller receipt — 22 November 2026
 
 Godot 4.7.2 standard console passed `--check-only` on this script. An isolated headless floor/wall fixture passed at fixed rendering cadences of 30 and 60 with the same physics rate. At both cadences: 180 forward ticks reached z=-33.9000 m and 18.0 m/s; braking stopped within 9.9756 m; reverse capped at 5.0 m/s with opposite yaw response; right steering moved toward +X; a wall centered at z=-8 stopped the car center at z=-5.5733. Upright/zero-velocity reset, non-finite control rejection, fall recovery, and parking on driver deactivation passed. The temporary harness is under `.toolchain/car_contract_check.gd` and is not a runtime dependency.
 
@@ -55,7 +71,7 @@ Both new vehicles face local −Z and spawn at y = 0.55 m. The shared controller
 
 Both colliders cover the seated rider and extend down to local y = −0.50 m. The motorcycle uses an exposed engine, fuel tank, narrow seat, larger wheels and footpegs. The scooter has smaller wheels, an enclosed rear body, low floorboard and front leg shield. Motorcycle steering softens at speed. The scooter is tuned for tight low-speed turns. The table records prototype handling and collision dimensions.
 
-Each vehicle shows its helmeted rider while `driver_active`. The motorcycle rider's hips sit at `(0, 0.38, 0.18)` and their knees straddle the tank. The scooter rider's hips sit at `(0, 0.40, 0.24)` with an upright torso and both feet on the floorboard. The prototype switches directly between the seated and walking poses. Reset immediately zeros visual lean. Parking eases the vehicle back upright.
+Each vehicle shows its helmeted rider while `driver_active`. The motorcycle rider straddles the tank with feet on the pegs. The scooter rider sits upright with both feet forward on the floorboard. Hands follow the steering grips. The prototype switches directly between the seated and walking poses. Reset immediately zeros visual lean. Parking eases the vehicle back upright.
 
 ### Two-wheeler references checked 22 November 2026
 
@@ -64,7 +80,7 @@ Each vehicle shows its helmeted rider while `driver_active`. The motorcycle ride
 
 Both models are original, unbranded procedural interpretations. Production model selection still needs current Bandra reference evidence.
 
-### Two-wheeler check receipt
+### Baseline two-wheeler check receipt
 
 All three new scripts pass Godot 4.7.2 parse checks. An isolated constructor/tree check confirms each concrete vehicle attaches its visual/rider tree, sets `is_two_wheeler`, starts with its rider hidden, and frees without orphaned nodes/resources. Constructors call `super()` explicitly through the inheritance chain.
 

@@ -19,6 +19,8 @@ Latest user delegation, 20 November: target **Windows 10 and Android 12**. Choos
 
 Open `prototype/project.godot` with the pinned Godot 4.7.2 standard editor. Keep prototype source in `prototype/`, toolchain material in `.toolchain/`, and Windows exports in `builds/`. Use the Windows desktop preset and smoke script documented in `prototype/README.md`. The user authorized execution servers for rendering or high CPU work when needed. Follow the remote runbook for shared node access.
 
+Use the visible street geometry to govern free-roam traversal. Test ordinary curbs, driveways and grades with all four vehicle families in both directions. Keep walls, high obstacles, blocked clearance and vehicle-width restrictions physically solid. Review the driving camera over changes in road height.
+
 ## Current overnight work
 
 The user authorized remote model creation between **22:00 and 08:00 Asia/Kolkata**. Read docs/OVERNIGHT_MODELING.md before operating the queue. jobs/night-queue.json owns the queue; jobs/specs/*.json own individual briefs. jobs/remote.json contains non-secret connection/tool paths. Use existing SSH key authentication; never record passwords/tokens or disable host-key checking.
@@ -28,6 +30,8 @@ The remote project is /root/motion/mumbai-gully-heat on epyc24. Respect /root/mo
 The Python supervisor executes saved Blender scripts without an active Codex session. It enforces the night window, retries bounded failures and checkpoints results. It is not an unattended reasoning agent. Once all jobs finish it exits; start it again after adding work. A remote reboot requires an explicit restart; the current setup does not install a system boot service.
 
 ## Asset acceptance
+
+Use grounded, stylized realism for player-facing art. Match the proportions, contours, materials and scale cues of present-day Mumbai references. Use Minecraft-like, voxel or deliberately block-shaped styling only when the user explicitly requests it for the work. Treat primitive blockouts as layout and collision studies. Review assets in the actual gameplay camera before accepting them as art. [Visual direction and review](docs/ASSET_PRODUCTION_PLAN.md#visual-direction-and-review)
 
 Overnight outputs are original procedural **static blockouts/studies**. They are not approved production characters, authentic nauvari/pheta, surveyed BDD replicas or tested game assets. A report with status:ok means technical export passed. Cultural/architectural review, rigging/weights, animation, collision and populated-scene performance remain separate gates.
 

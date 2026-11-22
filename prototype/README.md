@@ -18,6 +18,8 @@ Open `project.godot` in Godot 4.7.2 standard and press **F6** from `phase1.tscn`
 
 Follow Hill Road from the start toward St Peter's approach, turn onto St Peter's Road and follow Waroda Road back. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
+To try the curb crossing, drive slowly across the raised west-side curb on Hill Road. All four can climb the curb and come down to street or yard level. The handling yard also has a 22 cm test curb and a solid impact wall. The driving camera softens changes in height as the vehicle crosses the curb. [Vehicle handling notes](vehicle/README.md)
+
 ## Local smoke check and export
 
 From the repository root with the downloaded portable editor and its matching standard templates in `.toolchain`:
@@ -33,4 +35,4 @@ Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/phase-1/
 
 The smoke script exercises captured locomotion, all four vehicles, steering and braking, exit clearance, reset, the ramp, road clearances and simulated concurrent touch. `--touch-preview` also enables the overlay on a desktop build. Keep the Godot, OpenStreetMap and 100STYLE notices with the executable.
 
-The auto-rickshaw has tighter steering and a lower top speed than the car. The motorcycle has a straddled rider pose and more speed for the open yard. The scooter has a step-through pose and tighter steering for slow turns. Both two-wheelers lean visually through turns and use upright arcade collision bodies. Their procedural geometry and rider poses are placeholders. Android export, physical-device touch, minimum-spec performance, and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)
+The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle models. The two-wheelers have distinct skinned rider poses, with hands following the steering grips and visual lean on upright arcade collision bodies. Android export, physical-device touch, minimum-spec performance and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)

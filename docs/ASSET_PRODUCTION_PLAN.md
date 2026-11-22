@@ -10,6 +10,15 @@ The user now requires **present-day Mumbai only** (22 November 2026), retaining 
 
 The 19 November model/OEM/landmark research remains a dated candidate catalogue. Contemporary vehicle generations, skyline entries, street photos and redevelopment sources are now eligible for present-day reference/acquisition review; the blanket historical-era hold is removed. This does not approve location, exact generation, archive rights, visual accuracy, rig/collision or performance. Present-day traffic may include older generations when current local evidence supports them. Keep ordinary current clothing alongside contextual traditional dress; museum costumes do not establish daily clothing prevalence. Queue IDs and captured metadata remain unchanged.
 
+## Visual direction and review
+
+Use stylized realism grounded in present-day Mumbai. A low-spec asset should keep the silhouette, proportions and surface changes that make its real-world counterpart recognizable at the gameplay camera distance. Simplify small details and reuse materials. Use Minecraft-like, voxel or deliberately block-shaped art only for an explicit user request. Primitive collision and layout studies are useful during development and need an art review before they represent the game to players.
+
+- Check a dated reference for the subject, its dimensions, materials and details visible in Mumbai today. Record provenance and usage terms before adopting outside assets.
+- On vehicles, check wheelbase and track, body contour, roof and window rake, wheel arches and tire clearance. Use lighting, paint, glass, trim and visible mechanical parts to communicate construction and scale. Inspect steering, wheel motion, seat and rider contact from the normal chase camera and a three-quarter view.
+- On people and buildings, check proportions, silhouettes and real construction cues. Look at characters in motion and street assets in their actual surroundings. Use openings, roofs, signs and material changes where they help identify the place.
+- Record triangles, surfaces and texture use for the in-game view. Simplify detail that disappears at distance and validate the populated scene on the selected devices. [Mesh, materials and performance acceptance](#acceptance-sequence-and-evidence)
+
 ## Actual starting point
 
 The project has researched candidates and a working procedural-study pipeline. It has **no accepted engine asset or target-hardware benchmark**. Godot 4.7.2/Compatibility/GDScript is selected; implementation validation remains pending. A license/download declaration is not an inspected archive, an original blockout is not a finished asset, and a Blender export does not establish frame rate in the game.
