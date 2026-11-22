@@ -3,6 +3,7 @@ extends Node3D
 signal pause_requested
 
 const World := preload("res://world/phase1_world.gd")
+const Traffic := preload("res://world/ambient_traffic.gd")
 const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
 const Car := preload("res://vehicle/phase1_car.gd")
 const Rickshaw := preload("res://vehicle/phase1_rickshaw.gd")
@@ -20,8 +21,10 @@ const TALK_TIME := 4.8
 const EXIT_SPEED := 0.65
 const STREET_SOLIDS := 1 | 2 | 4
 const GAMEPAD_LOOK_SPEED := 680.0
+const TRAFFIC_ENTRY_ROAD := 3 # West Waroda Road.
 
 var world := World.new()
+var traffic := Traffic.new()
 var player := Walker.new()
 var car := Car.new()
 var rickshaw := Rickshaw.new()
@@ -60,6 +63,9 @@ func _ready() -> void:
 	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
 	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", World.MOTORCYCLE_START)
 	_add_practice_vehicle(scooter, "PracticeScooter", World.SCOOTER_START)
+	traffic.name = "AmbientTraffic"
+	add_child(traffic)
+	traffic.start(world.lane_graph.loop_for_road(TRAFFIC_ENTRY_ROAD), 26.0)
 	camera.fov = 68.0
 	camera.far = 570.0
 	add_child(camera)
@@ -297,6 +303,7 @@ func _reset_run() -> void:
 	_yaw = 0.0
 	_pitch = 0.32
 	_manual_look_time = 0.0
+	traffic.reset()
 	_show_message("Back at the starting point")
 
 

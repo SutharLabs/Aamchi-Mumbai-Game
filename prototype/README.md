@@ -1,6 +1,6 @@
 # Aamchi Mumbai Game · Phase 1 playtest
 
-Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable vehicles start in marked bays near the starting point. From the car, head left past the auto-rickshaw to find the motorcycle and scooter. The route includes a walking shortcut and an open handling yard. [Route and source notes](world/README.md)
+Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable vehicles start in marked bays near the starting point. From the car, head left past the auto-rickshaw to find the motorcycle and scooter. The route includes a walking shortcut and an open handling yard. One ambient hatchback follows the Ranwar roads and yields when the lane is blocked. [Route and source notes](world/README.md)
 
 Play as **Omkar Shirodkar (ओंकार शिरोडकर)**, wearing an indigo sadara, an ivory dhotar and Kolhapuri-style chappals. His original skinned mesh uses the captured idle, walk and jog clips. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
 
@@ -20,7 +20,7 @@ The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profil
 | Windows gamepad | Left stick to move or drive, right stick to look, X to jog, A to interact, LB to brake, Y to reset, Start to pause and B to go back. |
 | Touch controls | Walk or drive with the left stick, drag the right side to look, and use Interact, Brake, Reset and Pause. |
 
-Follow Hill Road from the start toward St Peter's approach, turn onto St Peter's Road and follow Waroda Road back. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
+Follow Hill Road from the start past the St Peter's exterior, turn onto St Peter's Road at the junction and follow Waroda Road back. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
 Walk up to Mira or Rafiq on Hill Road and press **E** or **A** on a gamepad, or tap **Interact**, when the talk prompt appears. Each pauses to face you and offers a short route tip, then continues walking. Pedestrians yield when their route is blocked and are solid to the player and all four vehicles.
 

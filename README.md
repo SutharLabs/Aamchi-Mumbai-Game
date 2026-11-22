@@ -72,7 +72,7 @@ The user selected a weaker PC class with **integrated graphics and 8 GB RAM**, a
 
 ## Status
 
-Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) in `C:/Suresh/Software/Aamchi-Mumbai-Game`. Active local branch: `phase-1/prototype`. The 0.0.1 development playtest has Windows x64 and Android ARM64 builds. Minimum-device acceptance remains open on both platforms.
+Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) in `C:/Suresh/Software/Aamchi-Mumbai-Game`. Active local branch: `phase-1/prototype`. The 0.0.1 development playtest has Windows x64 and Android ARM64 builds. The user reports that the game runs on the current Windows machine and an Android 12 phone. Formal Phase 1 device and player checks are deferred while Phase 2 continues.
 
 The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The Windows playtest opens with a Marathi-branded title menu, local profiles, settings and credits. It has four drivable vehicles and uses captured locomotion for the player and two pedestrians. The release schedule will be re-estimated after both-platform testing with the provisional ten human hours per week. [Playtest guide](prototype/README.md)
 

@@ -3,6 +3,10 @@
 ## Modern OSM-derived polylines: see README.md and layout.json beside this script.
 
 const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
+const StPetersApproach := preload("res://world/st_peters_approach.gd")
+# From OSM way 511064344, with a simplified forecourt along Hill Road.
+const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
+const ST_PETERS_LOT := Rect2(22.6, -375.3, 31.0, 25.4)
 const SHOP_LABELS: Array[String] = [
 	"MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY",
 	"LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"
@@ -20,6 +24,11 @@ const SCOOTER_START := Vector3(-8.7, 0.55, 1.5)
 const SIDEWALK_WIDTH := 2.3
 const SIDEWALK_HEIGHT := 0.12
 const ROAD_WIDTHS: Array[float] = [14.0, 10.0, 8.0, 8.0]
+const RanwarLaneGraph := preload("res://world/ranwar_lane_graph.gd")
+# Directions relative to ROAD_SOURCE, based on the bundled OSM snapshot tags.
+const AMBIENT_DIRECTIONS: Array[int] = [
+	RanwarLaneGraph.REVERSE, RanwarLaneGraph.BOTH, RanwarLaneGraph.REVERSE, RanwarLaneGraph.BOTH,
+]
 const ROAD_NAMES: Array[String] = ["Hill Road", "St Peter's Road", "Waroda Road east", "Waroda Road west"]
 const ROAD_SOURCE: Array = [
 	[Vector2(72.8260536,19.0546940), Vector2(72.8278068,19.0547279), Vector2(72.8283741,19.0547747), Vector2(72.8294289,19.0549497), Vector2(72.8300536,19.0550739), Vector2(72.8308263,19.0552115)],
@@ -29,6 +38,7 @@ const ROAD_SOURCE: Array = [
 ]
 const GULLY_SOURCE: Array[Vector2] = [Vector2(72.8275960,19.0541387), Vector2(72.8276071,19.0542799), Vector2(72.8276677,19.0544493), Vector2(72.8277695,19.0546053), Vector2(72.8278068,19.0547279)]
 
+var lane_graph: RanwarLaneGraph
 var _roads: Array[PackedVector3Array] = []
 var _gully := PackedVector3Array()
 var _lots: Array[Vector3] = []
@@ -51,9 +61,11 @@ func _ready() -> void:
 		_roads.append(points)
 	for coordinate: Vector2 in GULLY_SOURCE:
 		_gully.append(_project(coordinate))
+	lane_graph = RanwarLaneGraph.new(_roads, ROAD_WIDTHS, AMBIENT_DIRECTIONS)
 	_build_roads()
 	_build_gully()
 	_build_recovery_yard()
+	_build_st_peters()
 	_build_frontages()
 	_build_vehicle_bays()
 	_build_boundary()
@@ -241,6 +253,13 @@ func _is_free_lot(point: Vector3, radius: float) -> bool:
 	return true
 
 
+func _build_st_peters() -> void:
+	var church := StPetersApproach.create(_materials["frontage_kit"])
+	church.position = ST_PETERS_FRONT
+	church.rotation.y = PI * 0.5
+	add_child(church)
+
+
 func _build_frontages() -> void:
 	var palette: Array[String] = ["cream","ochre","mint","rose","blue"]
 	var building_count := 0
@@ -259,6 +278,10 @@ func _build_frontages() -> void:
 					if not _is_free_lot(point,8.0):
 						continue
 					_lots.append(point)
+					# Preserve subsequent frontage placement and variant order at this reserved lot.
+					if ST_PETERS_LOT.grow(10.0).has_point(Vector2(point.x, point.z)):
+						building_count += 1
+						continue
 					var tall: bool = road_index == 0 and building_count % 3 == 0
 					var height := 11.0 if tall else 5.5+float(building_count%3)*1.5
 					var angle := atan2(along.x,along.z)
@@ -317,10 +340,10 @@ func _add_shop_label(body: Node3D, caption: String, at: Vector3, yaw: float, pix
 
 func _build_vehicle_bays() -> void:
 	# Paint only: preserve a continuous collision floor and all actor spawn clearances.
-	_paint_vehicle_bay("CarBay",VEHICLE_START,2.8,5.4,"paint","CAR")
-	_paint_vehicle_bay("AutoBay",RICKSHAW_START,2.4,4.4,"paint","AUTO")
-	_paint_vehicle_bay("MotorcycleBay",MOTORCYCLE_START,1.8,3.8,"bay_cyan","MOTORCYCLE")
-	_paint_vehicle_bay("ScooterBay",SCOOTER_START,1.7,3.4,"bay_white","SCOOTER")
+	_paint_vehicle_bay("CarBay",VEHICLE_START,2.8,5.4,"paint")
+	_paint_vehicle_bay("AutoBay",RICKSHAW_START,2.4,4.4,"paint")
+	_paint_vehicle_bay("MotorcycleBay",MOTORCYCLE_START,1.8,3.8,"bay_cyan")
+	_paint_vehicle_bay("ScooterBay",SCOOTER_START,1.7,3.4,"bay_white")
 	_label("RANWAR / BANDRA WEST",Vector3(9.2,3.2,-32.0))
 	# Sparse painted training guide only; no new maneuver obstacles or route changes.
 	for index in range(5):
@@ -329,7 +352,7 @@ func _build_vehicle_bays() -> void:
 	_label("LOW SPEED PRACTICE",Vector3(-17.5,2.7,-23.0))
 
 
-func _paint_vehicle_bay(prefix: String, spawn: Vector3, width: float, length: float, marking: String, text: String) -> void:
+func _paint_vehicle_bay(prefix: String, spawn: Vector3, width: float, length: float, marking: String) -> void:
 	var center := Vector3(spawn.x,0.0,spawn.z)
 	_box(prefix+"Surface",center+Vector3(0,0.023,0),Vector3(width,0.012,length),"bay",false)
 	for side: float in [-1.0,1.0]:
@@ -338,17 +361,6 @@ func _paint_vehicle_bay(prefix: String, spawn: Vector3, width: float, length: fl
 	_strip(prefix+"ArrowShaft",center+Vector3(0,0,0.6),center+Vector3(0,0,-0.8),0.1,0.01,0.044,marking,false)
 	_strip(prefix+"ArrowLeft",center+Vector3(0,0,-0.8),center+Vector3(-0.35,0,-0.25),0.1,0.01,0.044,marking,false)
 	_strip(prefix+"ArrowRight",center+Vector3(0,0,-0.8),center+Vector3(0.35,0,-0.25),0.1,0.01,0.044,marking,false)
-	var label := Label3D.new()
-	label.name = prefix+"Label"
-	label.text = text
-	label.position = center+Vector3(0,1.9,length*0.5+1.3)
-	label.font_size = 36
-	label.pixel_size = 0.009
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.modulate = Color("fff1c9")
-	label.outline_modulate = Color("243138")
-	label.outline_size = 7
-	add_child(label)
 
 
 func _build_boundary() -> void:

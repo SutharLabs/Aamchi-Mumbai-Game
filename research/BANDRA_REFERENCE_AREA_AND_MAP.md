@@ -45,6 +45,20 @@ The local topology was checked using shared OSM node IDs. Source lengths follow 
 
 **On-foot gully candidate:** E -> Nagrana Lane -> F, about **70.5 m**, way **31217220**, tagged footway in the acquired snapshot. Keep it an on-foot shortcut candidate. Verify current width, steps/access, changes since capture and camera/collision behavior; a polyline is not evidence of vehicle access.
 
+### Phase 2 road-direction audit
+
+The preserved 20 November 2026 OpenStreetMap extract gives the following directions from each way's ordered nodes and explicit tags. A, B, C, D, E and F refer to the anchors above. Use these directions for ambient vehicles in the prototype. Field verification of current street signs, turn restrictions and vehicle exemptions remains pending. [Raw OSM extract](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/bandra-ranwar-modern.osm)
+
+| Source way | Captured access tags | Prototype use |
+|---|---|---|
+| [Hill Road 1053511374](https://www.openstreetmap.org/way/1053511374) | oneway=yes, motor_vehicle=yes, maxspeed=30 | Westward from St Peter's Road (B) to Waroda (A) |
+| [St Peter's Road 31152959](https://www.openstreetmap.org/way/31152959) | oneway=no, motor_vehicle=yes | Between B and C in both directions |
+| [Eastern Waroda Road 31152970](https://www.openstreetmap.org/way/31152970) | oneway=yes, motor_vehicle=yes | From Veronica approach (D) toward Chapel/St Peter's (C) |
+| [Western Waroda Road 431825049](https://www.openstreetmap.org/way/431825049) | hgv=no, oneway unspecified | Between A and D in both directions for the small-car pilot |
+| [Nagrana Lane 31217220](https://www.openstreetmap.org/way/31217220) | highway=footway, foot=permissive | Foot only between E and F |
+
+The connected ambient circuit runs **A → D → C → B → A**. The original player handling circuit remains available as a free-roam route. The two paths share the same projected road geometry.
+
 **First mission-route recommendation:** accept a fictional repair/delivery job near A; drive the loop past the St Peter's anchor to a fictional curbside stop near D; dismount and walk along Waroda to E, then use Nagrana Lane to reach F. Put the fictional handoff at an authored non-residential frontage rather than assigning criminal activity to a named real household. This proves travel, mounting, delivery and route choice without expanding the district or requiring a church interior.
 
 Start the greybox at approximate source scale. If travel needs shortening, trial gentle reductions of selected block gaps, initially up to about **15%**, preserving landmark order, junction connections and distinct outer-road/inner-lane character. This is a design experiment, not an applied transformation or surveyed target. Keep vehicle clearances and lane widths separately authored; do not uniformly shrink collision geometry to compress the city.

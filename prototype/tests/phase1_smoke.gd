@@ -16,6 +16,12 @@ func _run() -> void:
 	await _frames(30)
 	_expect(game.player.is_on_floor(), "player settles on the starting street")
 	_expect(not game.driving, "starts on foot")
+	var hover_labels: int = game.world.find_children("*BayLabel", "Label3D", true, false).size()
+	for actor: Node in [game.player, game.car, game.rickshaw, game.motorcycle, game.scooter] + game.pedestrians:
+		for label: Label3D in actor.find_children("*", "Label3D", true, false):
+			if label.is_visible_in_tree():
+				hover_labels += 1
+	_expect(hover_labels == 0, "actors and vehicle bays have no persistent hover labels")
 	await _check_locomotion()
 	await _check_pedestrians()
 	await _tap(&"interact")
