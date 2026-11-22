@@ -4,7 +4,7 @@ Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable 
 
 The player uses captured idle, walk and jog clips on an original skinned humanoid. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
 
-Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. The Windows 0.1.1 debug export is `../builds/phase-1/Aamchi Mumbai Game 0.1.1.exe`. The versioned filename avoids reusing the Windows shell icon cache entry from the earlier executable.
+Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. The first development release is **0.0.1**. Extract the Windows ZIP from `../builds/dev/0.0.1/` and run `Aamchi Mumbai Game 0.0.1.exe`. The versioned filename avoids reusing the Windows shell icon cache entry from an earlier executable.
 
 The title menu provides Play, Profiles, Settings, Credits and Quit. Profiles store a local display name and the active selection. Master volume, fullscreen and camera sensitivity are device settings saved in `user://preferences.json`. The pause menu also offers Resume and Main menu. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
 
@@ -34,11 +34,11 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --editor --import
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 5500 --script res://tests/phase1_smoke.gd -- --touch-preview
-New-Item -ItemType Directory -Force -Path '.\builds\phase-1' | Out-Null
-$exe = Join-Path (Get-Location) 'builds\phase-1\Aamchi Mumbai Game 0.1.1.exe'
+New-Item -ItemType Directory -Force -Path '.\builds\dev\0.0.1' | Out-Null
+$exe = Join-Path (Get-Location) 'builds\dev\0.0.1\Aamchi Mumbai Game 0.0.1.exe'
 & $editor --headless --path prototype --export-debug 'Windows Desktop' $exe
-Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/phase-1/'
-Copy-Item 'prototype/startup/art/NotoSansDevanagari-OFL.txt' 'builds/phase-1/'
+Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/dev/0.0.1/'
+Copy-Item 'prototype/startup/art/NotoSansDevanagari-OFL.txt' 'builds/dev/0.0.1/'
 ```
 
 The startup smoke exercises menu navigation, profile reload, settings, credits and pause. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. Keep the Godot, OpenStreetMap, 100STYLE and Noto notices with the executable.
@@ -50,8 +50,10 @@ The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle mod
 Use the **Android Debug** preset with the matching Godot 4.7.2 standard templates. Set the Java SDK and Android SDK paths in Godot's editor settings. This Windows build used project-local Eclipse Temurin 17 and AOSP tools for APK signing and ADB. The debug certificate stays with the local toolchain. [Godot Android export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html)
 
 ```powershell
-$apk = Join-Path (Get-Location) 'builds\phase-1\Aamchi Mumbai Game 0.1.1 - Phase 1 Android.apk'
+$apk = Join-Path (Get-Location) 'builds\dev\0.0.1\Aamchi-Mumbai-Game-0.0.1-Android-arm64.apk'
 & $editor --headless --path prototype --export-debug 'Android Debug' $apk
 ```
 
-The signed 0.1.1 APK is ARM64 and declares Android API 24 as its minimum and API 36 as its target. The launcher icon, package identifier `com.sutharlabs.aamchimumbai`, landscape orientation and v2/v3 signatures were verified. The companion ZIP contains the APK and the five notices used by the Windows package. Test launch and native inputs on an actual Android 12 ARM64 phone for the phase gate.
+The signed **0.0.1** APK is ARM64 and declares Android API 24 as its minimum and API 36 as its target. It retains the package identifier `com.sutharlabs.aamchimumbai` and the previous playtest signing certificate. Android uses internal version code **2** for the update from the 0.1.1 playtest, which used code 1. The Android ZIP bundles the same APK with five license and attribution notices.
+
+The selected Android test phone is the **Redmi Note 9 Pro Max (India)**. Record its installed Android and MIUI versions and RAM variant. In a first run, check launch and landscape menus, simultaneous movement and camera touch, talking with Mira or Rafiq, and entering, driving and exiting a vehicle. Record any touch or performance issue with the location and action that triggered it. [Xiaomi India device specifications](https://www.mi.com/in/redmi-note-9-pro-max/specs)

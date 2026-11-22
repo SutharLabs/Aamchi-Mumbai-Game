@@ -80,6 +80,7 @@ The 20 November snapshots predate the playable project. The current Windows play
 | E-19 | 22 November 0.1.1 pedestrian and Windows packaging checkpoint. [Playtest guide](../prototype/README.md) | 100 gameplay checks pass at each fixed 30/60 cadence with simulated touch. Pedestrians talk, pause, yield and block all four vehicles. The versioned Windows build launched on the Iris Xe development PC. Windows Shell showed the rickshaw at 16 and 32 px on the export and a freshly extracted copy of the ZIP. |
 | E-20 | 22 November 0.1.1 Android export checkpoint. [Android debug export](../prototype/README.md#android-debug-export) | Signed ARM64 APK and notices ZIP produced with Godot 4.7.2. Verified API 24 minimum/API 36 target, package and launcher resources, v2/v3 signatures, and embedded credit texts. ADB saw no connected device. APK SHA-256 `fc39dfc92989c87b2e1560f9f682a34e4e329cfb1cae08cffd08ca580e4d9053`. |
 | E-21 | 22 November real-time Ranwar development-PC benchmark | Godot 4.7.2 Compatibility on Windows 11, Intel i5-1145G7, Iris Xe and 15.7 GiB RAM. At 1280×720 with a 60 FPS cap, an automated car drive reached all 21 route waypoints in 140.5 s. Across 8,429 frame intervals, mean FPS was 59.99, p95 was 17.03 ms and p99 was 17.27 ms. Peak tracked engine allocation was 92.51 MiB. Minimum-device measurement and observed player runs remain open. |
+| E-22 | First development release **0.0.1**, source tag `v0.0.1`. [Playtest guide](../prototype/README.md) | Windows x64 ZIP and signed Android ARM64 APK plus notices ZIP built under `builds/dev/0.0.1/`. 25 startup and 100 gameplay checks passed. Windows file/product version `0.0.1.0`, native launch and Explorer icon verified. Android version name `0.0.1`, code 2, API 24 minimum/API 36 target and v2/v3 signing verified with the same key as the earlier playtest. APK SHA-256 `9a0239253add4d900eebca97748c6df5b67a48ea205de8e352d257a302fcfee5`. Handset testing remains open. |
 
 Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, and **23 remote Linux runner tests passed**. The Windows skips concerned unavailable test symlink creation. These results validate stated runner behaviors; they provide no gameplay, animation or low-spec frame-time evidence. The [verification receipt](../reports/overnight-verification.json) preserves their scope.
 
@@ -105,7 +106,7 @@ Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, 
 
 ## Phase 1 — walking and driving toy
 
-**Status: in progress.** The 0.1.1 prototype supports walking, talking to solid pedestrians, entering or mounting the four vehicles, driving, safe exit and reset. Windows and Android debug packages are built. Android hardware testing, minimum-device measurements and fresh-player observations remain open. [Playtest guide](../prototype/README.md)
+**Status: in progress.** The first development release **0.0.1** packages the Phase 1 walking, pedestrian, driving and recovery loop for Windows and Android. The user selected the **Redmi Note 9 Pro Max (India)** for Android testing. Device measurements and fresh-player observations remain open. [Playtest guide](../prototype/README.md) · [Device decision](PROJECT_RECORD.md)
 
 **Current implementation.** All four vehicles share the Godot character-body arcade controller with bounded curb traversal and pedestrian collision. Each has an original reference-based model. The auto shows a seated driver and the motorcycle and scooter use distinct skinned rider poses and visual lean. Mira and Rafiq give route tips and yield when their path is blocked. The road graph uses modern OSM with authored lanes and scenery. Windows smoke tests simulate separate fingers on the touch overlay. [Vehicle implementation](../prototype/vehicle/README.md)
 
@@ -120,8 +121,8 @@ Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, 
 
 ### Remaining work to close G1
 
-1. **Install and launch on the target devices.** Use the 0.1.1 Windows ZIP and signed Android APK on the named Windows 10 PC and Android 12 ARM64 phone.
-2. **Run the route on both minimum devices.** Name and use the target 8 GB integrated-graphics Windows 10 PC and the Android 12 phone. Walk, enter or mount, drive across the loop and curbs, exit and recover with all four vehicle families. Verify native touch and record frame time, memory and sustained traversal on each device.
+1. **Install and launch on the target devices.** Use the 0.0.1 Windows ZIP and signed Android APK. Record the installed Android/MIUI version and RAM variant on the Redmi Note 9 Pro Max (India).
+2. **Run the route on both minimum devices.** Identify the target 8 GB integrated-graphics Windows 10 PC. On that PC and the Redmi, walk, enter or mount, drive across the loop and curbs, exit and recover with all four vehicle families. Verify native touch and record frame time, memory and sustained traversal on each device.
 3. **Observe fresh players and rebaseline.** Collect at least three observations with Windows and Android coverage, resolve control, camera, touch and route blockers, and update the schedule against measured effort and the provisional ten hours per week.
 
 ## Phase 2 — Mumbai neighborhood and performance proof

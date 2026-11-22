@@ -91,7 +91,8 @@ The status column distinguishes a user choice, an implemented operation and an u
 | DEC-18 | Effort estimate | Preserve the earlier small-roster comparison baseline and re-estimate after vehicle/reference tests and the slice | No new deadline or AI speedup multiplier is justified by the current evidence. The roadmap owns the ranges. |
 | DEC-19 | Asset acceptance | Reference and license acquisition → visual/cultural review → technical preparation → functional import → whole-scene performance | Required production sequence. `status: ok` in an overnight report means technical export only. |
 | DEC-20 | Human planning capacity | One developer with some experience; provisionally ten focused hours/week | User supplied capacity and will revisit it as work progresses. Rebaseline using this allowance rather than assuming an experienced full-time developer. |
-| DEC-21 | Setup status | GitHub baseline and Windows export setup resumed on 22 November | GitHub source rebaselined in local branch, portable Godot and Windows preset exercised. Android export and hardware acceptance remain open. |
+| DEC-21 | Setup status | GitHub baseline and export setup resumed on 22 November | GitHub source rebaselined. The portable Godot editor and both debug presets are exercised. Device acceptance remains open. |
+| DEC-22 | First development release and Android test phone | **0.0.1** on Windows and Android. The user will install and test on a **Redmi Note 9 Pro Max (India)**. | Xiaomi lists Snapdragon 720G, Adreno 618 and 6/8 GB RAM variants. The handset's installed Android/MIUI and RAM variant need to be recorded during the test. [Xiaomi India specifications](https://www.mi.com/in/redmi-note-9-pro-max/specs) |
 
 ## Evidence inventory
 
@@ -149,7 +150,7 @@ These decisions are not permission requests for the current documentation work. 
 | OPEN-08 | Evaluate an image-to-3D tool/model and available compute | Current CPU Blender setup proves procedural generation only | Phase 2 experiment / asset workflow owner |
 | OPEN-09 | Lock actual campaign/combat scope from the slice | Prevents content production around unproven mechanics | Phase 3 / human creative and gameplay owner |
 | OPEN-10 | Rebaseline effort from observed handling, accepted-asset and mission time | Research and raw generation counts cannot predict accepted production throughput | After Phase 1 experiments and Phase 3 / human integrator |
-| OPEN-11 | Name the minimum Android phone/test device for the selected Android 12 OS target | OS choice is settled; physical SoC/RAM/GPU and measured thermal/memory behavior are not | Phase 0 / human integrator |
+| OPEN-11 | Test the selected Redmi Note 9 Pro Max (India) and record the Android 12 baseline | DEC-22 records the model. Installed OS, actual RAM variant, native input, thermal behavior and measured performance still need verification. | Phase 0 / human integrator |
 | OPEN-12 | Reassess the provisional ten human hours/week using actual development/review/playtest work | Initial availability and some experience are recorded; revise the plan when the user's capacity changes | Phase 1 onward / human integrator |
 
 ## Risk register
