@@ -1,0 +1,31 @@
+Aamchi Mumbai Game Source Viewing and Playtest License
+
+Copyright (c) 2026 SutharLabs. All rights reserved except as granted below.
+
+Scope
+
+This license covers original Aamchi Mumbai Game source code, documentation, art,
+branding, and game content to the extent SutharLabs holds the applicable rights.
+It also applies to that original material when included in compiled builds.
+
+Permissions
+
+You may view and inspect the original source in the public project repository.
+You may download and run unmodified official playtest builds for personal,
+noncommercial evaluation.
+
+Commercial redistribution of original project material or builds containing it
+requires prior written permission from SutharLabs. This includes selling copies,
+redistributing them for payment, and bundling them into a commercial offering.
+All other rights are reserved except as permitted by applicable law. The
+permissions provided by GitHub's Terms of Service for using a public repository
+through GitHub are unaffected.
+
+Third-party material
+
+Third-party software, data, fonts, and assets retain their own licenses. Nothing
+in this license limits rights granted by those licenses. See docs/THIRD_PARTY.md
+in the repository and the notices accompanying each build.
+
+Permissions inquiries can be directed to SutharLabs through the project repository
+at https://github.com/SutharLabs/Aamchi-Mumbai-Game.

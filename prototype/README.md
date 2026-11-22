@@ -41,7 +41,7 @@ Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/dev/0.0.
 Copy-Item 'prototype/startup/art/NotoSansDevanagari-OFL.txt' 'builds/dev/0.0.1/'
 ```
 
-The startup smoke exercises menu navigation, profile reload, settings, credits and pause. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. Keep the Godot, OpenStreetMap, 100STYLE and Noto notices with the executable.
+The startup smoke exercises menu navigation, profile reload, settings, credits and pause. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. Include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices in both build packages. [Project license](../LICENSE)
 
 The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle models. The two-wheelers have distinct skinned rider poses, with hands following the steering grips and visual lean on upright arcade collision bodies. Physical-device touch, minimum-spec performance and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)
 

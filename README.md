@@ -1,10 +1,21 @@
 # Aamchi Mumbai Game
 
-A solo-developer indie game workspace for Aamchi Mumbai Game, a stylized open-world driving and mission game based on real Mumbai, India. Buildings, landmarks, streets, and vehicle types use real local references, simplified for modest hardware. The characters, story, missions, and branding are original; geographic compression is documented.
+Aamchi Mumbai Game is a solo-developed, stylized open-world driving and mission game set in present-day Mumbai, India. Its original characters and vehicles draw on local references, with a compact Ranwar, Bandra West playtest built for modest hardware.
+
+## Download the 0.0.1 development playtest
+
+- **Windows x64.** Download the Windows ZIP, extract it and launch `Aamchi Mumbai Game 0.0.1.exe`. [Windows ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Windows-x64.zip)
+- **Android ARM64.** Download the signed APK to install on your phone. The Android ZIP includes the same APK and the notices. [Android APK](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Android-arm64.apk) · [Android ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Android-arm64.zip)
+
+The playtest includes walking, pedestrian conversations, driving four vehicle types and the Ranwar route. The Windows build was tested on the development PC. Native Android playtesting on the selected Redmi Note 9 Pro Max (India) is pending. [Release notes](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1) · [Phase progress](docs/PHASE_PROGRESS.md)
+
+## License
+
+The original project is source-available. You may inspect the public code and run the official builds for personal, noncommercial playtesting. Commercial redistribution requires prior written permission from SutharLabs. Third-party materials keep their own licenses. [Project license](LICENSE) · [Third-party notices](docs/THIRD_PARTY.md)
 
 ## Start here
 
-Phase 1 development has started on the **Aamchi Mumbai Game** GitHub baseline. Open the [Godot project](prototype/project.godot) to try the Windows walking and driving prototype in Ranwar. The [playtest guide](prototype/README.md) has controls and export commands. The [phase tracker](docs/PHASE_PROGRESS.md) records the Windows evidence and remaining device checks.
+Open `prototype/project.godot` in Godot **4.7.2** and press **F5** to launch the title menu from source. The playtest guide covers controls and export commands. [Godot project](prototype/project.godot) · [Playtest guide](prototype/README.md)
 
 | Document | Purpose |
 |---|---|
@@ -61,7 +72,7 @@ The user selected a weaker PC class with **integrated graphics and 8 GB RAM**, a
 
 ## Status
 
-Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) in `C:/Suresh/Software/Aamchi-Mumbai-Game`. Active local branch: `phase-1/prototype`. The Phase 1 Windows slice is runnable. Android export and minimum-device acceptance are still open.
+Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) in `C:/Suresh/Software/Aamchi-Mumbai-Game`. Active local branch: `phase-1/prototype`. The 0.0.1 development playtest has Windows x64 and Android ARM64 builds. Minimum-device acceptance remains open on both platforms.
 
 The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The Windows playtest opens with a Marathi-branded title menu, local profiles, settings and credits. It has four drivable vehicles and uses captured locomotion for the player and two pedestrians. The release schedule will be re-estimated after both-platform testing with the provisional ten human hours per week. [Playtest guide](prototype/README.md)
 
