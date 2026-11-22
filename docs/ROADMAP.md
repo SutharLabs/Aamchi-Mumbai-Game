@@ -8,7 +8,7 @@ Build a compact, finished, stylized Mumbai open-world action/driving game. One h
 
 The earlier estimates assumed an experienced developer contributing **30–40 focused hours per week**, including integration, art direction, review and playtesting. The user reports **some development experience and provisionally 10 focused hours/week**, to revisit as work proceeds. Human integration, art review and playtesting capacity will constrain accepted throughput. Parallel agent work was already included; do not divide calendar estimates by agent count or directly multiply them by an hours ratio. The earlier PC-first estimates are **not validated for simultaneous Windows/Android delivery, local-reference work, all four drivable families or this provisional capacity**. No revised duration is invented here. Rebaseline after device/toolchain and handling experiments, then again after the slice using measured accepted work and review time.
 
-**Current milestone status.** On 22 November 2026, the GitHub baseline was cloned locally and Phase 1 work began as Aamchi Mumbai Game. A Windows debug prototype supports a first walk and drive loop. G0 and G1 remain open for Android, physical-device evidence and the remaining Phase 1 checks. See the [phase tracker](PHASE_PROGRESS.md) and [playtest guide](../prototype/README.md).
+**Current milestone status.** Since Phase 1 began on 22 November 2026, the Windows debug prototype has gained walking, driving and recovery for the car, auto-rickshaw, motorcycle and scooter. The next gate is Android export and installation, followed by native touch, minimum-device performance and fresh-player observations for G0 and G1. [Phase tracker](PHASE_PROGRESS.md) · [Playtest guide](../prototype/README.md)
 
 ## Recommended first-release envelope
 
@@ -166,4 +166,4 @@ The [progress tracker's next-work sequence](PHASE_PROGRESS.md#next-work-in-depen
 5. Complete contemporary real-building/landmark and four-family vehicle packets; keep all four player-drivable milestones and record their measured effect on the baseline estimate.
 6. Evaluate the existing [model shortlist](../research/OPEN_MODEL_CATALOGUE.md), including rickshaw, Activa, Pulsar and WagonR leads, for current Mumbai fit. The former historical-era exclusion is removed. Exact generation/locality, archive license/provenance, fidelity/adaptation cost and both-device integration remain acceptance work; metadata alone does not pass the asset gate.
 
-Research and bounded asset-generation tooling are implemented. No engine/game implementation gate above has passed yet; the prepared study queue does not satisfy those gates by itself. Read the overnight handoff before resuming generation or reviewing outputs.
+The Windows playtest and research tools are implemented. G0 and G1 require physical-device evidence. Read the [overnight handoff](OVERNIGHT_HANDOFF.md) before resuming generation or reviewing outputs.

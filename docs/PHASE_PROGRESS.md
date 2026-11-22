@@ -21,12 +21,12 @@ The user has selected the following direction. A recorded answer resolves that s
 
 | Topic | Selected direction | Remaining detail / acceptance |
 |---|---|---|
-| First-release platforms | **Windows PC and Android together; Android 12 OS target** | Android 12 names an OS, not hardware. Actual phone/model/RAM/SoC/GPU and separate device budgets remain open; both export/install/input pipelines unproven. |
+| First-release platforms | **Windows 10 and Android 12 together** | Windows debug export launched on the development PC. Minimum Windows hardware, Android export and physical Android hardware/input budgets remain open. |
 | Windows target | **Weaker 8 GB integrated-GPU PC** | Exact CPU/GPU/RAM layout/driver/storage and test access remain open. The available **16 GB Core i5-1145G7 / Iris Xe / Windows 11** machine is a development/test device, not the accepted minimum. |
 | First area | **Bandra West** | Exact bounded neighborhood and playable route still to be selected from dated evidence |
 | Setting | **Present-day Mumbai only**, selected 22 November 2026 | Supersedes the earlier historical setting. Keep Ranwar/Bandra West, current dated references and original fictional cast/missions; no historical reconstruction gate. |
 | Map approach | **Compressed real road and landmark relationships** | Source extract, historical comparison, transformation notes and playable dimensions not yet produced |
-| Vehicles | **Cars, rickshaws, motorcycles and scooters all player-drivable in the first release** | Contemporary model choices, body/pose fidelity, handling, mounting, recovery and both-platform input/performance remain unproven |
+| Vehicles | **Cars, rickshaws, motorcycles and scooters all player-drivable in the first release** | All four are integrated in the Windows prototype. Production models, rider art, device input and performance remain open. |
 | Human capacity | **Some development experience; provisionally 10 focused hours/week** | User will revisit availability as work proceeds. Include human integration, review and playtesting within this capacity; do not assume the earlier experienced-developer 30–40-hour week. |
 
 The blank additional-answer field added no decision. The **22 November** setting change supersedes the earlier historical choice with **present-day Mumbai only**. Windows 10/Android 12, some experience and provisional **10 focused hours/week** remain. Phone hardware, minimum-PC measurements and final shipped boundary are still open. No new duration is assigned from this scope change or from an hours/agent multiplier.
@@ -45,15 +45,15 @@ The raw OSM reference and route/preview package are acquired with ODbL notices/h
 
 | Phase | Status | Evidence available | Gate still missing |
 |---|---|---|---|
-| 0. Scope, hardware and reuse decisions | **In progress** | Scope/map/reuse decisions, collected studies and E-13/E-14 Windows prototype/export evidence | Named minimum-device measurements and native Android export/install acceptance remain open |
-| 1. Walking and driving toy | **Started; partial Windows evidence** | Walking, car and root-validated second-vehicle auto loop; 32 checks pass at each fixed 30/60 cadence | Android hardware/touch, minimum-device performance, two-wheel riders/handling and fresh-player gate remain open |
+| 0. Scope, hardware and reuse decisions | **In progress** | Scope/map/reuse decisions, collected studies and Windows prototype/export evidence | Named minimum-device measurements and native Android export/install acceptance remain open |
+| 1. Walking and driving toy | **In progress** | Windows walking and driving loop with all four vehicle families | Native Android input, minimum-device performance and fresh-player observations remain open |
 | 2. Mumbai neighborhood and performance proof | **Not started; partial preparation available** | Local reference catalogues, exact asset leads and original procedural-study pipeline | Complete reference packets, accepted local assets, playable map/traffic, recognizability review and exported performance proof |
 | 3. Complete vertical slice | **Not started** | Requirements and candidate tooling identified | Complete mission, all four drivable families, save/retry/UI/audio and touch/lifecycle acceptance on both platforms |
 | 4. First-release content | **Not started** | Recommended content envelope documented | Entire campaign, repeatables and ending in Windows and Android packages |
 | 5. Alpha and beta | **Not started** | Proposed QA and performance gates documented | Both-platform new-player/full-campaign/device observations and resolved release blockers |
 | 6. Release candidate and launch readiness | **Not started** | Release acceptance requirements documented | Clean install/update, measured per-platform specs, complete notices and reproducible Windows/Android candidates |
 
-The 20 November snapshots predate the playable project. E-13/E-14 now establish the initial Windows engine/export and car/auto path on the available development PC. They do not establish minimum Windows 10 hardware, native Android installation/touch, full vehicle roster or final performance acceptance.
+The 20 November snapshots predate the playable project. The current Windows playtest includes the full initial vehicle roster on the available development PC. Windows 10 minimum hardware, native Android installation and touch, and device performance still require measurement.
 
 ## Evidence already completed
 
@@ -73,6 +73,7 @@ The 20 November snapshots predate the playable project. E-13/E-14 now establish 
 | E-12 | [Collection receipt](../reports/remote/epyc24/asset-collection-2026-11-20.json), [preliminary review](../reports/ASSET_REVIEW_2026-11-20.md) | All 77 output hashes match completed checkpoints. Eleven reports/previews and six extra views inspected; bay/props selected first. Remaining views and cultural/functional/runtime acceptance open. |
 | E-13 | [Phase 1 playtest and smoke commands](../prototype/README.md), [GitHub source baseline](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) | Rebaselined on local branch `phase-1/prototype` and renamed Aamchi Mumbai Game. Integrated 30/60 cadence smoke checks pass on Godot 4.7.2, including routing clearance, enter/exit recovery and simulated multi-touch. Windows export built and launched on the available Windows 11 Iris Xe PC. Native Android and measured target-device acceptance remain open. |
 | E-14 | 22 November scope/second-vehicle checkpoint; [playtest and smoke guide](../prototype/README.md) | Present-day-only setting recorded. Root validated 32/32 integrated Windows checks at fixed 30/60 cadence including auto handling, entry/exit/reset, shared collision and simulated touch. Windows debug artifact launched on available Iris Xe hardware; native Android, physical minimum devices, fresh-player and motorcycle/scooter gates remain open. |
+| E-15 | 22 November four-vehicle Windows checkpoint. [Playtest guide](../prototype/README.md) · [Vehicle notes](../prototype/vehicle/README.md) | 67/67 smoke checks pass at each fixed 30 and 60 frame cadence with simulated touch. Both two-wheelers pass mounting, moving exit refusal, braking, dismounting, recovery, collision and visual lean checks. The rendered run passed 52/52 and captured all four marked bays. The Windows debug export launched on the Iris Xe development PC. Device performance and native Android testing remain open. |
 
 Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, and **23 remote Linux runner tests passed**. The Windows skips concerned unavailable test symlink creation. These results validate stated runner behaviors; they provide no gameplay, animation or low-spec frame-time evidence. The [verification receipt](../reports/overnight-verification.json) preserves their scope.
 
@@ -94,13 +95,13 @@ Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, 
 | P0-08 | **77 outputs collected/hash-verified; preliminary visual triage and refinement choice complete** | Asset/review owner | Eleven reports/previews plus six extra views inspected; bay/props first. Remaining 27 views, knowledgeable cultural/architectural review, rig/collision and engine acceptance open | E-10; E-12; asset plan A0-A5 |
 | P0-09 | **Research selections and initial Windows verification documented.** G0 remains open. | Integration owner | Native Android export, named minimum devices and performance measurements. | E-11 to E-13 |
 
-**Remaining G0 evidence.** Package Android, launch both builds on named target devices and record performance. The available Windows development machine and the source-level Windows export establish the initial technical path.
+**Remaining G0 evidence.** The pinned template archive includes Android templates. The development machine still needs a Java and Android SDK setup and the project needs an Android debug preset. Package Android, launch both builds on named target devices and record performance.
 
 ## Phase 1 — walking and driving toy
 
-**Status: started on 22 November 2026.** The Windows prototype runs the first walk, enter, drive, exit and reset loop. See E-13 and the [playtest guide](../prototype/README.md). Android hardware testing, the remaining vehicle families and fresh-player/performance evidence remain open.
+**Status: started on 22 November 2026.** The Windows prototype supports walking, entering or mounting any of the four vehicles, driving, safe exit and reset. Android hardware testing, minimum-device measurements and fresh-player observations remain open. [Playtest guide](../prototype/README.md)
 
-**Current implementation.** The prototype reuses Godot character bodies and the built-in renderer/input systems. An original arcade controller drives one placeholder car. The current road graph is a blockout derived from modern OSM, with authored lanes and scenery. Android touch code is present and exercised with simulated separate fingers on Windows. The rickshaw, motorcycle and scooter require their own handling and rider tests.
+**Current implementation.** All four vehicles share the Godot character-body arcade controller. The motorcycle and scooter have distinct handling and seated poses, with visual lean on upright collision bodies. The road graph uses modern OSM with authored lanes and scenery. The Windows smoke tests can simulate separate fingers on the touch overlay. [Vehicle implementation](../prototype/vehicle/README.md)
 
 | Task ID | Remaining work | Owner role | Acceptance evidence | Dependencies |
 |---|---|---|---|---|
@@ -108,7 +109,7 @@ Recorded queue checks were **37 Windows tests run: 35 passed and two skipped**, 
 | P1-02 | **Implemented initial movement, orbit camera, keyboard/mouse and touch overlay.** | Gameplay agent | Windows movement and simultaneous simulated move/look touch pass. Native Android touch, controller and rebinding remain open. | E-13 |
 | P1-03 | **Arcade car integrated.** Acceleration, steering, reverse, braking and adjustable speed. | Vehicle agent | Forward, reverse, braking and ramp climb pass. Controller comparison, impact/curb trials and physical-device profiling remain open. | E-13 |
 | P1-04 | **Integrated entry, safe exit and reset.** | Gameplay agent | Moving exit refused. Two blocked sides keep driver in the car. Clear alternate side, enter and reset pass. Native Android and fresh-player checks remain open. | E-13 |
-| P1-05 | **Partial: car and second-vehicle auto-rickshaw integrated in the Windows prototype.** Motorcycle/scooter feasibility remains open. | Vehicle/animation agent; integrator accepts | E-14: root-validated 32/32 checks at fixed 30/60 cadence include auto entry/turn/upright/brake/stop/exit/recovery/shared collision and simulated touch; Windows debug build launches on the available Iris Xe PC. Native Android, named minimum-device performance, rider quality and two-wheel balance/mounting remain open. | P1-03; P0-05; E-14 |
+| P1-05 | **All four vehicle families drivable in the Windows prototype.** | Vehicle/animation agent with integrator acceptance | E-15 covers distinct motorcycle and scooter poses and handling, shared collision, mounting and recovery, plus simulated touch. Native Android, named minimum-device performance, and production vehicle and rider art remain open. | P1-03, P0-05, E-15 |
 | P1-06 | Observe fresh players, capture both-device performance and rebaseline scope/schedule | Human integration owner with QA agent | At least three observations with Windows/Android coverage stated; control/camera/touch blockers resolved; per-device route capture and all-four-driving effort recorded against actual weekly capacity | P1-02–P1-05 |
 
 **Next gate G1.** Windows and Android builds support walk → enter → drive → exit → recover/restart on the actual devices with native/touch controls. Record all-four-family feasibility and distinct motorcycle/scooter rider evidence, fresh-player coverage and per-device costs. Rebaseline before expanding content; parked-only substitution does not satisfy selected drivable scope.

@@ -4,6 +4,8 @@ const World := preload("res://world/phase1_world.gd")
 const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
 const Car := preload("res://vehicle/phase1_car.gd")
 const Rickshaw := preload("res://vehicle/phase1_rickshaw.gd")
+const Motorcycle := preload("res://vehicle/phase1_motorcycle.gd")
+const Scooter := preload("res://vehicle/phase1_scooter.gd")
 const Walker := preload("res://player.gd")
 const Hud := preload("res://phase1_hud.gd")
 const PLAYER_START := World.PLAYER_START
@@ -16,9 +18,12 @@ var world := World.new()
 var player := Walker.new()
 var car := Car.new()
 var rickshaw := Rickshaw.new()
+var motorcycle := Motorcycle.new()
+var scooter := Scooter.new()
 var camera := Camera3D.new()
 var hud := Hud.new()
 var active_vehicle: Vehicle
+var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var driving: bool:
 	get:
 		return active_vehicle != null
@@ -39,14 +44,10 @@ func _ready() -> void:
 	player.name = "Walker"
 	player.position = PLAYER_START
 	add_child(player)
-	car.name = "PracticeCar"
-	car.position = CAR_START
-	add_child(car)
-	car.reset_to(Transform3D(Basis.IDENTITY, CAR_START))
-	rickshaw.name = "PracticeRickshaw"
-	rickshaw.position = RICKSHAW_START
-	add_child(rickshaw)
-	rickshaw.reset_to(Transform3D(Basis.IDENTITY, RICKSHAW_START))
+	_add_practice_vehicle(car, "PracticeCar", CAR_START)
+	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
+	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", World.MOTORCYCLE_START)
+	_add_practice_vehicle(scooter, "PracticeScooter", World.SCOOTER_START)
 	camera.fov = 68.0
 	camera.far = 570.0
 	add_child(camera)
@@ -58,6 +59,15 @@ func _ready() -> void:
 	_update_camera(0.0)
 	if not hud.touch_enabled and DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3) -> void:
+	var pose := Transform3D(Basis.IDENTITY, spawn)
+	vehicle.name = node_name
+	vehicle.position = spawn
+	add_child(vehicle)
+	vehicle.reset_to(pose)
+	_parking_poses[vehicle] = pose
 
 
 func _add_lighting() -> void:
@@ -122,17 +132,21 @@ func _physics_process(delta: float) -> void:
 		player.direction = Basis(Vector3.UP, _yaw) * Vector3(intent.x, 0.0, intent.y)
 	_update_camera(delta)
 	_message_time = maxf(0.0, _message_time - delta)
-	var prompt := "Walk up to the car or auto-rickshaw"
+	var prompt := "Walk up to a parked vehicle"
 	var speed := 0.0
 	var vehicle_label := ""
 	if driving:
 		speed = active_vehicle.get_speed_mps()
 		vehicle_label = active_vehicle.vehicle_label
-		prompt = "Stop before getting out" if speed > EXIT_SPEED else "Get out"
+		if active_vehicle.is_two_wheeler:
+			prompt = "Stop before dismounting" if speed > EXIT_SPEED else "Dismount"
+		else:
+			prompt = "Stop before getting out" if speed > EXIT_SPEED else "Get out"
 	else:
 		var nearby := _nearby_vehicle()
 		if nearby != null:
-			prompt = "Get in the %s" % nearby.vehicle_label.to_lower()
+			var entry_label := "Mount" if nearby.is_two_wheeler else "Get in"
+			prompt = "%s the %s" % [entry_label, nearby.vehicle_label.to_lower()]
 	if _message_time > 0.0:
 		prompt = _message
 	hud.update_display(driving, speed, prompt, vehicle_label)
@@ -159,7 +173,7 @@ func _actor_position() -> Vector3:
 func _nearby_vehicle() -> Vehicle:
 	var best: Vehicle
 	var distance_limit := ENTER_RANGE * ENTER_RANGE
-	for candidate: Vehicle in [car, rickshaw]:
+	for candidate: Vehicle in _parking_poses:
 		var distance := player.global_position.distance_squared_to(candidate.global_position)
 		if distance < distance_limit and candidate.get_speed_mps() <= EXIT_SPEED:
 			best = candidate
@@ -170,7 +184,7 @@ func _nearby_vehicle() -> Vehicle:
 func _try_interact() -> void:
 	if driving:
 		if active_vehicle.get_speed_mps() > EXIT_SPEED:
-			_show_message("Stop before getting out")
+			_show_message("Stop before dismounting" if active_vehicle.is_two_wheeler else "Stop before getting out")
 			return
 		var exit_pose := _find_exit(active_vehicle)
 		if not exit_pose.is_finite():
@@ -227,10 +241,9 @@ func _show_message(message: String) -> void:
 
 func _reset_run() -> void:
 	active_vehicle = null
-	car.set_driver_active(false)
-	car.reset_to(Transform3D(Basis.IDENTITY, CAR_START))
-	rickshaw.set_driver_active(false)
-	rickshaw.reset_to(Transform3D(Basis.IDENTITY, RICKSHAW_START))
+	for vehicle: Vehicle in _parking_poses:
+		vehicle.set_driver_active(false)
+		vehicle.reset_to(_parking_poses[vehicle])
 	player.global_position = PLAYER_START
 	player.rotation = Vector3.ZERO
 	player.set_on_foot(true)

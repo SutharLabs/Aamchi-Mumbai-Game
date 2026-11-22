@@ -3,6 +3,7 @@ extends SceneTree
 const Scenario := preload("res://phase1.tscn")
 var game: Node3D
 var failures := 0
+var checks := 0
 
 
 func _initialize() -> void:
@@ -51,15 +52,27 @@ func _run() -> void:
 	_check_route_clearance()
 	await _check_ramp()
 	await _check_rickshaw()
+	_expect(game.motorcycle.rider.position.distance_to(game.scooter.rider.position) > 0.04, "motorcycle and scooter use distinct riding positions")
+	await _check_two_wheeler(game.motorcycle, "motorcycle")
+	await _check_two_wheeler(game.scooter, "scooter")
 	if game.hud.touch_enabled:
 		await _check_touch()
 		await _check_touch_rickshaw()
+		await _check_touch_two_wheeler(game.motorcycle, "motorcycle")
+		await _check_touch_two_wheeler(game.scooter, "scooter")
 	if "--capture" in OS.get_cmdline_user_args() and DisplayServer.get_name() != "headless":
+		# Presentation only: the assertions above still exercise the normal reset.
+		game.player.global_position.x = (game.car.global_position.x + game.scooter.global_position.x) * 0.5
+		game.player.global_position.z = maxf(game.car.global_position.z, game.scooter.global_position.z) + 8.5
+		game._yaw = 0.0
+		game._pitch = 0.32
+		game._manual_look_time = 0.0
+		await _frames(3)
 		await RenderingServer.frame_post_draw
 		var screenshot := root.get_texture().get_image()
 		_expect(screenshot.save_png("user://phase1-preview.png") == OK, "preview PNG saved")
 		print("Preview: ", ProjectSettings.globalize_path("user://phase1-preview.png"))
-	print("Phase 1 smoke: ", failures, " failures")
+	print("Phase 1 smoke: ", failures, " failures (", checks, " checks)")
 	quit(0 if failures == 0 else 1)
 
 
@@ -117,7 +130,60 @@ func _check_rickshaw() -> void:
 	_expect(not game.driving and game.player.visible, "stopped auto-rickshaw can be exited")
 	await _tap(&"recover")
 	var centered: Vector2 = Vector2(game.rickshaw.position.x, game.rickshaw.position.z)
-	_expect(centered.distance_to(Vector2(parked.x, parked.z)) < 0.1 and absf(game.car.position.z) < 0.1 and not game.driving, "reset parks both vehicles at their original bays")
+	_expect(centered.distance_to(Vector2(parked.x, parked.z)) < 0.1 and absf(game.car.position.z) < 0.1 and not game.driving, "reset parks the car and auto-rickshaw at their original bays")
+
+
+func _check_two_wheeler(vehicle: Node3D, label: String) -> void:
+	var parked: Vector3 = vehicle.global_position
+	_expect(vehicle.is_two_wheeler and not vehicle.rider.visible, "parked %s has no visible rider" % label)
+	var collision := KinematicCollision3D.new()
+	var probe := Transform3D(Basis.IDENTITY, game.car.global_position + Vector3(0.0, 0.07, -4.0))
+	var hits_parked_car: bool = vehicle.test_move(probe, Vector3(0.0, 0.0, 4.0), collision)
+	_expect(hits_parked_car and collision.get_collider() == game.car and (vehicle.collision_layer & 4) != 0, "%s collision sweep detects another parked vehicle" % label)
+	await _approach_vehicle(vehicle)
+	await _tap(&"interact")
+	_expect(game.active_vehicle == vehicle and vehicle.driver_active and not game.car.driver_active and not game.rickshaw.driver_active and game.motorcycle.driver_active != game.scooter.driver_active, "nearest %s takes exclusive driving control" % label)
+	_expect(vehicle.rider.visible and not game.player.visible, "mounting %s shows its rider and hides the walker" % label)
+	# Isolate handling from parked bays and the ramp. The world owns this yard;
+	# derive the test pose from it instead of duplicating vehicle spawn constants.
+	var yard: Node3D = game.world.get_node("RecoveryYard")
+	var quiet_start := Vector3(yard.global_position.x + 10.0, parked.y, yard.global_position.z + 24.0)
+	vehicle.reset_to(Transform3D(Basis.IDENTITY, quiet_start))
+	await _frames(6)
+	await _hold(&"move_forward", 90)
+	_expect(vehicle.position.z < quiet_start.z - 3.0 and vehicle.get_speed_mps() > 2.0, "%s accelerates along the handling lane" % label)
+	var heading: float = vehicle.rotation.y
+	Input.action_press(&"move_forward")
+	await _hold(&"move_right", 30)
+	Input.action_release(&"move_forward")
+	_expect(absf(angle_difference(heading, vehicle.rotation.y)) > 0.10, "%s steers while moving" % label)
+	var lean: float = absf(vehicle.lean_visual.rotation.z)
+	_expect(lean > 0.03 and lean <= deg_to_rad(23.0) and vehicle.global_basis.y.dot(Vector3.UP) > 0.999, "%s leans visually while its collision chassis stays upright" % label)
+	await _tap(&"interact")
+	_expect(game.active_vehicle == vehicle and vehicle.rider.visible, "moving %s cannot be dismounted" % label)
+	await _hold(&"brake", 80)
+	_expect(vehicle.get_speed_mps() < 0.20, "%s brakes to a halt" % label)
+	await _tap(&"interact")
+	_expect(not game.driving and game.player.visible and not vehicle.driver_active and not vehicle.rider.visible, "dismounting %s restores walking and removes its rider" % label)
+	await _tap(&"recover")
+	_expect(_at_parked_bay(vehicle, parked) and absf(vehicle.lean_visual.rotation.z) < 0.001, "%s reset restores its bay and clears lean" % label)
+	await _approach_vehicle(vehicle)
+	await _tap(&"interact")
+	_expect(game.active_vehicle == vehicle and vehicle.rider.visible, "%s can be mounted again after recovery" % label)
+	await _tap(&"recover")
+	_expect(not game.driving and game.player.visible and not vehicle.driver_active and not vehicle.rider.visible and vehicle.get_speed_mps() < 0.01 and _at_parked_bay(vehicle, parked), "reset while mounted parks %s and clears rider/control state" % label)
+
+
+func _approach_vehicle(vehicle: Node3D) -> void:
+	var feet_height: float = game.player.global_position.y
+	game.player.global_position = vehicle.global_position + vehicle.global_basis.z * 2.4
+	game.player.global_position.y = feet_height
+	game.player.velocity = Vector3.ZERO
+	await _frames(6)
+
+
+func _at_parked_bay(vehicle: Node3D, parked: Vector3) -> bool:
+	return Vector2(vehicle.global_position.x, vehicle.global_position.z).distance_to(Vector2(parked.x, parked.z)) < 0.1
 
 
 func _check_touch() -> void:
@@ -172,6 +238,32 @@ func _check_touch_rickshaw() -> void:
 	_expect(not game.driving and absf(game.rickshaw.position.z) < 0.1, "touch reset returns the auto-rickshaw to its bay")
 
 
+func _check_touch_two_wheeler(vehicle: Node3D, label: String) -> void:
+	var parked: Vector3 = vehicle.global_position
+	await _approach_vehicle(vehicle)
+	var surface: Control = game.hud._touch_surface
+	var interact: Vector2 = game.hud._button_rect(0).get_center()
+	_touch(surface, 7, interact, true)
+	_touch(surface, 7, interact, false)
+	await _frames(4)
+	_expect(game.active_vehicle == vehicle and vehicle.rider.visible, "touch Interact mounts %s with a visible rider" % label)
+	var stick: Vector2 = game.hud._stick_center() - Vector2(0, 52)
+	_touch(surface, 8, stick, true)
+	await _frames(50)
+	_expect(vehicle.position.z < parked.z - 1.0 and vehicle.get_speed_mps() > 1.0, "touch stick accelerates %s" % label)
+	var brake: Vector2 = game.hud._button_rect(1).get_center()
+	_touch(surface, 9, brake, true)
+	await _frames(70)
+	_expect(game.hud.move_axis.y < -0.4 and vehicle.get_speed_mps() < 0.2, "second touch brakes %s while throttle remains held" % label)
+	_touch(surface, 8, stick, false)
+	_touch(surface, 9, brake, false)
+	var reset_button: Vector2 = game.hud._button_rect(2).get_center()
+	_touch(surface, 10, reset_button, true)
+	_touch(surface, 10, reset_button, false)
+	await _frames(4)
+	_expect(not game.driving and not vehicle.rider.visible and _at_parked_bay(vehicle, parked), "touch reset parks %s and clears its rider" % label)
+
+
 func _touch(surface: Control, index: int, point: Vector2, pressed: bool) -> void:
 	var touch := InputEventScreenTouch.new()
 	touch.index = index
@@ -209,6 +301,7 @@ func _frames(ticks: int) -> void:
 
 
 func _expect(condition: bool, description: String) -> void:
+	checks += 1
 	if condition:
 		print("PASS ", description)
 	else:

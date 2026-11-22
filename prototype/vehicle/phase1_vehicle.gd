@@ -14,6 +14,7 @@ const TERMINAL_FALL_SPEED: float = 35.0
 const FALL_RESET_Y: float = -25.0
 var wheel_radius: float = 0.32
 var vehicle_label: String = "Vehicle"
+var is_two_wheeler: bool = false
 var exit_side_offset: float = 1.48
 var follow_distance: float = 6.9
 var steering_full_speed: float = 3.0

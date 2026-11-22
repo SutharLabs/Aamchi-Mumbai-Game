@@ -1,6 +1,6 @@
 # Phase 1 arcade vehicles
 
-`preload("res://vehicle/phase1_car.gd").new()` and `preload("res://vehicle/phase1_rickshaw.gd").new()` each construct a complete vehicle, original primitive body, and collision shape. Both extend `phase1_vehicle.gd`, which owns the shared typed arcade movement/reset/input contract. No imported assets, plugins, file/network access, credentials, or external dependencies are used.
+`phase1_car.gd`, `phase1_rickshaw.gd`, `phase1_motorcycle.gd`, and `phase1_scooter.gd` each construct a vehicle with an original procedural body and collision shape. They share movement, reset and input through `phase1_vehicle.gd`. The motorcycle and scooter also share rider geometry and visual lean through `phase1_two_wheeler.gd`.
 
 The car faces local **-Z**. A spawn origin around **y = 0.55 m** places the chassis just above a flat road at y = 0. Collision is a 1.64 × 0.92 × 3.80 m box centered at local y = -0.04 m: local bounds x ±0.82, y -0.50…0.42, z ±1.90 m. The visual roof extends above the collider, to local y ≈0.95. Wheels extend to approximately x ±0.93.
 
@@ -11,8 +11,9 @@ API:
 - `get_speed_mps() -> float`: absolute horizontal speed.
 - `reset_to(Transform3D)`: zeros motion and controls, preserves the supplied heading while restoring upright orientation. The caller supplies an unobstructed grounded pose. Invalid transforms are rejected. The latest reset pose becomes the fall-recovery pose.
 - `vehicle_label: String`, `exit_side_offset: float`, and `follow_distance: float`: integration properties for prompts, safe exit placement, and chase-camera distance. Car values are `Car`, 1.48 m, 6.9 m; auto values are `Auto-rickshaw`, 1.30 m, 6.2 m.
+- `is_two_wheeler: bool`: false on the car/auto, true on motorcycle/scooter. The two-wheeler class exposes `rider: Node3D`, `lean_visual: Node3D`, and `max_lean_radians: float` for integration and observable checks.
 
-Physics layer values: world **1**, walking player **2**, vehicles **4**. Both vehicles use layer 4 and mask **1|2|4**, including peer vehicles. The caller must remove/disable the mounted walking player's collision so the driver does not collide with the vehicle. Ground/exit raycasts should exclude the vehicle or use only the world layer.
+Physics layers use **1** for the world, **2** for the walking player and **4** for every vehicle. Vehicles use mask **1|2|4**, so they collide with parked vehicles too. The caller disables the walking player's collision while driving. Ground and exit raycasts should exclude the vehicle or use only the world layer.
 
 Initial tuning: 18 m/s forward (64.8 km/h), 5 m/s reverse, 8 m/s² acceleration, 16 m/s² braking, 2.8 m/s² coasting drag. Steering is speed-scaled, softer at high speed, reversed while backing, and disabled at rest/in air. Gravity, floor snap, and `move_and_slide()` provide grounded collision without a drivetrain/suspension simulation. A fall below y=-25 returns to the last known reset pose.
 
@@ -42,3 +43,31 @@ The model is an original generic contemporary Mumbai auto study. It is not an ex
 All three scripts pass Godot 4.7.2 `--check-only`. The existing standalone car contract still passes after extraction: 18.0 m/s forward, approximately 9.9756 m braking distance, correct steering/reverse, frontal-wall stop, reset and recovery. The current base preserves the integrated prototype's seam fix: grounded vertical velocity is zero and `floor_constant_speed` is not forced on.
 
 The auto contract passes at fixed 30 and 60 rendering cadences with identical results: 180 forward ticks reach z=-24.5392 m at 13.0 m/s; braking stops in 6.9333 m; reverse caps at 3.5 m/s; right steering moves toward +X. A parked car at z=-12 blocks the auto at z=-8.74955 without moving the parked car. Three-wheel/one-steered-wheel count, upright reset, finite-control rejection, fall recovery, and parking pass. Temporary harness: `.toolchain/rickshaw_contract_check.gd`. Integrated route/ramp/entry-exit tests and actual Windows/Android device performance are separate evidence.
+
+## Contemporary motorcycle and scooter
+
+Both new vehicles face local −Z and spawn at y = 0.55 m. The shared controller handles steering and wheel rotation. The visible body and rider lean into the turn while the collision body stays upright. Both vehicles have a slow backward maneuver for parking.
+
+| Vehicle | Collider width × height × length (center Y) | Forward / reverse limit | Acceleration / braking | Visual lean cap | Exit / camera distance |
+|---|---|---|---|---|---|
+| Motorcycle | 0.74 × 1.88 × 2.05 m (0.44 m) | 20 / 2 m/s | 8.8 / 15 m/s² | 22° | 1.05 / 5.9 m |
+| Scooter | 0.70 × 1.90 × 1.90 m (0.45 m) | 14 / 1.8 m/s | 6.8 / 13 m/s² | 16° | 1.00 / 5.6 m |
+
+Both colliders cover the seated rider and extend down to local y = −0.50 m. The motorcycle uses an exposed engine, fuel tank, narrow seat, larger wheels and footpegs. The scooter has smaller wheels, an enclosed rear body, low floorboard and front leg shield. Motorcycle steering softens at speed. The scooter is tuned for tight low-speed turns. The table records prototype handling and collision dimensions.
+
+Each vehicle shows its helmeted rider while `driver_active`. The motorcycle rider's hips sit at `(0, 0.38, 0.18)` and their knees straddle the tank. The scooter rider's hips sit at `(0, 0.40, 0.24)` with an upright torso and both feet on the floorboard. The prototype switches directly between the seated and walking poses. Reset immediately zeros visual lean. Parking eases the vehicle back upright.
+
+### Two-wheeler references checked 22 November 2026
+
+- The Splendor+ informed the red motorcycle's proportions and exposed-engine layout. The manufacturer lists a 2,000 mm length, 720 mm width, 1,052 mm vehicle height, 785 mm saddle height and 1,236 mm wheelbase. [Hero Splendor+ specifications](https://www.heromotocorp.com/en-in/motorcycles/splendor-plus.html)
+- The Access informed the blue scooter's step-through layout and smaller wheels. The manufacturer lists a 1,835 mm length, 680 or 690 mm width by variant, 1,155 mm vehicle height and 1,260 mm wheelbase. [Suzuki Access specifications](https://www.suzukimotorcycle.co.in/product-details/all-new-access-125-bluetooth-enabled/features)
+
+Both models are original, unbranded procedural interpretations. Production model selection still needs current Bandra reference evidence.
+
+### Two-wheeler check receipt
+
+All three new scripts pass Godot 4.7.2 parse checks. An isolated constructor/tree check confirms each concrete vehicle attaches its visual/rider tree, sets `is_two_wheeler`, starts with its rider hidden, and frees without orphaned nodes/resources. Constructors call `super()` explicitly through the inheritance chain.
+
+The standalone movement and presentation checks passed at fixed 30 and 60 frame cadences. The motorcycle reached 20.0 m/s, stopped in 13.17 m and showed 21.60° of lean during the steering check. The scooter reached 14.0 m/s, stopped in 7.42 m and showed 15.71° of lean. The tests also covered front steering, wheel roll, parking assist, rider visibility, upright collision, reset and rejection of non-finite inputs. The local harness is `.toolchain/two_wheeler_contract_check.gd`.
+
+Front and side renders on the Iris Xe development PC showed both riders facing forward with their hands on the controls and legs in their intended poses. The local captures are in `.toolchain/two-wheeler-preview/`. Minimum-device frame pacing, Android hardware testing and production rider animation remain open.

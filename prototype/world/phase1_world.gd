@@ -9,6 +9,8 @@ const AXIS_FORWARD := Vector2(0.99347, 0.11401)
 const PLAYER_START := Vector3(0.0, 0.5, 5.0)
 const VEHICLE_START := Vector3(0.0, 0.55, 0.0)
 const RICKSHAW_START := Vector3(-3.4, 0.55, 0.0)
+const MOTORCYCLE_START := Vector3(-6.2, 0.55, 1.0)
+const SCOOTER_START := Vector3(-8.7, 0.55, 1.5)
 const ROAD_WIDTHS: Array[float] = [14.0, 10.0, 8.0, 8.0]
 const ROAD_NAMES: Array[String] = ["Hill Road", "St Peter's Road", "Waroda Road east", "Waroda Road west"]
 const ROAD_SOURCE: Array = [
@@ -45,7 +47,7 @@ func _ready() -> void:
 	_build_gully()
 	_build_recovery_yard()
 	_build_frontages()
-	_build_auto_bay()
+	_build_vehicle_bays()
 	_build_boundary()
 	_build_markers()
 
@@ -67,7 +69,8 @@ func _build_materials() -> void:
 		"blue": Color("879da9"), "gully": Color("6a9e98"),
 		"shop_teal": Color("236d70"), "shop_saffron": Color("d39a39"),
 		"shop_blue": Color("345c83"), "shutter": Color("737c7c"),
-		"bay": Color("344247")
+		"bay": Color("344247"), "bay_cyan": Color("32d7d2"),
+		"bay_white": Color("f1ede2")
 	}
 	for key: String in colors:
 		var material := StandardMaterial3D.new()
@@ -274,18 +277,40 @@ func _dress_storefront(point: Vector3, across: Vector3, side: float, angle: floa
 		add_child(payments)
 
 
-func _build_auto_bay() -> void:
+func _build_vehicle_bays() -> void:
 	# Paint only: preserve a continuous collision floor and all actor spawn clearances.
-	var center := Vector3(RICKSHAW_START.x,0.0,RICKSHAW_START.z)
-	_box("AutoBaySurface",center+Vector3(0,0.023,0),Vector3(2.4,0.012,4.4),"bay",false)
-	for side: float in [-1.0,1.0]:
-		_box("AutoBaySidePaint",center+Vector3(side*1.2,0.034,0),Vector3(0.09,0.012,4.4),"paint",false)
-		_box("AutoBayEndPaint",center+Vector3(0,0.034,side*2.2),Vector3(2.4,0.012,0.09),"paint",false)
-	_strip("AutoBayArrowShaft",center+Vector3(0,0,0.7),center+Vector3(0,0,-0.9),0.1,0.01,0.044,"paint",false)
-	_strip("AutoBayArrowLeft",center+Vector3(0,0,-0.9),center+Vector3(-0.4,0,-0.3),0.1,0.01,0.044,"paint",false)
-	_strip("AutoBayArrowRight",center+Vector3(0,0,-0.9),center+Vector3(0.4,0,-0.3),0.1,0.01,0.044,"paint",false)
-	_label("AUTO BAY",Vector3(-5.8,2.1,-4.5))
+	_paint_vehicle_bay("CarBay",VEHICLE_START,2.8,5.4,"paint","CAR")
+	_paint_vehicle_bay("AutoBay",RICKSHAW_START,2.4,4.4,"paint","AUTO")
+	_paint_vehicle_bay("MotorcycleBay",MOTORCYCLE_START,1.8,3.8,"bay_cyan","MOTORCYCLE")
+	_paint_vehicle_bay("ScooterBay",SCOOTER_START,1.7,3.4,"bay_white","SCOOTER")
 	_label("RANWAR / BANDRA WEST",Vector3(9.2,3.2,-32.0))
+	# Sparse painted training guide only; no new maneuver obstacles or route changes.
+	for index in range(5):
+		var z := -8.0-float(index)*3.0
+		_strip("PracticeGuide",Vector3(-16,0,z),Vector3(-16,0,z-1.5),0.13,0.008,0.044,"bay_cyan",false)
+	_label("LOW SPEED PRACTICE",Vector3(-17.5,2.7,-23.0))
+
+
+func _paint_vehicle_bay(prefix: String, spawn: Vector3, width: float, length: float, marking: String, text: String) -> void:
+	var center := Vector3(spawn.x,0.0,spawn.z)
+	_box(prefix+"Surface",center+Vector3(0,0.023,0),Vector3(width,0.012,length),"bay",false)
+	for side: float in [-1.0,1.0]:
+		_box(prefix+"SidePaint",center+Vector3(side*width*0.5,0.034,0),Vector3(0.09,0.012,length),marking,false)
+		_box(prefix+"EndPaint",center+Vector3(0,0.034,side*length*0.5),Vector3(width,0.012,0.09),marking,false)
+	_strip(prefix+"ArrowShaft",center+Vector3(0,0,0.6),center+Vector3(0,0,-0.8),0.1,0.01,0.044,marking,false)
+	_strip(prefix+"ArrowLeft",center+Vector3(0,0,-0.8),center+Vector3(-0.35,0,-0.25),0.1,0.01,0.044,marking,false)
+	_strip(prefix+"ArrowRight",center+Vector3(0,0,-0.8),center+Vector3(0.35,0,-0.25),0.1,0.01,0.044,marking,false)
+	var label := Label3D.new()
+	label.name = prefix+"Label"
+	label.text = text
+	label.position = center+Vector3(0,1.9,length*0.5+1.3)
+	label.font_size = 36
+	label.pixel_size = 0.009
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.modulate = Color("fff1c9")
+	label.outline_modulate = Color("243138")
+	label.outline_size = 7
+	add_child(label)
 
 
 func _build_boundary() -> void:

@@ -67,7 +67,7 @@ func _ready() -> void:
 	credit.offset_left = -300
 	credit.offset_right = -18
 	credit.offset_top = 20
-	update_display(false, 0.0, "Walk up to the car or auto-rickshaw", "")
+	update_display(false, 0.0, "Walk up to a parked vehicle", "")
 	if touch_enabled:
 		_touch_surface = Control.new()
 		canvas.add_child(_touch_surface)

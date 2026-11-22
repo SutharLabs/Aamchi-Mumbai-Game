@@ -63,7 +63,7 @@ The user selected a weaker PC class with **integrated graphics and 8 GB RAM**, a
 
 Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) in `C:/Suresh/Software/Aamchi-Mumbai-Game`. Active local branch: `phase-1/prototype`. The Phase 1 Windows slice is runnable. Android export and minimum-device acceptance are still open.
 
-The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The current playtest includes a car and an auto-rickshaw. The former PC-first, experienced-developer estimate requires rebaselining for these choices, simultaneous Android release and ten human hours/week; it is not a current delivery forecast.
+The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The current Windows playtest has four drivable vehicles: a car, an auto-rickshaw, a motorcycle and a scooter. The release schedule will be re-estimated after both-platform testing with the provisional ten human hours per week.
 
 **Godot 4.7.2 standard, Compatibility rendering and typed GDScript** are selected for implementation; the [technology selection](research/TECH_STACK_SELECTION.md) owns versions, component choices and upstream evidence. OpenCity remains a reference rather than the foundation. The portable editor and standard Windows export are exercised locally. The GitHub clone and Windows preset resume the earlier setup work. Native Android export and benchmarks on the 8 GB Windows 10 baseline and Android 12 phone remain open.
 
