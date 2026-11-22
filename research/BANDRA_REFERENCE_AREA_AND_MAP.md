@@ -1,6 +1,6 @@
 # Bandra West reference area and acquired offline map
 
-Selected and acquired **20 November 2026** for Mumbai: Gully Heat. User direction: Bandra West, **1990–1995**, compressed real road/landmark relationships, Windows/Android, original fictional crime-story cast and missions. The user delegated the reference-area choice and acquisition of an actual commercially usable offline map sample.
+Selected and acquired **20 November 2026** for Aamchi Mumbai Game. User direction: Bandra West, **1990–1995**, compressed real road/landmark relationships, Windows/Android, original fictional crime-story cast and missions. The user delegated the reference-area choice and acquisition of an actual commercially usable offline map sample.
 
 **Selection:** the **Ranwar–Waroda Road–Chapel Road pocket**, with Hill Road as the busier northern edge and St Peter's Church as the first nearby landmark anchor. This is a small, defensible reference area rather than a plan to model all of Bandra. An actual modern OSM extract is now saved under [assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md). No engine import, player navigation, historical mesh or device-performance gate is claimed.
 

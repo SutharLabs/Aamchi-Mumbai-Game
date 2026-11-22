@@ -1,0 +1,7 @@
+# Keep the evidence and deployment inputs byte-identical across checkouts.
+assets/maps/reference/** text eol=lf
+assets/generated/**/report.json text eol=lf
+jobs/night-queue.json text eol=lf
+jobs/specs/*.json text eol=lf
+tools/*.py text eol=lf
+tools/modeling/*.py text eol=lf

@@ -1,0 +1,5 @@
+/.toolchain/
+/builds/
+**/.godot/
+**/__pycache__/
+*.pyc

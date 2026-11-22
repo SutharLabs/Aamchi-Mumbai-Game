@@ -1,4 +1,4 @@
-﻿# Agent workflow - Mumbai: Gully Heat
+﻿# Agent workflow - Aamchi Mumbai Game
 
 Updated 19 November 2026. This workflow supports one human developer with a high Codex budget, reusable components and bounded parallel work. The implemented unattended capability is a saved procedural Blender queue during **22:00-08:00 Asia/Kolkata**. A broad continuous reasoning-agent service is not configured. More concurrent agents are useful only when prerequisites, acceptance criteria and human review capacity are ready.
 
@@ -74,7 +74,7 @@ The agent should then:
 
 A minimal correction prompt can identify a defect rather than restating the project:
 
-> Continue Mumbai: Gully Heat. Resolve CLOTH-01 and CLOTH-02 from the overnight handoff for the nauvari study. Own only the relevant generator/spec and focused checks. Preserve the current remote batch; prepare a reviewed correction locally, report its visual evidence and use the documented stop/verify/deploy/resume process only when ready for the next run.
+> Continue Aamchi Mumbai Game. Resolve CLOTH-01 and CLOTH-02 from the overnight handoff for the nauvari study. Own only the relevant generator/spec and focused checks. Preserve the current remote batch; prepare a reviewed correction locally, report its visual evidence and use the documented stop/verify/deploy/resume process only when ready for the next run.
 
 For a prepared batch that has exited or a rebooted node:
 

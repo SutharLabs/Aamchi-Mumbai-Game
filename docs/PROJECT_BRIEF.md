@@ -1,8 +1,8 @@
-# Mumbai: Gully Heat — project brief
+# Aamchi Mumbai Game — project brief
 
 ## Selected game title
 
-**Mumbai: Gully Heat** is the selected title. Proposed tagline: “Mumbai never slows down.” See `BRAND.md` for the visual direction.
+**Aamchi Mumbai Game** is the selected title. Proposed tagline: “Mumbai never slows down.” See `BRAND.md` for the visual direction.
 
 ## Concept
 

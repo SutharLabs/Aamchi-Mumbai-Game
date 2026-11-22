@@ -1,4 +1,4 @@
-# Open model catalogue — Mumbai: Gully Heat
+# Open model catalogue — Aamchi Mumbai Game
 
 Latest delegated choices: **Windows 10/Android 12**, the [selected Ranwar/Waroda/Chapel reference pocket and acquired open map](BANDRA_REFERENCE_AREA_AND_MAP.md), and the [selected Godot 4.7.2 stack](TECH_STACK_SELECTION.md). The [collected-study triage](../reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first and holds generic chawl assemblies from local placement. Final shipped boundary, dated per-subject fit and technical/device acceptance remain open; earlier catalogue metadata below is preserved.
 

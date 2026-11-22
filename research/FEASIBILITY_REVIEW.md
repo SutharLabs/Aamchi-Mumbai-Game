@@ -1,4 +1,4 @@
-# Mumbai: Gully Heat — feasibility review
+# Aamchi Mumbai Game — feasibility review
 
 Research date: 19 November 2026. Scope: a solo developer, substantial agent assistance, reusable open-source pieces, stylized classic open-world gameplay, a Mumbai map, modest Windows hardware, and later expansion.
 

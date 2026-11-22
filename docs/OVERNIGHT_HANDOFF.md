@@ -8,7 +8,7 @@ The user specified Windows 10/Android 12 and deferred Git/recovery/repeatable-ex
 
 **Historical remote status check: 20 November 2026, 06:21:08 IST (client clock).** All **11 production jobs technically completed**, with one charged attempt and one launch each, and zero pending/running/failed/exhausted/interrupted jobs. The supervisor had exited normally. Model artifacts were not collected or visually reviewed during this read-only check. This is a timestamped observation, not live status or production-asset acceptance.
 
-Run `python tools/remote_night.py status` before making an operational decision. The detailed procedure is [OVERNIGHT_MODELING.md](OVERNIGHT_MODELING.md); geometry/acceptance boundaries are [MODELING_PIPELINE.md](MODELING_PIPELINE.md). The selected title is **Mumbai: Gully Heat**.
+Run `python tools/remote_night.py status` before making an operational decision. The detailed procedure is [OVERNIGHT_MODELING.md](OVERNIGHT_MODELING.md); geometry/acceptance boundaries are [MODELING_PIPELINE.md](MODELING_PIPELINE.md). The selected title is **Aamchi Mumbai Game**.
 
 ## Latest status evidence
 

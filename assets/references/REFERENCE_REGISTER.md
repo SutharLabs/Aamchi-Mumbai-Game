@@ -1,6 +1,6 @@
 # Real-world reference register
 
-Project: Mumbai: Gully Heat. Source research checked 19 November 2026; direction updated 20 November. These are source records, not downloaded/shipping assets or cleared production models. The [asset production plan](../../docs/ASSET_PRODUCTION_PLAN.md) owns asset priorities and acceptance gates; the [third-party ledger](../../docs/THIRD_PARTY.md) owns acquisitions/adoptions. Preserve the difference between evidence about a subject and permission to copy an image or mesh.
+Project: Aamchi Mumbai Game. Source research checked 19 November 2026; direction updated 20 November. These are source records, not downloaded/shipping assets or cleared production models. The [asset production plan](../../docs/ASSET_PRODUCTION_PLAN.md) owns asset priorities and acceptance gates; the [third-party ledger](../../docs/THIRD_PARTY.md) owns acquisitions/adoptions. Preserve the difference between evidence about a subject and permission to copy an image or mesh.
 
 **Selected scope:** Ranwar/Waroda/Chapel Road reference pocket, Bandra West, **1990-1995**, compressed geography, **Windows 10 and Android 12**, and all four vehicle families player-drivable. The source crop, ~0.2016 km2 first greybox envelope and acquired OSM package are in the [area/map report](../../research/BANDRA_REFERENCE_AREA_AND_MAP.md). Final shipped boundaries, dated per-asset evidence and measured physical-device budgets remain open. Human availability is ten hours/week with some experience; modern photographs/models remain period holds until verified.
 

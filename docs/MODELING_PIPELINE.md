@@ -4,7 +4,7 @@ Updated 20 November 2026. This document describes the **implemented** model-gene
 
 ## Product boundary
 
-**Mumbai: Gully Heat** is an original, stylized open-world game grounded in real Mumbai. The user requires actual local buildings, landmarks and vehicle families, plus Indian/Maharashtrian character/clothing and chawl research. Stylization reduces rendering cost; it does not establish that generic geometry represents a particular real building or garment.
+**Aamchi Mumbai Game** is an original, stylized open-world game grounded in real Mumbai. The user requires actual local buildings, landmarks and vehicle families, plus Indian/Maharashtrian character/clothing and chawl research. Stylization reduces rendering cost; it does not establish that generic geometry represents a particular real building or garment.
 
 The current overnight batch addresses reference gaps with original procedural static studies. It is a geometry/export prototype, not a full asset factory or a playable game. These studies must pass reference review and later production gates before placement in a release. The selected district, reference year/year-band and surveyed or documented source example remain prerequisites for location-specific final art; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md) and [PROJECT_RECORD.md](PROJECT_RECORD.md).
 

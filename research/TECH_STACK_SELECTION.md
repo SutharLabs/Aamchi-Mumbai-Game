@@ -1,7 +1,8 @@
-# Technical stack selection - Mumbai: Gully Heat
+# Technical stack selection - Aamchi Mumbai Game
 
 Selected 20 November 2026 after checking current official engine documentation, the release archive and upstream sources. This is a **researched implementation choice**, not a claim that the engine is installed, a component is integrated or either exported build has passed. The user deferred Git/recovery/repeatable-export setup; no repository was initialized, SDK installed or prototype built for this decision. The [project record](../docs/PROJECT_RECORD.md), [roadmap](../docs/ROADMAP.md) and [phase tracker](../docs/PHASE_PROGRESS.md) own requirements, schedule and completed gates.
 
+Implementation update, 22 November 2026. The verified Godot 4.7.2 standard editor and matching templates are available in the local GitHub checkout. The first Windows prototype uses Compatibility, GDScript and Jolt. The Android SDK/device checks and controller comparison remain open. [Playtest guide](../prototype/README.md)
 ## Selected foundation
 
 Use **Godot 4.7.2 stable, standard edition, typed GDScript, the Compatibility renderer on both Windows and Android, and built-in Jolt 3D physics**. Start with engine facilities and narrowly selected official examples. **No third-party runtime addon is required for the initial foundation.** Keep the advanced vehicle controller as a bounded optional comparison, not an architectural dependency.

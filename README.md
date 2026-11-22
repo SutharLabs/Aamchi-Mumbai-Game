@@ -1,10 +1,10 @@
-# Mumbai: Gully Heat
+# Aamchi Mumbai Game
 
-A solo-developer indie game workspace for Mumbai: Gully Heat, a stylized open-world driving and mission game based on real Mumbai, India. Buildings, landmarks, streets, and vehicle types use real local references, simplified for modest hardware. The characters, story, missions, and branding are original; geographic compression is documented.
+A solo-developer indie game workspace for Aamchi Mumbai Game, a stylized open-world driving and mission game based on real Mumbai, India. Buildings, landmarks, streets, and vehicle types use real local references, simplified for modest hardware. The characters, story, missions, and branding are original; geographic compression is documented.
 
 ## Start here
 
-The project is in **Phase 0: scope, hardware and reuse decisions**. Research and the remote modeling pipeline have advanced; a playable engine build and target-device measurements remain ahead. The current phase tracker records accepted progress separately from prepared studies.
+Phase 1 development has started on the **Aamchi Mumbai Game** GitHub baseline. Open the [Godot project](prototype/project.godot) to try the Windows walking and driving prototype in Ranwar. The [playtest guide](prototype/README.md) has controls and export commands. The [phase tracker](docs/PHASE_PROGRESS.md) records the Windows evidence and remaining device checks.
 
 | Document | Purpose |
 |---|---|
@@ -18,7 +18,7 @@ The project is in **Phase 0: scope, hardware and reuse decisions**. Research and
 
 ## Selected game title
 
-**Mumbai: Gully Heat** is the selected title. Proposed tagline: “Mumbai never slows down.” See `docs/BRAND.md`.
+**Aamchi Mumbai Game** is the selected title. Proposed tagline: “Mumbai never slows down.” See `docs/BRAND.md`.
 
 ## First target
 
@@ -56,16 +56,16 @@ The user selected a weaker PC class with **integrated graphics and 8 GB RAM**, a
 - [Overnight handoff](docs/OVERNIGHT_HANDOFF.md) — deployment/status receipt and instructions for the next session.
 - `research/evidence/sketchfab-models-2026-11-19.json` — captured creator/license/download/geometry fields for those candidates.
 - `assets/references/REFERENCE_REGISTER.md` — dated photo/OEM/heritage references and per-asset provenance fields.
-- `prototype/` — engine project after the foundation is selected and boot-tested.
+- `prototype/` — runnable Godot Phase 1 practice route, walking/controller code and Windows export preset.
 - `assets/` — original or properly licensed assets.
 
 ## Status
 
-Documentation and Phase 0 decisions updated on **20 November 2026**. Phase 0 is in progress. Phases 1–6 have not passed an implementation gate; Phase 2 already has useful reference, catalogue and modeling-tool preparation. The [phase progress tracker](docs/PHASE_PROGRESS.md) owns detailed status; no overall completion percentage is assigned.
+Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://github.com/SutharLabs/Aamchi-Mumbai-Game/commit/85442338c6670b486bad7264eded24e8c9c58479) in `C:/Suresh/Software/Aamchi-Mumbai-Game`. Active local branch: `phase-1/prototype`. The Phase 1 Windows slice is runnable. Android export and minimum-device acceptance are still open.
 
 The user selected Bandra West in 1990–1995 and all four drivable families. Exact boundary and period-appropriate models remain pending. Existing contemporary catalogues and recent photos need dated corroboration before historical use. The former PC-first, experienced-developer estimate requires rebaselining for these choices, simultaneous Android release and ten human hours/week; it is not a current delivery forecast.
 
-**Godot 4.7.2 standard, Compatibility rendering and typed GDScript** are selected for implementation; the [technology selection](research/TECH_STACK_SELECTION.md) owns versions, component choices and upstream evidence. OpenCity remains a reference rather than the foundation. No engine/game build or target-device benchmark has passed. The user has deferred Git, recovery and repeatable platform-export setup; Phase 0's technical gate remains open.
+**Godot 4.7.2 standard, Compatibility rendering and typed GDScript** are selected for implementation; the [technology selection](research/TECH_STACK_SELECTION.md) owns versions, component choices and upstream evidence. OpenCity remains a reference rather than the foundation. The portable editor and standard Windows export are exercised locally. The GitHub clone and Windows preset resume the earlier setup work. Native Android export and benchmarks on the 8 GB Windows 10 baseline and Android 12 phone remain open.
 
 The first procedural Blender batch **completed all eleven jobs**. All **77 generated files are collected and match accepted checkpoint hashes**, recorded at **20 November 2026, 06:57:50 IST** in the [collection receipt](reports/remote/epyc24/asset-collection-2026-11-20.json). [Preliminary review](reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first; full view/period/cultural/architectural, rig/collision and game acceptance remain open. The [handoff](docs/OVERNIGHT_HANDOFF.md) preserves earlier observations. No new batch was started.
 

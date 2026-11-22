@@ -1,4 +1,4 @@
-# Asset production plan - Mumbai: Gully Heat
+# Asset production plan - Aamchi Mumbai Game
 
 Updated 20 November 2026. This plan turns the real-Mumbai requirement into acquisition, modeling, review and integration work. It supports the [roadmap](ROADMAP.md), [phase progress](PHASE_PROGRESS.md) and [project record](PROJECT_RECORD.md); those documents own overall scope, milestone progress and decisions. This document owns asset-family priorities, production gates, the study inventory and the asset backlog.
 

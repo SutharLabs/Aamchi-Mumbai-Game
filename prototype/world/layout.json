@@ -1,0 +1,114 @@
+﻿{
+    "status":  "Phase 1 traversal blockout; modern-reference-derived geometry, not a 1990-1995 reconstruction or accepted world",
+    "source":  "../../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json",
+    "derivation":  "Selected polyline bend points; local metric approximation; rotation only, no uniform scale compression. Widths, buildings and handling yard authored for gameplay.",
+    "axes":  "Y up; A at origin; A-to-B approximately negative Z",
+    "player_spawn":  [
+                         0,
+                         0.5,
+                         5
+                     ],
+    "vehicle_spawn":  [
+                          0,
+                          0.55,
+                          0
+                      ],
+    "vehicle_heading":  "negative Z",
+    "road_widths_m":  [
+                          14,
+                          10,
+                          8,
+                          8
+                      ],
+    "footway_width_m":  2.4,
+    "footway_bollard_gap_m":  1.1,
+    "anchor_tolerance_note":  "Rounded double-precision reference values; Godot Vector2 source-coordinate precision can differ by roughly one meter. Use 3m radius for route checks.",
+    "anchors":  [
+                    {
+                        "id":  "A",
+                        "reference":  "Hill Road / Waroda Road",
+                        "x":  0.00,
+                        "y":  0,
+                        "z":  0.00
+                    },
+                    {
+                        "id":  "B",
+                        "reference":  "Hill Road / St Peter\u0027s Road",
+                        "x":  0.02,
+                        "y":  0,
+                        "z":  -505.47
+                    },
+                    {
+                        "id":  "C",
+                        "reference":  "Waroda / Chapel / St Peter\u0027s Road junction",
+                        "x":  155.78,
+                        "y":  0,
+                        "z":  -476.95
+                    },
+                    {
+                        "id":  "D",
+                        "reference":  "Waroda Road / Veronica Road",
+                        "x":  93.47,
+                        "y":  0,
+                        "z":  -243.21
+                    },
+                    {
+                        "id":  "E",
+                        "reference":  "Nagrana Lane / Waroda Road",
+                        "x":  79.92,
+                        "y":  0,
+                        "z":  -154.18
+                    },
+                    {
+                        "id":  "F",
+                        "reference":  "Nagrana Lane / Hill Road",
+                        "x":  17.28,
+                        "y":  0,
+                        "z":  -183.70
+                    }
+                ],
+    "driving_anchor_order":  [
+                                 "A",
+                                 "B",
+                                 "C",
+                                 "D",
+                                 "A"
+                             ],
+    "walking_shortcut_order":  [
+                                   "E",
+                                   "F"
+                               ],
+    "handling_slope_route":  [
+                                 [
+                                     -31,
+                                     0,
+                                     -20
+                                 ],
+                                 [
+                                     -31,
+                                     0,
+                                     -28
+                                 ],
+                                 [
+                                     -31,
+                                     1.2,
+                                     -43
+                                 ],
+                                 [
+                                     -31,
+                                     1.2,
+                                     -51
+                                 ],
+                                 [
+                                     -31,
+                                     0,
+                                     -66
+                                 ],
+                                 [
+                                     -31,
+                                     0,
+                                     -75
+                                 ]
+                             ],
+    "license":  "Map data from OpenStreetMap contributors; ODbL-1.0. See source package ATTRIBUTION.md and ODbL-1.0.txt. Original script/art additions are tracked separately by project owner."
+}

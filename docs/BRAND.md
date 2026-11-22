@@ -1,8 +1,10 @@
-﻿# Brand guide — Mumbai: Gully Heat
+﻿# Brand guide — Aamchi Mumbai Game
 
 ## Selected game title
 
-**Mumbai: Gully Heat**
+**Aamchi Mumbai Game**
+
+Selected on 22 November 2026. The 20 November GitHub baseline and archive used the former title, **Mumbai: Gully Heat**.
 
 ## Proposed tagline
 
@@ -12,7 +14,7 @@
 
 A fast, colorful, street-level open-world adventure based on real Mumbai. The identity centers on neighborhood rivalries, narrow-lane chases, local ambition, and Mumbai street life. Real buildings, landmarks, street relationships, and vehicle models establish the setting, with stylized geometry for modest hardware. Story, cast, missions, and branding are original. Monsoon rain, sea air, and late-night light support the city's observed character.
 
-The user selected **Bandra West, 1990–1995**, with a gangster-era crime-fiction direction. Build an original cast and story around that setting. The title remains **Mumbai: Gully Heat**; period street signage, dress, vehicle generations and city details require dated reference checks. The proposed tagline, palette and logo concept below have not been separately selected. Design readable interfaces for the selected Windows PC/Android release; Android 12 is the OS target, with phone hardware still to be specified.
+The user selected **Bandra West, 1990–1995**, with a gangster-era crime-fiction direction. Build an original cast and story around that setting. The title remains **Aamchi Mumbai Game**; period street signage, dress, vehicle generations and city details require dated reference checks. The proposed tagline, palette and logo concept below have not been separately selected. Design readable interfaces for the selected Windows PC/Android release; Android 12 is the OS target, with phone hardware still to be specified.
 
 ## Voice
 
@@ -28,7 +30,7 @@ The user selected **Bandra West, 1990–1995**, with a gangster-era crime-fictio
 - **Typography:** bold condensed display lettering for the title; clean, highly legible sans serif for interface and mission information.
 - **Texture:** rain sheen, halftone grain, painted sign surfaces, sun-faded print, and restrained 2D poster wear.
 - **Shape language:** angled road markings, local-train route geometry, rain arcs, and layered coastal horizons.
-- **Logo concept:** MUMBAI above a larger GULLY HEAT wordmark, using bold, condensed lettering inspired by painted street signs. Give GULLY HEAT the strongest visual weight while keeping MUMBAI readable at small sizes. Explore angled road-marking cuts and taxi-amber highlights; the logo is a concept awaiting visual development.
+- **Logo concept:** set AAMCHI MUMBAI in bold, condensed lettering inspired by painted street signs. Keep GAME legible in the lockup and test the title at thumbnail size. Angled road markings and taxi amber are available directions for later exploration.
 
 ## Color starting points
 
@@ -65,4 +67,4 @@ A stylized open-world action and driving game where neighborhood rivalries, narr
 
 ## Status
 
-Mumbai: Gully Heat is the title selected by the user. The tagline, palette, and logo direction remain proposals. Title availability has not been checked.
+Aamchi Mumbai Game is the title selected by the user. The tagline, palette, and logo direction remain proposals. Title availability has not been checked.

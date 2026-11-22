@@ -1,6 +1,6 @@
 ﻿# Overnight modeling operations
 
-Updated 19 November 2026 for **Mumbai: Gully Heat**. This is the operating runbook for the saved Blender queue. Read [the current handoff](OVERNIGHT_HANDOFF.md) for the latest observed remote state and [the modeling pipeline](MODELING_PIPELINE.md) for geometry, budgets and acceptance gates.
+Updated 19 November 2026 for **Aamchi Mumbai Game**. This is the operating runbook for the saved Blender queue. Read [the current handoff](OVERNIGHT_HANDOFF.md) for the latest observed remote state and [the modeling pipeline](MODELING_PIPELINE.md) for geometry, budgets and acceptance gates.
 
 ## What runs after Codex closes
 

@@ -1,12 +1,12 @@
-# Mumbai: Gully Heat project record
+# Aamchi Mumbai Game project record
 
-Updated 20 November 2026. This record brings together the agreed direction, working proposals, evidence, unresolved decisions and reasons for the current production sequence. The [project brief](PROJECT_BRIEF.md) defines the product; the [roadmap](ROADMAP.md) owns scope and schedule; [phase progress](PHASE_PROGRESS.md) records completed work and remaining acceptance gates.
+Updated 22 November 2026. This record brings together the agreed direction, working proposals, evidence, unresolved decisions and reasons for the current production sequence. The [project brief](PROJECT_BRIEF.md) defines the product; the [roadmap](ROADMAP.md) owns scope and schedule; [phase progress](PHASE_PROGRESS.md) records completed work and remaining acceptance gates.
 
 ## Current position
 
-The project has a researched production direction, model acquisition shortlists, original procedural modeling tools and a technically completed first remote night batch. It does not yet have an engine project, an exported playable build or a measured minimum player device. Research and tooling have advanced; the first playable milestone remains ahead.
+The first GitHub version, `85442338c6670b486bad7264eded24e8c9c58479`, is the source baseline for the new `Aamchi-Mumbai-Game` checkout. The game is now **Aamchi Mumbai Game** and Phase 1 has started with a Godot walking and driving prototype and a local Windows export. See the [playtest guide](../prototype/README.md). Actual minimum-device performance and the Android export remain open.
 
-Subsequent research selected Ranwar/Waroda/Chapel Road, acquired the actual ODbL map and selected Godot 4.7.2/Compatibility/GDScript for Windows 10/Android 12. The [06:57:50 IST collection receipt](../reports/remote/epyc24/asset-collection-2026-11-20.json) verifies all **77 generated outputs** against accepted checkpoint hashes. The [preliminary review](../reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first after eleven previews/reports and six extra views. Full art/period/runtime gates remain open. Git, recovery and repeatable exports are deferred by the user's latest instruction.
+Subsequent research selected Ranwar/Waroda/Chapel Road, acquired the actual ODbL map and selected Godot 4.7.2/Compatibility/GDScript for Windows 10/Android 12. The [06:57:50 IST collection receipt](../reports/remote/epyc24/asset-collection-2026-11-20.json) verifies all **77 generated outputs** against accepted checkpoint hashes. The [preliminary review](../reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first after eleven previews/reports and six extra views. Full art/period/runtime gates remain open. At the time, the user deferred Git, recovery and repeatable exports.
 
 At **20 November 2026, 06:21:08 IST (client clock)**, a read-only remote check found all **eleven jobs technically completed**, one charged attempt and one launch each, with no pending, running, failed, exhausted or interrupted jobs. The supervisor had exited normally. The saved worker log records `queue_complete` at **19 November 23:24:33 IST**. No model artifacts were collected during this check; visual, cultural/architectural, rig/collision and game acceptance remain pending. The helper's displayed remote time after supervisor exit is the uncalibrated host clock; use the client observation time here. [Current status snapshot](../reports/remote/epyc24/phase0-status-2026-11-20.json)
 
@@ -18,7 +18,8 @@ Two separate smoke studies have already exported and rendered successfully in re
 
 | Location | Purpose and boundary |
 |---|---|
-| `C:\Suresh\Software\MumbaiStreetGame` | This project's product, research, production tools, queue briefs and evidence. The display/game name is Mumbai: Gully Heat; the folder has not been renamed. |
+| `C:\Suresh\Software\Aamchi-Mumbai-Game` | Active GitHub-based worktree (`phase-1/prototype`), product, research, modeling tools, and playable prototype. |
+| `C:\Suresh\Software\MumbaiStreetGame` | Source for the archived 20 November Phase 0 snapshot and former title. |
 | `C:\Suresh\Software\GameDevelopmentResearch` | Earlier independent research workspace for GTA/comparable open-world development processes. Its [README](../../GameDevelopmentResearch/README.md) describes case-study questions and planned deliverables; that is not evidence those studies or a game have been completed. |
 | `C:\Suresh\Software\MotionGraphics` | Separate video workspace. The game queue uses an existing remote Blender installation and heavy-work lock; the video project's scripts and services were not modified for this work. |
 | `/root/motion/mumbai-gully-heat` on epyc24 | Isolated deployed game-modeling scripts, remote state, logs and generated artifacts. The [runbook](OVERNIGHT_MODELING.md) owns operations. |
@@ -29,7 +30,7 @@ Keep new game work in the game workspace. A shared machine or tool installation 
 
 | ID | Requirement | Consequence for production |
 |---|---|---|
-| REQ-01 | Use the selected name **Mumbai: Gully Heat** | Preserve this title in the workspace and game-facing proposals. The tagline, palette and logo direction are separate proposals. |
+| REQ-01 | Use the selected name **Aamchi Mumbai Game** | Preserve this title in the workspace and game-facing proposals. The tagline, palette and logo direction are separate proposals. |
 | REQ-02 | Begin with a less realistic, classic Vice City-style open-world city game | Aim for readable stylized geometry and arcade play, with original characters, story, missions, branding and assets. |
 | REQ-03 | Base the setting on Mumbai, India | Use real district, road, building, landmark and vehicle references; document geographic compression. |
 | REQ-04 | Run on less capable devices; target an 8 GB integrated-graphics Windows PC | Establish a named baseline machine and measure exported builds before expanding visual or simulation cost. The available approximately 16 GB development PC is a stronger test device, not proof of the 8 GB minimum. |
@@ -62,7 +63,7 @@ The blank numbered item 8 adds no decision. Map area, mission count, playtime an
 
 ### Subsequent six-item delegation
 
-The user specified **Windows 10 and Android 12**, delegated the reference-area, engine/components, open-map acquisition and study-refinement choices to research, and said **“I will plan this later”** for the prior list's item 5: Git, recovery and repeatable platform exports. This defers that setup; it does not pass its technical tests. Independent research proceeds without another phone-model/area/engine approval round. See the [selected reference area and acquired map](../research/BANDRA_REFERENCE_AREA_AND_MAP.md) and [selected stack](../research/TECH_STACK_SELECTION.md). Physical device performance remains unverified.
+In the 20 November discussion, the user specified **Windows 10 and Android 12**, delegated the reference-area, engine/components, open-map acquisition and study-refinement choices to research, and said **“I will plan this later”** for the prior list's item 5: Git, recovery and repeatable platform exports. This defers that setup; it does not pass its technical tests. Independent research proceeds without another phone-model/area/engine approval round. See the [selected reference area and acquired map](../research/BANDRA_REFERENCE_AREA_AND_MAP.md) and [selected stack](../research/TECH_STACK_SELECTION.md). Physical device performance remains unverified.
 
 ## Decisions and proposals
 
@@ -70,7 +71,7 @@ The status column distinguishes a user choice, an implemented operation and an u
 
 | ID | Subject | Current position | Status / next evidence |
 |---|---|---|---|
-| DEC-01 | Name | Mumbai: Gully Heat | User selected. [Brand guide](BRAND.md) |
+| DEC-01 | Name | Aamchi Mumbai Game | User renamed the game on 22 November 2026. The Phase 0 archive and model-run receipts document the former title. [Brand guide](BRAND.md) |
 | DEC-02 | Art and setting | Stylized real-Mumbai setting with original game content | User selected Bandra West in 1990–1995, with a gangster-era crime-fiction direction. Exact small boundary remains open. |
 | DEC-03 | First player platforms | Windows 10 and Android 12 together | User specified both operating systems. Plan Windows x64/Android ARM64 evaluation; offline play remains proposed. Physical performance and actual exports remain unverified; setup deferred under DEC-21. |
 | DEC-04 | Minimum device | Integrated graphics and 8 GB RAM for the weaker Windows target | User selected hardware class. 720p / 30 FPS remains a proposed budget; exact CPU/GPU/driver/storage and measured baseline are open. Android minimum is separately open. |
@@ -90,7 +91,7 @@ The status column distinguishes a user choice, an implemented operation and an u
 | DEC-18 | Effort estimate | Preserve the earlier small-roster comparison baseline and re-estimate after vehicle/reference tests and the slice | No new deadline or AI speedup multiplier is justified by the current evidence. The roadmap owns the ranges. |
 | DEC-19 | Asset acceptance | Reference and license acquisition → visual/cultural review → technical preparation → functional import → whole-scene performance | Required production sequence. `status: ok` in an overnight report means technical export only. |
 | DEC-20 | Human planning capacity | One developer with some experience; provisionally ten focused hours/week | User supplied capacity and will revisit it as work progresses. Rebaseline using this allowance rather than assuming an experienced full-time developer. |
-| DEC-21 | Setup deferral | Git, recovery and repeatable Windows/Android export setup deferred | Explicit latest user instruction for prior item 5. Keep technical G0 acceptance open; do not initialize/install/build merely to close this task. Research, acquisition and study review continue. |
+| DEC-21 | Setup status | GitHub baseline and Windows export setup resumed on 22 November | GitHub source rebaselined in local branch, portable Godot and Windows preset exercised. Android export and hardware acceptance remain open. |
 
 ## Evidence inventory
 
