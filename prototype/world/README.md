@@ -1,8 +1,10 @@
 ﻿# Phase 1 traversal world
 
+Updated **22 November 2026** for the selected **present-day Mumbai** direction.
+
 `phase1_world.gd` extends `Node3D` and builds local mesh/collision geometry in `_ready()`. Attach it below the game's main scene. The main project supplies lighting, camera, player, vehicles and UI.
 
-Player start: `(0, 0.5, 5)`. Vehicle start: `(0, 0.55, 0)`, pointing along negative Z. The first road leaves the origin approximately along negative Z; follow its bends rather than driving indefinitely straight.
+Player start: `(0, 0.5, 5)`. Car start: `(0, 0.55, 0)`. Auto-rickshaw start: `(-3.4, 0.55, 0)`. Both vehicles point along negative Z. The first road leaves the origin approximately along negative Z; follow its bends rather than driving indefinitely straight.
 
 ## Route and provenance
 
@@ -10,13 +12,25 @@ The blockout uses selected bend points from the downloaded modern OpenStreetMap 
 
 Authoring changes: 14 m Hill carriageway, 10 m St Peter's approach, 8 m inner streets, 2.4 m footway, simplified junction pads, sidewalks/curbs, footway walls/bollards, generic color-block frontage masses, bounded recovery yard and barriers. These dimensions and buildings are gameplay additions, not measured local conditions. Frontages are generic blockout masses; they do not reconstruct named real houses or an accepted landmark. Labels identify reference approaches only. No named residence is assigned a fictional criminal role.
 
-The modern source is not a historical map. Exact 1990-1995 roads, access, widths, surface, buildings and permissions remain unverified. Historical world acceptance, routing and period-correct art remain separate work. This is a traversal toy, not a completed district.
+The modern source is an acquired mapping snapshot, not a surveyed current streetscape. Road access, authored widths, building frontages and permissions remain unverified. A present-day setting does not make the generic dressing a reconstruction of actual operating shops or named properties. This is a traversal toy, not a completed district.
 
 Map data from **OpenStreetMap contributors**, under **ODbL 1.0**. Retain the raw extract, transformation details and data-offer obligations if distributing this derived layout. Source package: `../../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/`; read its `ATTRIBUTION.md`, `ODbL-1.0.txt` and `candidate-layout.json`. No external imagery, downloaded game assets or new dependencies are used by this script.
 
 ## Handling area
 
-The open asphalt yard is west of the spawn. A seven-meter-wide test ramp along x = -31 rises from z = -28 to -43 by 1.2 m, has an eight-meter deck to z = -51, then descends to ground at z = -66. Approach from `(−31, 0, −20)` toward negative Z. A separate curb and impact wall allow controlled recovery checks; the world boundary prevents leaving the ground plane. The main controller owns recovery actions.
+The open asphalt yard is west of the spawn. A seven-meter-wide test ramp along x = -31 rises from z = -28 to -43 by 1.2 m, has an eight-meter deck to z = -51, then descends to ground at z = -66. Approach from `(−31, 0, −20)` toward negative Z. A separate curb and impact wall allow controlled recovery checks; the outer barriers constrain the traversable ground area. The main controller owns recovery actions. Road, junction, footway and yard surfaces are non-colliding visual overlays above one continuous y=0 collision plane; curbs, sidewalks, ramp and barriers retain collisions.
+
+## Present-day authored dressing and auto bay
+
+The first eight existing frontage lots have original painted service signs, simple shutters, compact wall equipment and shared color materials. The invented service labels include mobile repair, parcel, groceries, print/copy and everyday services. Three generic digital-payment notices add a current visual cue without using payment-provider logos or copied shop brands. They are design additions, not claims about actual businesses at those OSM coordinates. Additional source geometry, actors and route connections are unchanged by this pass.
+
+Neutral wayfinding identifies Ranwar / Bandra West and the existing route approaches. The older [MMR-HCS heritage inventory, entries 612 and 619](https://mmrhcs.org.in/images/documents/projects/heritage-listning/01-Heritage-List.pdf) provides prior streetscape context; [St Peter's parish history](https://stpetersbandra.com/about-us/history/) documents the local landmark's background. Both primary pages were rechecked on 22 November 2026. Neither establishes a current storefront inventory or supplies reused artwork, and no external images were imported.
+
+The auto-rickshaw bay is centered at `(-3.4, 0, 0)`, width **2.4 m**, length **4.4 m**, with its arrow pointing along negative Z. The bay surface, boundary paint, arrow and nearby labels have no colliders. Its painted footprint is x=-4.6..-2.2, z=-2.2..2.2, inside the authored 14 m road. No pole or street furniture is added near the player/car/rickshaw spawns. The bay sits on the handling-yard side of the road to keep the final Waroda approach clear. Final actor-to-actor clearance, mounting and driving remain the integrated vehicle tests' responsibility.
+
+## Focused world check
+
+The isolated world check cleared all three spawn volumes and confirmed the ground beneath the auto bay. The integrated Phase 1 smoke test checks the shared road, the walking shortcut, both vehicles and the ramp. [Playtest and verification commands](../README.md)
 
 ## Implementation boundaries
 

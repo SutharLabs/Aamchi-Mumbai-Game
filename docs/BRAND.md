@@ -14,7 +14,7 @@ Selected on 22 November 2026. The 20 November GitHub baseline and archive used t
 
 A fast, colorful, street-level open-world adventure based on real Mumbai. The identity centers on neighborhood rivalries, narrow-lane chases, local ambition, and Mumbai street life. Real buildings, landmarks, street relationships, and vehicle models establish the setting, with stylized geometry for modest hardware. Story, cast, missions, and branding are original. Monsoon rain, sea air, and late-night light support the city's observed character.
 
-The user selected **Bandra West, 1990–1995**, with a gangster-era crime-fiction direction. Build an original cast and story around that setting. The title remains **Aamchi Mumbai Game**; period street signage, dress, vehicle generations and city details require dated reference checks. The proposed tagline, palette and logo concept below have not been separately selected. Design readable interfaces for the selected Windows PC/Android release; Android 12 is the OS target, with phone hardware still to be specified.
+The user selected **present-day Mumbai only** on **22 November 2026**, retaining the Ranwar/Bandra West pocket and original fictional cast/story. Contemporary signs, clothing, vehicle generations and streetscape details need dated current references and commercial-safe inputs. The title remains **Aamchi Mumbai Game**. Tagline, palette and logo concepts below are proposals. Keep interfaces readable for Windows 10 and Android 12; phone hardware remains to be specified.
 
 ## Voice
 

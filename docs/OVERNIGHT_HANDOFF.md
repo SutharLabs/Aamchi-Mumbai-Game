@@ -26,7 +26,7 @@ Source: [phase0-status-2026-11-20.json](../reports/remote/epyc24/phase0-status-2
 
 No deploy, control, clock calibration or model-artifact transfer occurred. After supervisor exit the helper reports offset zero/no live calibration, so its displayed remote current time follows the skewed host clock. Use the client timestamp for this observation and saved corrected worker log times for run events. No host clock was changed.
 
-The user has now selected **1990–1995 Bandra West**, simultaneous **Windows/Android** release, **Android 12** as the OS target and all four vehicle families drivable. These studies need period/location checks as well as existing art gates; the stable job ID `contemporary-character-study-v001` does not approve its outfit for the historical setting. No runtime/specification was changed to apply those choices.
+**Scope update, 22 November 2026:** the active setting is **present-day Ranwar/Bandra West only**, superseding the former historical setting. Windows 10/Android 12 and all four first-release drivable families remain. Studies require current locality, art/cultural, rig/collision and runtime checks; a stable job name is not acceptance. Dated execution receipts, output hashes and saved specifications remain unchanged.
 
 ## Historical pre-window status
 

@@ -1,18 +1,18 @@
 # Bandra West reference area and acquired offline map
 
-Selected and acquired **20 November 2026** for Aamchi Mumbai Game. User direction: Bandra West, **1990–1995**, compressed real road/landmark relationships, Windows/Android, original fictional crime-story cast and missions. The user delegated the reference-area choice and acquisition of an actual commercially usable offline map sample.
+Selected and acquired **20 November 2026**; active scope updated **22 November 2026** to **present-day Mumbai only**. Retain Ranwar/Bandra West, compressed real roads/landmarks, Windows 10/Android 12 and original fictional cast/missions. The acquired contemporary OSM snapshot is now the spatial baseline; the former historical reconstruction requirement is superseded.
 
 **Selection:** the **Ranwar–Waroda Road–Chapel Road pocket**, with Hill Road as the busier northern edge and St Peter's Church as the first nearby landmark anchor. This is a small, defensible reference area rather than a plan to model all of Bandra. An actual modern OSM extract is now saved under [assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md). No engine import, player navigation, historical mesh or device-performance gate is claimed.
 
 ## Why this pocket
 
-MMR-HCS's Bandra precinct study separates Ranwar, Waroda Road development and Chapel Road development. It describes the transition from the busy outer commercial streets into quieter residential interiors, with narrower lanes and changing building height/style. That contrast supports a short driving circuit, readable on-foot shortcut and a compact reusable building kit. The study is later conservation evidence, not a 1990–1995 survey. Its large Volume I PDF exceeded the research browser's direct-fetch limit; the indexed primary-source text was accessible. [MMR-HCS Bandra study, Volume I, printed p.4](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf)
+MMR-HCS's Bandra precinct study separates Ranwar, Waroda Road development and Chapel Road development. Its commercial-road/narrow-residential-lane contrast supports the compact loop and on-foot shortcut. This later conservation study documents identity and morphology, not a fresh current survey. Its large Volume I exceeded direct browser fetch limits; indexed primary text was accessible. [MMR-HCS Bandra study, printed p.4](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf)
 
-The MMR-HCS heritage list identifies the Hill/Waroda/Chapel precinct and its pitched roofs, porches, verandahs, squares and lane footprints. Entry 619 describes nineteenth-century Ranwar village houses with raised plinths, exterior stairs and tiled roofs. These support local village-house modules; they do **not** establish an 80-room BDD gallery chawl in this first pocket. Entry 621 records a Veronica Road villa's replacement during the 1990s without an exact year, so individual building states can remain uncertain even within the chosen band. [Heritage list, entries 612, 619 and 621, printed pp.69–71](https://www.mmrhcs.org.in/images/documents/projects/heritage-listning/01-Heritage-List.pdf#page=69)
+The MMR-HCS heritage list documents the Hill/Waroda/Chapel precinct, pitched roofs, porches/verandahs, squares and lane footprints. Entry 619 describes nineteenth-century village-house features; this does not establish a local BDD gallery chawl. Entry 621 records a villa replacement in the 1990s, illustrating why older descriptions must be checked against the actual current parcel rather than treated as present appearance. [Entries 612, 619, 621, printed pp.69-71](https://www.mmrhcs.org.in/images/documents/projects/heritage-listning/01-Heritage-List.pdf#page=69)
 
-For the first landmark, St Peter's official history dates the present church's foundation to 1938 and consecration to 1964. That supports its pre-period existence; the modern footprint/exterior still needs comparison with dated references before production matching. [St Peter's parish history](https://stpetersbandra.com/about-us/history/)
+For the first landmark, St Peter's official site continues to identify the existing church and its history; checked again on 22 November 2026. The 1938 foundation/1964 consecration are historical identity facts, not a requirement to recreate its old appearance. Use dated current exterior/surrounding views with suitable rights before final modeling. [Official parish history](https://stpetersbandra.com/about-us/history/)
 
-St Andrew's and Mount Carmel are **contextual anchors in the larger source crop**, outside the proposed first core. Do not enlarge the playable map merely to include them. St Andrew's parish records a 1966 extension and a 2024–2025 restoration, a concrete reason to distinguish period appearance from current photographs. [St Andrew's parish history](https://www.standrewchurch.in/history)
+St Andrew's and Mount Carmel remain contextual anchors outside the first core. Do not enlarge the map solely to include them. St Andrew's official history, checked 22 November, records its 2024-2025 restoration; current modeling should account for that restored state rather than requiring a pre-restoration facade. The site labels images representational, so they are not a survey or blanket image license. [Official parish history](https://www.standrewchurch.in/history)
 
 ## Three different boundaries
 
@@ -30,7 +30,7 @@ The first core is roughly bounded by Hill Road to the north, the St Peter's Road
 
 ## Concrete routes from the downloaded geometry
 
-The local topology has been checked using actual shared OSM node IDs. Calculated lengths follow the downloaded polyline geometry. These checks ignore current one-way/access direction and are **geometric**, not acceptance of current legal routing or 1990–1995 traffic rules.
+The local topology was checked using shared OSM node IDs. Source lengths follow the downloaded polyline geometry. These undirected checks do not establish current one-way/access legality, widths or driveability; verify current routing rules and author the left-hand arcade lane graph separately.
 
 | Anchor | Modern source junction | OSM node | Latitude, longitude |
 |---|---|---:|---|
@@ -41,9 +41,9 @@ The local topology has been checked using actual shared OSM node IDs. Calculated
 | E | Nagrana Lane / Waroda Road | 347181270 | 19.0541387, 72.8275960 |
 | F | Nagrana Lane / Hill Road | 10242737039 | 19.0547279, 72.8278068 |
 
-**Initial road circuit:** A → Hill Road → B → St Peter's Road → C → Waroda Road → D → western Waroda Road → A. Its connected source geometry is about **1,186.7 m**. Referenced ways are **1053511374, 31152959, 31152970 and 431825049**. The complete ordered nodes/coordinates are in [candidate-layout.json](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json). A historical/arcade left-hand lane layout still needs authoring and review; this route description does not approve the traversal direction against modern one-way tags.
+**Initial road circuit:** A -> Hill Road -> B -> St Peter's Road -> C -> Waroda Road -> D -> western Waroda Road -> A. Source geometry is about **1,186.7 m**, using ways **1053511374, 31152959, 31152970 and 431825049**. Ordered IDs/coordinates remain in [candidate-layout.json](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json). Use the dated contemporary geometry as the baseline; current traffic direction, clearances and authored gameplay adaptation still need acceptance.
 
-**On-foot gully candidate:** E → **Nagrana Lane** → F, about **70.5 m**, OSM way **31217220**, currently tagged `highway=footway`. It connects the inner Waroda street to Hill Road and gives a clear alternate route. Keep it on-foot in the first greybox; width, steps, public access, exact 1990s state and camera/collision behavior remain to be checked. Do not infer vehicle access from the existence of a polyline.
+**On-foot gully candidate:** E -> Nagrana Lane -> F, about **70.5 m**, way **31217220**, tagged footway in the acquired snapshot. Keep it an on-foot shortcut candidate. Verify current width, steps/access, changes since capture and camera/collision behavior; a polyline is not evidence of vehicle access.
 
 **First mission-route recommendation:** accept a fictional repair/delivery job near A; drive the loop past the St Peter's anchor to a fictional curbside stop near D; dismount and walk along Waroda to E, then use Nagrana Lane to reach F. Put the fictional handoff at an authored non-residential frontage rather than assigning criminal activity to a named real household. This proves travel, mounting, delivery and route choice without expanding the district or requiring a church interior.
 
@@ -51,7 +51,7 @@ Start the greybox at approximate source scale. If travel needs shortening, trial
 
 ## Actual acquired data and inspection
 
-The accepted download is a **572,456-byte raw OSM XML** response from `https://overpass-api.de/api/interpreter`, using the saved [query](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/source-query.overpassql). The source reports database time **2026-11-20T01:19:21Z**. Acquisition/access times and response details are preserved in the [manifest](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/manifest.json). This is a **modern database snapshot**, not a map from 1990–1995.
+The accepted download is a **572,456-byte raw OSM XML** response from `https://overpass-api.de/api/interpreter`, using the saved [query](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/source-query.overpassql). The source reports database time **2026-11-20T01:19:21Z**. Acquisition/access times and response details are preserved in the [manifest](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/manifest.json). This is a **modern database snapshot**, a dated contemporary reference.
 
 | Recorded count | Result |
 |---|---:|
@@ -66,7 +66,7 @@ Counts are OSM object counts, not necessarily unique physical roads/buildings or
 
 The first full request returned HTTP 502 and a bounded alternate-mirror attempt timed out; neither was accepted as data. A subsequent primary-endpoint request succeeded. Those attempts are in the manifest. No fabrication, Google extraction, imagery download, live tile dependency or change to OSM was involved. Overpass is a read-oriented query route documented by its operator. [Overpass API manual](https://dev.overpass-api.de/overpass-doc/en/)
 
-Convenience files include [modern road GeoJSON](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/roads-modern.geojson), a [self-contained SVG preview](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/reference-preview.svg), and an initial [historical uncertainty ledger](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/historical-change-ledger.csv). They are derived aids; retain the raw file and attribution beside them.
+Convenience files include [modern road GeoJSON](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/roads-modern.geojson), [SVG preview](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/reference-preview.svg) and the original [historical uncertainty ledger](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/historical-change-ledger.csv). The last file and historical-setting strings inside the hashed package are preserved acquisition history, not the active production workflow. Keep package bytes/checksums unchanged; record present-day checks and gameplay edits outside that immutable source package.
 
 ## Licensing and commercial use
 
@@ -76,14 +76,14 @@ Treat a publicly distributed modified OSM road/footprint database as an ODbL Der
 
 Use **“Map data from OpenStreetMap contributors”** with the copyright/license link in this reference package. For a shipped game, plan legible attribution in a suitable startup/game/menu/credits location plus accessible detailed data licensing. The exact display and data offer must match the released use. This data license does not grant reuse rights for Google, street-view, parish or heritage-report images. [OSMF game attribution guidance](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines#Computer_games_and_simulations)
 
-## Historical reconstruction layer and remaining gates
+## Present-day reference adoption and remaining gates
 
-Keep four distinct records: immutable modern source; OSM-derived road/building transformation data; sourced 1990–1995 decisions/uncertainties; original gameplay/art additions. Use the initial ledger to attach source/OSM IDs, evidence date, proposed period state and review status.
+Keep four distinct records: immutable 20 November modern source; traceable OSM-derived gameplay data; dated current locality/appearance/access checks; original art/gameplay additions. The earlier 1990-1995 reconstruction plan is superseded by the 22 November present-day-only instruction. Historical facts and the unchanged package ledger remain provenance, not active-era requirements.
 
-1. **Confirmed broad anchors:** St Peter's existed before the period; the heritage inventory supports older village-house character. This does not authenticate every current footprint/facade in 1990–1995.
-2. **Period corroboration needed:** exact road widths/alignment, one-way/vehicle permissions, local signage, paving/drainage, commercial occupants, property replacements, church surroundings and any relevant coastline/reclamation edge. Modern OSM is evidence of current mapping only. Absence in OSM is not historical absence.
-3. **Building-state uncertainty:** resolve the Veronica Road villa replacement's exact date before copying that particular structure. Obtain appropriately reusable dated references; do not trace report photographs or present restored details without checking their period state and rights.
-4. **Local module choice:** prioritize raised-plinth village houses, tiled roofs, verandahs/balconies and narrow exterior stairs. Retain the existing BDD/gallery output as a separate study until a dated local match exists. The baithi/courtyard study is a construction experiment, not an accepted Ranwar replica.
+1. **Current anchors:** retain St Peter's and the Ranwar village-house streetscape. Older conservation records explain identity and architecture; compare current facade, roof, services, context and access before production matching.
+2. **Current corroboration needed:** verify road widths/alignment, one-way/vehicle permissions, signage, paving/drainage, occupants, redevelopment and shoreline/reclamation context where actually visible. The OSM database timestamp is **2026-11-20T01:19:21Z**; it is a dated current baseline, not proof every mapped tag was freshly surveyed. OSM absence is not evidence of physical absence.
+3. **Building-state uncertainty:** older references, including a villa replaced in the 1990s, explain changes rather than require historical reconstruction. Check the actual current parcel/form and source rights. St Andrew's restoration is part of contemporary reference matching if that contextual landmark is used.
+4. **Local module choice:** prioritize current Ranwar examples with raised plinths, tiled roofs, verandahs/balconies and narrow exterior stairs where documented. Keep BDD/gallery and baithi/courtyard assemblies as typology studies until an actual current local match is established; present-day scope does not relocate Worli or Chembur into Ranwar.
 5. **Implementation still ahead:** convert a bounded subset into a playable road graph/blockout, author lane/sidewalk/vehicle clearances, demonstrate collision/navigation and test the loop/shortcut on actual Windows/Android devices. Acquisition and layout research alone do not finish the Phase 0 technical gate or start the accepted neighborhood phase.
 
-Git/recovery and repeatable export setup are outside this acquisition task and remain deferred by the user's latest instruction. No engine, remote worker, shared project record or existing asset was changed.
+The later GitHub/Windows prototype path is recorded in the phase tracker and playtest guide. This acquisition report does not itself establish engine, traffic, historical or real-device acceptance. The source data, query, license and checksums remain unchanged by the 22 November scope update.

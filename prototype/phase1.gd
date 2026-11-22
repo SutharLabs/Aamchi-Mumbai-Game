@@ -1,20 +1,27 @@
 extends Node3D
 
 const World := preload("res://world/phase1_world.gd")
+const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
 const Car := preload("res://vehicle/phase1_car.gd")
+const Rickshaw := preload("res://vehicle/phase1_rickshaw.gd")
 const Walker := preload("res://player.gd")
 const Hud := preload("res://phase1_hud.gd")
-const PLAYER_START := Vector3(0.0, 0.5, 5.0)
-const CAR_START := Vector3(0.0, 0.55, 0.0)
+const PLAYER_START := World.PLAYER_START
+const CAR_START := World.VEHICLE_START
+const RICKSHAW_START := World.RICKSHAW_START
 const ENTER_RANGE := 3.2
 const EXIT_SPEED := 0.65
 
 var world := World.new()
 var player := Walker.new()
 var car := Car.new()
+var rickshaw := Rickshaw.new()
 var camera := Camera3D.new()
 var hud := Hud.new()
-var driving := false
+var active_vehicle: Vehicle
+var driving: bool:
+	get:
+		return active_vehicle != null
 var _yaw := 0.0
 var _pitch := 0.32
 var _manual_look_time := 0.0
@@ -36,6 +43,10 @@ func _ready() -> void:
 	car.position = CAR_START
 	add_child(car)
 	car.reset_to(Transform3D(Basis.IDENTITY, CAR_START))
+	rickshaw.name = "PracticeRickshaw"
+	rickshaw.position = RICKSHAW_START
+	add_child(rickshaw)
+	rickshaw.reset_to(Transform3D(Basis.IDENTITY, RICKSHAW_START))
 	camera.fov = 68.0
 	camera.far = 570.0
 	add_child(camera)
@@ -106,19 +117,25 @@ func _physics_process(delta: float) -> void:
 	if hud.move_axis.length_squared() > intent.length_squared():
 		intent = hud.move_axis
 	if driving:
-		car.set_controls(-intent.y, intent.x, Input.is_action_pressed(&"brake") or hud.brake_held)
+		active_vehicle.set_controls(-intent.y, intent.x, Input.is_action_pressed(&"brake") or hud.brake_held)
 	else:
 		player.direction = Basis(Vector3.UP, _yaw) * Vector3(intent.x, 0.0, intent.y)
 	_update_camera(delta)
 	_message_time = maxf(0.0, _message_time - delta)
-	var prompt := "Walk up to the amber car"
+	var prompt := "Walk up to the car or auto-rickshaw"
+	var speed := 0.0
+	var vehicle_label := ""
 	if driving:
-		prompt = "Stop before getting out" if car.get_speed_mps() > EXIT_SPEED else "Get out"
-	elif _near_car():
-		prompt = "Get in"
+		speed = active_vehicle.get_speed_mps()
+		vehicle_label = active_vehicle.vehicle_label
+		prompt = "Stop before getting out" if speed > EXIT_SPEED else "Get out"
+	else:
+		var nearby := _nearby_vehicle()
+		if nearby != null:
+			prompt = "Get in the %s" % nearby.vehicle_label.to_lower()
 	if _message_time > 0.0:
 		prompt = _message
-	hud.update_display(driving, car.get_speed_mps(), prompt)
+	hud.update_display(driving, speed, prompt, vehicle_label)
 
 
 func _request_interact() -> void:
@@ -136,53 +153,62 @@ func _apply_look(motion: Vector2) -> void:
 
 
 func _actor_position() -> Vector3:
-	return car.global_position if driving else player.global_position
+	return active_vehicle.global_position if driving else player.global_position
 
 
-func _near_car() -> bool:
-	return player.global_position.distance_to(car.global_position) < ENTER_RANGE
+func _nearby_vehicle() -> Vehicle:
+	var best: Vehicle
+	var distance_limit := ENTER_RANGE * ENTER_RANGE
+	for candidate: Vehicle in [car, rickshaw]:
+		var distance := player.global_position.distance_squared_to(candidate.global_position)
+		if distance < distance_limit and candidate.get_speed_mps() <= EXIT_SPEED:
+			best = candidate
+			distance_limit = distance
+	return best
 
 
 func _try_interact() -> void:
 	if driving:
-		if car.get_speed_mps() > EXIT_SPEED:
-			_show_message("Stop the car before getting out")
+		if active_vehicle.get_speed_mps() > EXIT_SPEED:
+			_show_message("Stop before getting out")
 			return
-		var exit_pose := _find_exit()
+		var exit_pose := _find_exit(active_vehicle)
 		if not exit_pose.is_finite():
-			_show_message("Both sides are blocked. Move the car and try again.")
+			_show_message("Both sides are blocked. Repark and try again.")
 			return
 		player.global_position = exit_pose
-		player.rotation.y = car.rotation.y
+		player.rotation.y = active_vehicle.rotation.y
 		player.set_on_foot(true)
-		car.set_driver_active(false)
-		driving = false
+		active_vehicle.set_driver_active(false)
+		active_vehicle = null
 		_message_time = 0.0
 		return
-	if not _near_car() or car.get_speed_mps() > EXIT_SPEED:
+	var vehicle := _nearby_vehicle()
+	if vehicle == null:
 		return
 	var reach := PhysicsRayQueryParameters3D.create(
-		player.global_position + Vector3.UP, car.global_position + Vector3.UP * 0.3, 1)
+		player.global_position + Vector3.UP, vehicle.global_position + Vector3.UP * 0.3, 1 | 4)
+	reach.exclude = [vehicle.get_rid()]
 	if not get_world_3d().direct_space_state.intersect_ray(reach).is_empty():
-		_show_message("Approach the car from the street")
+		_show_message("Move closer to the vehicle from a clear side")
 		return
 	player.set_on_foot(false)
-	car.set_driver_active(true)
-	driving = true
+	active_vehicle = vehicle
+	active_vehicle.set_driver_active(true)
 	_message_time = 0.0
 
 
-func _find_exit() -> Vector3:
+func _find_exit(vehicle: Vehicle) -> Vector3:
 	var space := get_world_3d().direct_space_state
 	for side in [-1.0, 1.0]:
-		var candidate := car.global_position + car.global_basis.x * (1.48 * float(side))
+		var candidate := vehicle.global_position + vehicle.global_basis.x * (vehicle.exit_side_offset * float(side))
 		var ray := PhysicsRayQueryParameters3D.create(candidate + Vector3.UP * 1.1, candidate - Vector3.UP * 1.0, 1)
 		var ground := space.intersect_ray(ray)
 		if ground.is_empty():
 			continue
 		var normal: Vector3 = ground.normal
 		var surface: Vector3 = ground.position
-		if normal.y < 0.72 or absf(surface.y - car.global_position.y) > 0.80:
+		if normal.y < 0.72 or absf(surface.y - vehicle.global_position.y) > 0.80:
 			continue
 		var feet := surface + Vector3.UP * 0.055
 		var clearance := PhysicsShapeQueryParameters3D.new()
@@ -200,9 +226,11 @@ func _show_message(message: String) -> void:
 
 
 func _reset_run() -> void:
-	driving = false
+	active_vehicle = null
 	car.set_driver_active(false)
 	car.reset_to(Transform3D(Basis.IDENTITY, CAR_START))
+	rickshaw.set_driver_active(false)
+	rickshaw.reset_to(Transform3D(Basis.IDENTITY, RICKSHAW_START))
 	player.global_position = PLAYER_START
 	player.rotation = Vector3.ZERO
 	player.set_on_foot(true)
@@ -215,9 +243,9 @@ func _reset_run() -> void:
 func _update_camera(delta: float) -> void:
 	_manual_look_time = maxf(0.0, _manual_look_time - delta)
 	if driving and _manual_look_time <= 0.0:
-		_yaw = lerp_angle(_yaw, car.rotation.y, minf(delta * 4.5, 1.0))
+		_yaw = lerp_angle(_yaw, active_vehicle.rotation.y, minf(delta * 4.5, 1.0))
 	var target := _actor_position() + Vector3.UP * (1.10 if driving else 1.30)
-	var distance := 6.9 if driving else 4.8
+	var distance := active_vehicle.follow_distance if driving else 4.8
 	var offset := Vector3(sin(_yaw) * cos(_pitch), sin(_pitch), cos(_yaw) * cos(_pitch))
 	var desired := target + offset * distance
 	var query := PhysicsRayQueryParameters3D.create(target, desired, 1)

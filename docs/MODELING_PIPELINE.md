@@ -1,12 +1,12 @@
 ﻿# Modeling pipeline and asset acceptance
 
-Updated 20 November 2026. This document describes the **implemented** model-generation architecture and the route from a draft to a usable game asset. For commands and failure recovery use [OVERNIGHT_MODELING.md](OVERNIGHT_MODELING.md); for actual deployment/status evidence use [OVERNIGHT_HANDOFF.md](OVERNIGHT_HANDOFF.md). The first eleven-job batch has technically completed; that does not advance visual, period, cultural or engine acceptance.
+Updated 20 November 2026. This document describes the **implemented** model-generation architecture and the route from a draft to a usable game asset. For commands and failure recovery use [OVERNIGHT_MODELING.md](OVERNIGHT_MODELING.md); for actual deployment/status evidence use [OVERNIGHT_HANDOFF.md](OVERNIGHT_HANDOFF.md). The first eleven-job batch has technically completed; that does not advance visual, current-reference, cultural or engine acceptance.
 
 ## Product boundary
 
 **Aamchi Mumbai Game** is an original, stylized open-world game grounded in real Mumbai. The user requires actual local buildings, landmarks and vehicle families, plus Indian/Maharashtrian character/clothing and chawl research. Stylization reduces rendering cost; it does not establish that generic geometry represents a particular real building or garment.
 
-The current overnight batch addresses reference gaps with original procedural static studies. It is a geometry/export prototype, not a full asset factory or a playable game. These studies must pass reference review and later production gates before placement in a release. The selected district, reference year/year-band and surveyed or documented source example remain prerequisites for location-specific final art; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md) and [PROJECT_RECORD.md](PROJECT_RECORD.md).
+The current overnight batch addresses reference gaps with original procedural static studies. It is a geometry/export prototype, not a full asset factory or a playable game. These studies must pass reference review and later production gates before placement in a release. The selected district, reference observation date and surveyed or documented source example remain prerequisites for location-specific final art; see [PROJECT_BRIEF.md](PROJECT_BRIEF.md) and [PROJECT_RECORD.md](PROJECT_RECORD.md).
 
 ## Implemented architecture
 
@@ -97,7 +97,7 @@ The [asset production plan](ASSET_PRODUCTION_PLAN.md#acceptance-sequence-and-evi
 
 The user selected Windows PC and Android together, with an integrated-GPU/8 GB Windows class and Android 12 as the OS target. The provisional PC budget is 720p/30 FPS; actual PC CPU/GPU/driver and the Android phone's SoC/RAM/GPU remain to be specified and measured through real exports. Require platform-specific touch/input, memory, frame-time and suspend/resume checks. One 300-triangle bay can still be expensive when repeated as many meshes/materials; one low-triangle NPC can still fail animation or overdraw budgets. Count instances, materials, objects, texture memory and visibility as well as triangles.
 
-For the selected **1990–1995 Bandra West** setting, keep period-appropriate everyday street dress alongside traditional/ceremonial clothing in appropriate contexts. Current generator labels and reference links do not establish period fit. A generic sari is not automatically a nauvari/kashtha drape. Review leg division, rear tuck, pleats, shoulder/pallu route, blouse fit and cloth intersections; confirm cap/pheta form and tying style rather than approving an accessory by color. Read [INDIAN_MAHARASHTRIAN_CHARACTERS.md](../research/INDIAN_MAHARASHTRIAN_CHARACTERS.md).
+For the selected **present-day Bandra West** setting, keep contemporary everyday street dress alongside traditional/ceremonial clothing in appropriate contexts. Current generator labels and reference links do not establish current local fit. A generic sari is not automatically a nauvari/kashtha drape. Review leg division, rear tuck, pleats, shoulder/pallu route, blouse fit and cloth intersections; confirm cap/pheta form and tying style rather than approving an accessory by color. Read [INDIAN_MAHARASHTRIAN_CHARACTERS.md](../research/INDIAN_MAHARASHTRIAN_CHARACTERS.md).
 
 For chawls, distinguish multistorey shared-gallery dwellings from low-rise courtyard forms and generic informal/shanty construction. Select a dated reference belonging to the chosen district, preserve characteristic dwelling repetition/circulation, and document deliberate gameplay compression. Read [CHAWL_MODEL_RESEARCH.md](CHAWL_MODEL_RESEARCH.md).
 

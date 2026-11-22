@@ -1,5 +1,5 @@
-extends Node3D
-## Deterministic traversal blockout, not a surveyed or period-approved Bandra model.
+﻿extends Node3D
+## Deterministic present-day traversal blockout, not a surveyed current Bandra model.
 ## Modern OSM-derived polylines: see README.md and layout.json beside this script.
 
 const ORIGIN := Vector2(72.8260536, 19.0546940)
@@ -8,6 +8,7 @@ const NORTH_METERS := 111320.0
 const AXIS_FORWARD := Vector2(0.99347, 0.11401)
 const PLAYER_START := Vector3(0.0, 0.5, 5.0)
 const VEHICLE_START := Vector3(0.0, 0.55, 0.0)
+const RICKSHAW_START := Vector3(-3.4, 0.55, 0.0)
 const ROAD_WIDTHS: Array[float] = [14.0, 10.0, 8.0, 8.0]
 const ROAD_NAMES: Array[String] = ["Hill Road", "St Peter's Road", "Waroda Road east", "Waroda Road west"]
 const ROAD_SOURCE: Array = [
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_build_gully()
 	_build_recovery_yard()
 	_build_frontages()
+	_build_auto_bay()
 	_build_boundary()
 	_build_markers()
 
@@ -62,7 +64,10 @@ func _build_materials() -> void:
 		"roof": Color("885d4c"), "dark": Color("28383e"),
 		"cream": Color("d9c9a7"), "ochre": Color("bd9f66"),
 		"mint": Color("93aba0"), "rose": Color("b58e83"),
-		"blue": Color("879da9"), "gully": Color("6a9e98")
+		"blue": Color("879da9"), "gully": Color("6a9e98"),
+		"shop_teal": Color("236d70"), "shop_saffron": Color("d39a39"),
+		"shop_blue": Color("345c83"), "shutter": Color("737c7c"),
+		"bay": Color("344247")
 	}
 	for key: String in colors:
 		var material := StandardMaterial3D.new()
@@ -230,8 +235,57 @@ func _build_frontages() -> void:
 					_box("RoofCap",point+Vector3(0,height+0.15,0),Vector3(12.6,0.3,13.6),"roof",false,angle)
 					var facing := point-across*side*6.15
 					_box("Porch",facing+Vector3(0,2.1,0),Vector3(9,0.18,2.4),"dark",false,angle)
+					# A bounded dressing sample signals present-day services without copying businesses.
+					if building_count < 8:
+						_dress_storefront(point,across,side,angle,building_count)
 					building_count += 1
 				distance += 24.0
+
+
+func _dress_storefront(point: Vector3, across: Vector3, side: float, angle: float, index: int) -> void:
+	var services: Array[String] = ["MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY", "LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"]
+	var sign_colors: Array[String] = ["shop_teal","shop_saffron","shop_blue"]
+	var face_normal := -across*side
+	var face := point+face_normal*6.2
+	# Thin face panels and equipment are decorative only, contained at the building face.
+	_box("ShopShutter",face+Vector3(0,1.05,0),Vector3(0.12,2.1,7.7),"shutter",false,angle)
+	_box("PaintedShopSign",face+face_normal*0.12+Vector3(0,2.65,0),Vector3(0.2,0.95,9.4),sign_colors[index%sign_colors.size()],false,angle)
+	var lettering := Label3D.new()
+	lettering.name = "OriginalServiceLettering"
+	lettering.text = services[index]
+	lettering.position = face+face_normal*0.25+Vector3(0,2.65,0)
+	lettering.rotation.y = angle+side*PI*0.5
+	lettering.font_size = 40
+	lettering.pixel_size = 0.016
+	lettering.modulate = Color("fff6db")
+	lettering.outline_size = 3
+	add_child(lettering)
+	_box("WallServiceUnit",face+Vector3(0,3.9,0),Vector3(0.45,0.65,1.2),"cream",false,angle)
+	if index < 3:
+		var payments := Label3D.new()
+		payments.name = "GenericPaymentNotice"
+		payments.text = "DIGITAL PAYMENTS"
+		payments.position = face+face_normal*0.28+Vector3(0,0.75,0)
+		payments.rotation.y = angle+side*PI*0.5
+		payments.font_size = 32
+		payments.pixel_size = 0.009
+		payments.modulate = Color("fff6db")
+		payments.outline_size = 3
+		add_child(payments)
+
+
+func _build_auto_bay() -> void:
+	# Paint only: preserve a continuous collision floor and all actor spawn clearances.
+	var center := Vector3(RICKSHAW_START.x,0.0,RICKSHAW_START.z)
+	_box("AutoBaySurface",center+Vector3(0,0.023,0),Vector3(2.4,0.012,4.4),"bay",false)
+	for side: float in [-1.0,1.0]:
+		_box("AutoBaySidePaint",center+Vector3(side*1.2,0.034,0),Vector3(0.09,0.012,4.4),"paint",false)
+		_box("AutoBayEndPaint",center+Vector3(0,0.034,side*2.2),Vector3(2.4,0.012,0.09),"paint",false)
+	_strip("AutoBayArrowShaft",center+Vector3(0,0,0.7),center+Vector3(0,0,-0.9),0.1,0.01,0.044,"paint",false)
+	_strip("AutoBayArrowLeft",center+Vector3(0,0,-0.9),center+Vector3(-0.4,0,-0.3),0.1,0.01,0.044,"paint",false)
+	_strip("AutoBayArrowRight",center+Vector3(0,0,-0.9),center+Vector3(0.4,0,-0.3),0.1,0.01,0.044,"paint",false)
+	_label("AUTO BAY",Vector3(-5.8,2.1,-4.5))
+	_label("RANWAR / BANDRA WEST",Vector3(9.2,3.2,-32.0))
 
 
 func _build_boundary() -> void:

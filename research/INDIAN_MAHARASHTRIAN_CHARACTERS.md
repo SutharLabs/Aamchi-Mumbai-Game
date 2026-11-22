@@ -4,7 +4,7 @@ Latest delegated choices: **Windows 10/Android 12**, the [selected Ranwar/Waroda
 
 Research date: 19 November 2026. Project: Aamchi Mumbai Game. User requirement: Indian characters and clothing, with specific attention to Maharashtrian dress, suitable for a commercial stylized game.
 
-**Production direction updated 20 November 2026:** the first pocket is **Bandra West during the settled 1990-1995 year-band**; the precise boundary and dated per-outfit evidence remain pending. The wardrobe needs **ordinary period-appropriate clothing alongside contextual Maharashtrian/traditional outfits**. Existing contemporary model leads and the `contemporary-character-study-v001` job name are retained research/technical studies, not proof of period dress. Modern street photos, tourism pages and historical costume collections do not establish garment prevalence during 1990-1995. First release targets **Windows and Android 12 together**, with cars, rickshaws, motorcycles and scooters all player-drivable; clothing/rig acceptance therefore includes driver/rider poses, touch-input handling context and populated exported-scene performance on both actual test devices. Android 12 identifies an OS; phone model/SoC/RAM/GPU remain unknown.
+**Production direction updated 22 November 2026:** **present-day Ranwar/Bandra West only**. The wardrobe combines ordinary contemporary street clothing with contextual Maharashtrian/traditional outfits. Modern-style candidates and the stable contemporary-character study are eligible inputs; current local silhouette, fit, rights, rig/deformation and performance remain to be accepted. Historical costume sources support construction/context rather than present-day prevalence. Windows 10/Android 12 and all four drivable families require driver/rider poses and both-platform acceptance; physical minimum-device details remain open.
 
 Production follow-up: the suggested studies below now have implemented original Blender generators and saved overnight job briefs. The [asset production plan](../docs/ASSET_PRODUCTION_PLAN.md) owns their production route; the [handoff](../docs/OVERNIGHT_HANDOFF.md) owns actual execution and review status; [phase progress](../docs/PHASE_PROGRESS.md) records remaining acceptance work. The catalogue findings remain candidate research, without model-archive or rig inspection.
 
@@ -20,7 +20,7 @@ CC BY 4.0 permits commercial reuse/adaptation under its attribution and other co
 
 All six rows returned **download enabled** and the **CC BY 4.0 license URL** in live public metadata. Face counts are reported by the catalogue, not locally measured. These are Indian-category references; none is authenticated as a complete specifically Maharashtrian outfit.
 
-Era approval is a separate outstanding gate for every candidate, including modern-style CHAR-005/006 and garments labeled traditional. Verify dated Bandra/Mumbai clothing references, cut, materials, footwear, hair and occasion for the selected 1990-1995 year-band before shipping. No candidate is adopted or authenticated as period-correct by its model title, clothing category or license declaration.
+Current locality and wardrobe context are separate acceptance checks for every candidate. Inspect dated current Bandra/Mumbai clothing references, garment cut/material, footwear, hair and occasion. CHAR-005/006 and traditional garments are not excluded by the superseded historical-era setting; model title or license still does not authenticate local use or construction.
 
 | ID | Model and creator | API faces / animations | Proposed use and remaining work |
 |---|---|---:|---|
@@ -50,7 +50,7 @@ An additional [traditional sari model](https://sketchfab.com/3d-models/tradition
 
 No openly licensed complete production-ready nauvari/kashtha, pheta or Gandhi-cap clothing kit was established in this review. This is a gap in the reviewed sources, not proof that no such asset exists anywhere.
 
-Use garment construction and contextual references, not an assumed facial appearance, to establish local clothing identity. A title containing “Maharashtrian” is not an accuracy certificate. Keep ordinary clothing appropriate to the selected 1990-1995 year-band, contextual traditional/heritage clothing, and festival/ceremonial outfits as separate art categories. Current-style examples remain comparators until period cut/material/context is verified.
+Use garment construction and contextual references, not an assumed facial appearance, to establish clothing identity. Keep contemporary everyday, traditional/heritage and festival/ceremonial categories distinct. A Maharashtrian model title is not accuracy evidence; present-day street references and knowledgeable review must support form and context.
 
 | Reference | What it supports | Limits |
 |---|---|---|
@@ -61,7 +61,7 @@ Use garment construction and contextual references, not an assumed facial appear
 
 A generic cylindrical sari cannot pass as the selected divided/back-tucked nauvari variant. A generic turban cone cannot pass as a referenced pheta. A dhoti, pajama and lungi should retain their different construction/silhouette where those distinctions matter to the selected character.
 
-For the period Bandra West district, collect dated, appropriately licensed street references from the selected year/year-band before deciding clothing frequencies. Modern sources cannot establish past prevalence; older costume descriptions cannot substitute for an era-specific street record. Do not invent percentages from national culture pages or historical costume descriptions. Keep regional, generational, occupational and occasion variation visible in the character set.
+For present-day Bandra West, collect dated, appropriately reusable current street references before deciding clothing frequencies. Historical costume descriptions and museums do not establish today's prevalence. Do not invent percentages; preserve regional, generational, occupational and occasion variation.
 
 ## 4. Reusable base-body route
 
@@ -71,7 +71,7 @@ MakeHuman's official [commercial-use FAQ](https://static.makehumancommunity.org/
 
 The remote node available to the main workflow is CPU-only Blender. The first batch should produce **original procedural drafts**, saved for later human review, rather than claim to generate accepted cultural/game assets unattended. These are suggested job priorities, not a claim that any job has run:
 
-1. **Ordinary-clothing technical study:** the existing contemporary-named brief provides shirt/trouser/body proportions; its cuts, footwear and details still need selected-period evidence. Keep the saved job ID intact as execution history; no celebrity likeness or third-party generator input.
+1. **Ordinary-clothing technical study:** the existing contemporary-named brief provides shirt/trouser/body proportions; its cuts, footwear and details still need selected-current reference evidence. Keep the saved job ID intact as execution history; no celebrity likeness or third-party generator input.
 2. **Cotton sari study:** original simplified blouse/sari draft with an explicit generic drape label. Keep it distinct from the nauvari study.
 3. **Nauvari/kashtha drape study:** preserve the selected lower-leg separation, front-pleat/back-tuck concept and shoulder/pallu route. Document approximation and missing references. Human cultural review is required before labeling the result authentic.
 4. **Kurta/dhoti study:** original kurta/sadara and dhoti/dhotar silhouette, with clear legs and garment/body separation in the source scene.
@@ -83,6 +83,6 @@ No live cloth simulation is needed for these initial drafts. Later character acc
 
 ## 6. Acceptance sequence
 
-Period/place/input-rights references complete → silhouette/cultural review → mesh/material review → rig/animation and driver/rider review → engine import → populated exported-scene performance on Windows and Android → production adoption.
+Current place/context/input-rights references complete -> silhouette/cultural review -> mesh/material review -> rig/animation and driver/rider review -> engine import -> populated Windows/Android performance -> production adoption.
 
 Any overnight output stops at the stage it actually demonstrates. Archive and human review statuses should survive worker/session restarts; rerunning a completed study should create a new version rather than silently overwrite an accepted asset.

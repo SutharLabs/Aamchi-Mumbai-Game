@@ -67,7 +67,7 @@ func _ready() -> void:
 	credit.offset_left = -300
 	credit.offset_right = -18
 	credit.offset_top = 20
-	update_display(false, 0.0, "Walk up to the amber car")
+	update_display(false, 0.0, "Walk up to the car or auto-rickshaw", "")
 	if touch_enabled:
 		_touch_surface = Control.new()
 		canvas.add_child(_touch_surface)
@@ -77,10 +77,10 @@ func _ready() -> void:
 		_touch_surface.draw.connect(_draw_touch)
 
 
-func update_display(driving: bool, speed: float, prompt: String) -> void:
+func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String) -> void:
 	var mode := "Ranwar practice route  /  On foot"
 	if driving:
-		mode = "Ranwar practice route  /  %d km/h" % roundi(speed * 3.6)
+		mode = "%s  /  %d km/h" % [vehicle_label, roundi(speed * 3.6)]
 	if _mode.text != mode:
 		_mode.text = mode
 	if _prompt.text != prompt:

@@ -50,8 +50,10 @@ func _run() -> void:
 	_expect(not game.driving and absf(game.car.position.z) < 0.1 and absf(game.player.position.z - 5.0) < 0.1, "reset restores both actors")
 	_check_route_clearance()
 	await _check_ramp()
+	await _check_rickshaw()
 	if game.hud.touch_enabled:
 		await _check_touch()
+		await _check_touch_rickshaw()
 	if "--capture" in OS.get_cmdline_user_args() and DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
 		var screenshot := root.get_texture().get_image()
@@ -84,10 +86,38 @@ func _check_ramp() -> void:
 	game.car.reset_to(Transform3D(Basis.IDENTITY, Vector3(-31, 0.55, -20)))
 	game.car.set_driver_active(true)
 	game.player.set_on_foot(false)
-	game.driving = true
+	game.active_vehicle = game.car
 	await _hold(&"move_forward", 160)
 	_expect(game.car.position.y > 1.35 and game.car.position.z < -43.0, "car climbs the handling ramp to the deck")
 	await _tap(&"recover")
+
+
+func _check_rickshaw() -> void:
+	var parked: Vector3 = game.rickshaw.global_position
+	var collision := KinematicCollision3D.new()
+	var probe := Transform3D(Basis.IDENTITY, parked + Vector3(0.0, 0.07, 4.0))
+	var hit_vehicle: bool = game.car.test_move(probe, Vector3(0.0, 0.0, -4.0), collision)
+	_expect(hit_vehicle and collision.get_collider() == game.rickshaw, "parked vehicles collide with each other")
+	game.player.global_position = Vector3(parked.x, 0.04, parked.z + 2.4)
+	await _frames(6)
+	await _tap(&"interact")
+	_expect(game.active_vehicle == game.rickshaw and game.rickshaw.driver_active and not game.car.driver_active, "nearest auto-rickshaw takes control while the car stays parked")
+	await _hold(&"move_forward", 72)
+	_expect(game.rickshaw.position.z < parked.z - 2.5 and game.rickshaw.get_speed_mps() > 1.8, "auto-rickshaw accelerates")
+	var heading: float = game.rickshaw.rotation.y
+	Input.action_press(&"move_forward")
+	await _hold(&"move_right", 18)
+	Input.action_release(&"move_forward")
+	_expect(absf(angle_difference(heading, game.rickshaw.rotation.y)) > 0.12 and game.rickshaw.global_basis.y.dot(Vector3.UP) > 0.99, "auto-rickshaw turns and remains upright")
+	await _tap(&"interact")
+	_expect(game.active_vehicle == game.rickshaw, "moving auto-rickshaw cannot be exited")
+	await _hold(&"brake", 70)
+	_expect(game.rickshaw.get_speed_mps() < 0.2, "auto-rickshaw brakes to a halt")
+	await _tap(&"interact")
+	_expect(not game.driving and game.player.visible, "stopped auto-rickshaw can be exited")
+	await _tap(&"recover")
+	var centered: Vector2 = Vector2(game.rickshaw.position.x, game.rickshaw.position.z)
+	_expect(centered.distance_to(Vector2(parked.x, parked.z)) < 0.1 and absf(game.car.position.z) < 0.1 and not game.driving, "reset parks both vehicles at their original bays")
 
 
 func _check_touch() -> void:
@@ -113,6 +143,33 @@ func _check_touch() -> void:
 	_touch(surface, 2, reset_button.get_center(), false)
 	await _frames(4)
 	_expect(absf(game.player.position.z - 5.0) < 0.1, "touch reset runs through the HUD signal")
+
+
+func _check_touch_rickshaw() -> void:
+	var parked: Vector3 = game.rickshaw.global_position
+	game.player.global_position = Vector3(parked.x, 0.04, parked.z + 2.4)
+	await _frames(6)
+	var surface: Control = game.hud._touch_surface
+	var interact: Vector2 = game.hud._button_rect(0).get_center()
+	_touch(surface, 3, interact, true)
+	_touch(surface, 3, interact, false)
+	await _frames(4)
+	_expect(game.active_vehicle == game.rickshaw, "touch Interact selects the auto-rickshaw")
+	var stick: Vector2 = game.hud._stick_center() - Vector2(0, 52)
+	_touch(surface, 4, stick, true)
+	await _frames(58)
+	_expect(game.rickshaw.position.z < parked.z - 1.0, "touch stick drives the auto-rickshaw")
+	var brake: Vector2 = game.hud._button_rect(1).get_center()
+	_touch(surface, 5, brake, true)
+	await _frames(65)
+	_expect(game.hud.move_axis.y < -0.4 and game.rickshaw.get_speed_mps() < 0.2, "second touch brakes while throttle is held")
+	_touch(surface, 4, stick, false)
+	_touch(surface, 5, brake, false)
+	var reset_button: Vector2 = game.hud._button_rect(2).get_center()
+	_touch(surface, 6, reset_button, true)
+	_touch(surface, 6, reset_button, false)
+	await _frames(4)
+	_expect(not game.driving and absf(game.rickshaw.position.z) < 0.1, "touch reset returns the auto-rickshaw to its bay")
 
 
 func _touch(surface: Control, index: int, point: Vector2, pressed: bool) -> void:

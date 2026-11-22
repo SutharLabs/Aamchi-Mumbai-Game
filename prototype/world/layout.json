@@ -1,5 +1,5 @@
 ﻿{
-    "status":  "Phase 1 traversal blockout; modern-reference-derived geometry, not a 1990-1995 reconstruction or accepted world",
+    "status":  "Phase 1 present-day traversal blockout; modern-reference-derived layout with original authored dressing, not surveyed current buildings or an accepted district",
     "source":  "../../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json",
     "derivation":  "Selected polyline bend points; local metric approximation; rotation only, no uniform scale compression. Widths, buildings and handling yard authored for gameplay.",
     "axes":  "Y up; A at origin; A-to-B approximately negative Z",
@@ -110,5 +110,46 @@
                                      -75
                                  ]
                              ],
-    "license":  "Map data from OpenStreetMap contributors; ODbL-1.0. See source package ATTRIBUTION.md and ODbL-1.0.txt. Original script/art additions are tracked separately by project owner."
+    "license":  "Map data from OpenStreetMap contributors; ODbL-1.0. See source package ATTRIBUTION.md and ODbL-1.0.txt. Original script/art additions are tracked separately by project owner.",
+    "updated":  "2026-11-22",
+    "game_setting":  "Present-day Mumbai; Ranwar / Bandra West reference pocket",
+    "rickshaw_spawn":  [
+                           -3.4,
+                           0.55,
+                           0
+                       ],
+    "auto_bay":  {
+                     "center":  [
+                                    -3.4,
+                                    0,
+                                    0
+                                ],
+                     "width_m":  2.4,
+                     "length_m":  4.4,
+                     "heading":  "negative Z",
+                     "collisions":  "None: decorative surface, paint and arrow only",
+                     "bounds_x":  [
+                                      -4.6,
+                                      -2.2
+                                  ],
+                     "bounds_z":  [
+                                      -2.2,
+                                      2.2
+                                  ]
+                 },
+    "present_day_dressing":  {
+                                 "frontage_count":  8,
+                                 "services":  "Original generic service signs, shutters, wall equipment, three digital-payment notices",
+                                 "provenance":  "Authored game additions, not an actual current shop or building survey",
+                                 "dependencies":  "No external assets or plugins",
+                                 "route_geometry":  "Existing source-derived route and authored collision ground preserved"
+                             },
+    "world_check":  {
+                        "script":  "res://world/check_world.gd",
+                        "date":  "2026-11-22",
+                        "engine":  "Godot 4.7.2 standard headless",
+                        "result":  "Three conservative spawn proxies clear of world colliders; rickshaw bay floor y=0",
+                        "direct_world_children":  531,
+                        "exclusions":  "No actor-to-actor, visual, handling, device-performance or mobile acceptance"
+                    }
 }
