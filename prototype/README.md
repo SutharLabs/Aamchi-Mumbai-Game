@@ -4,17 +4,20 @@ Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable 
 
 The player uses captured idle, walk and jog clips on an original skinned humanoid. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
 
-Open `project.godot` in Godot 4.7.2 standard and press **F6** from `phase1.tscn` or **F5** to run the project. The local Windows debug export is `../builds/phase-1/Aamchi Mumbai Game.exe`.
+Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. The local Windows debug export is `../builds/phase-1/Aamchi Mumbai Game.exe`.
+
+The title menu provides Play, Profiles, Settings, Credits and Quit. Profiles store a local display name and the active selection. Master volume, fullscreen and camera sensitivity are device settings saved in `user://preferences.json`. The pause menu also offers Resume and Main menu. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
 
 | Input | Action |
 |---|---|
 | **WASD** or **arrows** | Walk, or steer and control speed while driving. |
 | **Shift** with movement | Jog on foot. |
-| **Mouse** | Look around. Escape releases the pointer and a click captures it again. |
+| **Mouse** | Look around. |
+| **Esc** | Pause or resume. Return from a menu page to the preceding menu. |
 | **E** | Get in or mount the nearest vehicle. Stop and press again to exit. |
 | **Space** | Brake while driving. |
 | **R** | Return on foot and put all four vehicles back in their bays. |
-| Touch controls | Walk or drive with the left stick, drag the right side to look, and use Interact, Brake and Reset. |
+| Touch controls | Walk or drive with the left stick, drag the right side to look, and use Interact, Brake, Reset and Pause. |
 
 Follow Hill Road from the start toward St Peter's approach, turn onto St Peter's Road and follow Waroda Road back. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
@@ -26,13 +29,16 @@ From the repository root with the downloaded portable editor and its matching st
 
 ```powershell
 $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe'
+& $editor --headless --path prototype --editor --import
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 5000 --script res://tests/phase1_smoke.gd -- --touch-preview
 New-Item -ItemType Directory -Force -Path '.\builds\phase-1' | Out-Null
 $exe = Join-Path (Get-Location) 'builds\phase-1\Aamchi Mumbai Game.exe'
 & $editor --headless --path prototype --export-debug 'Windows Desktop' $exe
 Copy-Item 'prototype/character/motion/100STYLE-ATTRIBUTION.txt' 'builds/phase-1/'
+Copy-Item 'prototype/startup/art/NotoSansDevanagari-OFL.txt' 'builds/phase-1/'
 ```
 
-The smoke script exercises captured locomotion, all four vehicles, steering and braking, exit clearance, reset, the ramp, road clearances and simulated concurrent touch. `--touch-preview` also enables the overlay on a desktop build. Keep the Godot, OpenStreetMap and 100STYLE notices with the executable.
+The startup smoke exercises menu navigation, profile reload, settings, credits and pause. The gameplay smoke exercises captured locomotion, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. `--touch-preview` enables the overlay on a desktop build. Keep the Godot, OpenStreetMap, 100STYLE and Noto notices with the executable.
 
 The car, auto-rickshaw, motorcycle and scooter use shaped, unbranded vehicle models. The two-wheelers have distinct skinned rider poses, with hands following the steering grips and visual lean on upright arcade collision bodies. Android export, physical-device touch, minimum-spec performance and fresh-player testing remain open. [Vehicle notes](vehicle/README.md) · [Phase tracker](../docs/PHASE_PROGRESS.md)

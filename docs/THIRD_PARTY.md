@@ -19,12 +19,13 @@ CC BY content needs its actual creator/source/license/change record; see [CC BY 
 
 ## Adopted third-party code and shipping assets
 
-The Ranwar playtest includes the map-based blockout and the 100STYLE animation excerpts below. [Engine and component selections](../research/TECH_STACK_SELECTION.md)
+The Ranwar playtest uses the map data, 100STYLE animation excerpts and startup font below. Credits are available from the title and pause screens. [Credits research](../research/STARTUP_AND_CREDITS.md) · [Engine and component selections](../research/TECH_STACK_SELECTION.md)
 
 | Item / file | Source URL | Version / commit | Code license | Asset license | Obligations | Changes | Adopted? |
 |---|---|---|---|---|---|---|---|
 | Ranwar modern OSM reference | [OSM license](https://www.openstreetmap.org/copyright); [local package/manifest](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md) | Database 20 Nov 2026, 01:19:21 UTC; raw hash/checksums retained | Map data, not runtime code | ODbL 1.0; no imagery rights | Attribution/license and applicable derivative-database/Produced Work data offer; local ATTRIBUTION.md records details | Raw XML unchanged; GeoJSON/layout/preview separately traceable | Acquired reference/evaluation; no engine/shipping acceptance |
 | 100STYLE `Neutral_ID.bvh`, `Neutral_FW.bvh`, `Neutral_FR.bvh` | [Ian Mason's 100STYLE dataset](https://www.ianxmason.com/100style/) and [Zenodo archive](https://doi.org/10.5281/zenodo.8127870) | Publisher's neutral XSens recordings at 60 fps | Motion data | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Give creator credit, link source and license, and identify adaptations. [Packaged notice](../prototype/character/motion/100STYLE-ATTRIBUTION.txt) | Extracted, trimmed, looped, made in-place and retargeted at 30 Hz to the original humanoid | `phase1_motions.tres` plays idle, walk and jog in the Windows prototype |
+| Noto Sans Devanagari | [Pinned Google Fonts source](https://github.com/google/fonts/tree/06bfe0d62a98375cb09c942fa18e68bd32cff057/ofl/notosansdevanagari) | `06bfe0d62a98375cb09c942fa18e68bd32cff057` | Font asset | [SIL OFL 1.1](../prototype/startup/art/NotoSansDevanagari-OFL.txt) | Retain author notice and full license alongside distributed builds | Original font bytes stored as `NotoSansDevanagari.ttf` | Marathi title in the startup screen |
 
 ## Original procedural geometry - separate provenance record
 

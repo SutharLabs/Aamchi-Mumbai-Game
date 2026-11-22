@@ -6,6 +6,9 @@ tools/modeling/*.py text eol=lf
 tools/mocap/*.py text eol=lf
 prototype/character/motion/phase1_motions.tres text eol=lf
 
+# Preserve the exact upstream font license, including its original whitespace.
+prototype/startup/art/NotoSansDevanagari-OFL.txt -text -whitespace
+
 # These files were recorded with CRLF in the map and deployment manifests.
 assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/candidate-layout.json text eol=crlf
 assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/manifest.json text eol=crlf

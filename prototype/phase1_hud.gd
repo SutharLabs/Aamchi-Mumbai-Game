@@ -2,9 +2,11 @@ extends CanvasLayer
 
 signal interact_pressed
 signal reset_pressed
+signal pause_pressed
 signal look_dragged(relative: Vector2)
 
 var touch_enabled := false
+var pause_enabled := false
 var move_axis := Vector2.ZERO
 var brake_held := false
 var _mode := Label.new()
@@ -55,18 +57,6 @@ func _ready() -> void:
 	_help.add_theme_color_override("font_color", Color("deebef"))
 	_help.add_theme_font_size_override("font_size", 15)
 	details.add_child(_help)
-	var credit := Label.new()
-	credit.text = "Map data © OpenStreetMap contributors"
-	credit.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	credit.add_theme_font_size_override("font_size", 13)
-	credit.add_theme_color_override("font_color", Color("e3eced"))
-	credit.add_theme_color_override("font_outline_color", Color("10212c"))
-	credit.add_theme_constant_override("outline_size", 5)
-	canvas.add_child(credit)
-	credit.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	credit.offset_left = -300
-	credit.offset_right = -18
-	credit.offset_top = 20
 	update_display(false, 0.0, "Walk up to a parked vehicle", "")
 	if touch_enabled:
 		_touch_surface = Control.new()
@@ -90,19 +80,25 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		help = "WASD / Arrows  Drive     Space  Brake     E  Exit when stopped     R  Reset"
 	if touch_enabled:
 		help = "Left stick  Drive     Right area  Look" if driving else "Left stick  Walk     Right area  Look"
+	elif pause_enabled:
+		help += "     Esc  Pause"
 	if _help.text != help:
 		_help.text = help
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		_move_finger = -1
-		_look_finger = -1
-		_brake_finger = -1
-		move_axis = Vector2.ZERO
-		brake_held = false
-		if is_instance_valid(_touch_surface) and _touch_surface.is_inside_tree():
-			_touch_surface.queue_redraw()
+		clear_touch_input()
+
+
+func clear_touch_input() -> void:
+	_move_finger = -1
+	_look_finger = -1
+	_brake_finger = -1
+	move_axis = Vector2.ZERO
+	brake_held = false
+	if is_instance_valid(_touch_surface) and _touch_surface.is_inside_tree():
+		_touch_surface.queue_redraw()
 
 
 func _touch_input(event: InputEvent) -> void:
@@ -119,7 +115,9 @@ func _touch_input(event: InputEvent) -> void:
 
 
 func _start_touch(index: int, point: Vector2) -> void:
-	if point.distance_to(_stick_center()) < 105.0 and _move_finger < 0:
+	if pause_enabled and _pause_rect().has_point(point):
+		pause_pressed.emit()
+	elif point.distance_to(_stick_center()) < 105.0 and _move_finger < 0:
 		_move_finger = index
 		_update_stick(point)
 	elif _button_rect(0).has_point(point):
@@ -160,19 +158,27 @@ func _button_rect(index: int) -> Rect2:
 	return Rect2(_touch_surface.size.x - 148.0, _touch_surface.size.y - 79.0 - index * 67.0, 124.0, 53.0)
 
 
+func _pause_rect() -> Rect2:
+	return Rect2(_touch_surface.size.x - 148.0, 20.0, 124.0, 53.0)
+
+
 func _draw_touch() -> void:
 	var center := _stick_center()
 	_touch_surface.draw_circle(center, _stick_radius, Color("12232fc4"))
 	_touch_surface.draw_arc(center, _stick_radius, 0.0, TAU, 36, Color("a3c4cab0"), 2.0, true)
 	_touch_surface.draw_circle(center + move_axis * (_stick_radius - 16.0), 22.0, Color("6dc1cdeb"))
 	var button_text := ["Interact", "Brake", "Reset"]
-	var font := ThemeDB.fallback_font
 	for index in range(button_text.size()):
-		var bounds := _button_rect(index)
 		var color := Color("466c70db") if index == 1 and brake_held else Color("14283ae0")
-		_touch_surface.draw_rect(bounds, color)
-		_touch_surface.draw_rect(bounds, Color("9bcdd4bc"), false, 1.5)
-		var label_text: String = button_text[index]
-		var text_width := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21).x
-		var baseline := bounds.get_center() + Vector2(-text_width * 0.5, 7.0)
-		_touch_surface.draw_string(font, baseline, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+		_draw_touch_button(_button_rect(index), button_text[index], color)
+	if pause_enabled:
+		_draw_touch_button(_pause_rect(), "Pause", Color("14283ae0"))
+
+
+func _draw_touch_button(bounds: Rect2, label_text: String, color: Color) -> void:
+	var font := ThemeDB.fallback_font
+	_touch_surface.draw_rect(bounds, color)
+	_touch_surface.draw_rect(bounds, Color("9bcdd4bc"), false, 1.5)
+	var text_width := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21).x
+	var baseline := bounds.get_center() + Vector2(-text_width * 0.5, 7.0)
+	_touch_surface.draw_string(font, baseline, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)

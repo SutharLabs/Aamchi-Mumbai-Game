@@ -2,8 +2,15 @@ config_version=5
 
 [application]
 config/name="Aamchi Mumbai Game"
-run/main_scene="res://phase1.tscn"
+config/version="0.1.0"
+run/main_scene="res://startup/startup.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+config/quit_on_go_back=false
+config/icon="res://startup/art/amg-mark.png"
+config/windows_native_icon="res://startup/art/amg-mark.ico"
+boot_splash/image="res://startup/art/amg-mark.png"
+boot_splash/bg_color=Color(0.043, 0.067, 0.098, 1)
+boot_splash/fullsize=false
 
 [display]
 window/size/viewport_width=1280

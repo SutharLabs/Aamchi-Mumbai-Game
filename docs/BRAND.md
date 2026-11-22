@@ -14,7 +14,13 @@ Selected on 22 November 2026. The 20 November GitHub baseline and archive used t
 
 A fast, colorful, street-level open-world adventure based on real Mumbai. The identity centers on neighborhood rivalries, narrow-lane chases, local ambition, and Mumbai street life. Real buildings, landmarks, street relationships, and vehicle models establish the setting, with stylized geometry for modest hardware. Story, cast, missions, and branding are original. Monsoon rain, sea air, and late-night light support the city's observed character.
 
-The user selected **present-day Mumbai only** on **22 November 2026**, retaining the Ranwar/Bandra West pocket and original fictional cast/story. Contemporary signs, clothing, vehicle generations and streetscape details need dated current references and commercial-safe inputs. The title remains **Aamchi Mumbai Game**. Tagline, palette and logo concepts below are proposals. Keep interfaces readable for Windows 10 and Android 12; phone hardware remains to be specified.
+The user selected **present-day Mumbai only** on **22 November 2026**, retaining the Ranwar/Bandra West pocket and original fictional cast/story. Contemporary signs, clothing, vehicles and streetscape details use dated references and commercially usable inputs. Keep interfaces readable for Windows 10 and Android 12. The minimum Android phone remains open.
+
+## Startup identity
+
+The title screen pairs **आमची मुंबई** with **Our Mumbai**. The background is an original generated illustration of a fictional Ranwar-inspired lane after rain, using the neighborhood's narrow frontages, tiled roofs, verandahs and street-facing windows. Set the title and controls in native UI text over the dark side of the composition. [Mumbai name and street research](../research/STARTUP_AND_CREDITS.md)
+
+The playtest mark combines a gold M with the front of a black-and-yellow auto-rickshaw. The PNG is used in the menu, project and boot splash. The multi-size ICO provides the Windows file and taskbar icon. Preserve the dark rounded field and the large M at small sizes. [Playtest mark](../prototype/startup/art/amg-mark.png)
 
 ## Voice
 
@@ -30,7 +36,7 @@ The user selected **present-day Mumbai only** on **22 November 2026**, retaining
 - **Typography:** bold condensed display lettering for the title; clean, highly legible sans serif for interface and mission information.
 - **Texture:** rain sheen, halftone grain, painted sign surfaces, sun-faded print, and restrained 2D poster wear.
 - **Shape language:** angled road markings, local-train route geometry, rain arcs, and layered coastal horizons.
-- **Logo concept:** set AAMCHI MUMBAI in bold, condensed lettering inspired by painted street signs. Keep GAME legible in the lockup and test the title at thumbnail size. Angled road markings and taxi amber are available directions for later exploration.
+- **Title lockup:** use bold readable type for Aamchi Mumbai Game. Pair it with the standalone rickshaw mark and the native Marathi title in the startup view.
 
 ## Color starting points
 
@@ -67,4 +73,4 @@ A stylized open-world action and driving game where neighborhood rivalries, narr
 
 ## Status
 
-Aamchi Mumbai Game is the title selected by the user. The tagline, palette, and logo direction remain proposals. Title availability has not been checked.
+Aamchi Mumbai Game is the selected title. The startup art and rickshaw mark are in the Phase 1 Windows build. The tagline and broader palette remain proposals.

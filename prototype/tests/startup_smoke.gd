@@ -1,0 +1,186 @@
+extends SceneTree
+
+const Start := preload("res://startup/startup.tscn")
+const Preferences := preload("res://startup/preferences.gd")
+var _failures := 0
+var _checks := 0
+var _capture_enabled := false
+var app: Node
+
+
+func _initialize() -> void:
+	_capture_enabled = "--capture" in OS.get_cmdline_user_args()
+	_run.call_deferred()
+
+
+func _run() -> void:
+	app = Start.instantiate()
+	var storage := "user://menu-probe-%s.json" % OS.get_process_id()
+	app.preferences.storage_path = storage
+	root.add_child(app)
+	await _settle()
+	_expect(_button("PlayButton") != null and _button("QuitButton") != null, "home primary actions")
+	_expect(app.gameplay == null and _has_label("आमची मुंबई"), "title shows Marathi identity before creating a game")
+	_expect(root.gui_get_focus_owner() == _button("PlayButton"), "initial keyboard focus")
+	_expect(Input.emulate_mouse_from_touch, "touch emulation enabled on title")
+	await _capture("startup-home.png")
+	_press("CreditsButton")
+	await _settle()
+	_expect(_has_label("Map data") and _has_label("Motion capture") and _has_label("Game engine") and _has_label("Devanagari type"), "credits cover map data, motion, engine and font")
+	_expect(_has_button_text("Derived route layout") and _has_button_text("CC BY 4.0"), "actionable attribution")
+	await _capture("startup-credits.png")
+	_key(KEY_ESCAPE)
+	await _settle()
+	_expect(_button("PlayButton") != null, "Escape from credits returns home")
+	_press("ProfilesButton")
+	await _settle()
+	var field := app.menu.find_child("ProfileNameInput", true, false) as LineEdit
+	field.text = "मीरा"
+	_press("CreateProfileButton")
+	await _settle()
+	_expect(app.preferences.active_profile_name == "मीरा" and app.preferences.profiles.size() == 2, "create and select a Marathi profile name")
+	field = app.menu.find_child("ProfileNameInput", true, false) as LineEdit
+	field.text = "QA Tara"
+	_press("RenameProfileButton")
+	await _settle()
+	_expect(app.preferences.active_profile_name == "QA Tara", "rename active profile")
+	var selector := app.menu.find_child("ProfileSelector", true, false) as OptionButton
+	selector.item_selected.emit(0)
+	await _settle()
+	_expect(app.preferences.active_profile_name == "Player", "switch to original profile")
+	await _capture("startup-profiles.png")
+	_press("BackButton")
+	await _settle()
+	_press("SettingsButton")
+	await _settle()
+	var volume := app.menu.find_child("MasterVolumeSlider", true, false) as HSlider
+	var look := app.menu.find_child("LookSensitivitySlider", true, false) as HSlider
+	volume.value = 0.65
+	look.value = 1.35
+	_press("ApplySettingsButton")
+	await _settle()
+	_expect(is_equal_approx(app.preferences.master_volume, 0.65), "master volume applied")
+	_expect(is_equal_approx(app.preferences.look_sensitivity, 1.35), "camera sensitivity applied")
+	_expect(FileAccess.file_exists(storage), "settings saved locally")
+	var restored := Preferences.new()
+	restored.storage_path = storage
+	root.add_child(restored)
+	_expect(restored.profiles.size() == 2 and restored.active_profile_name == "Player" and is_equal_approx(restored.look_sensitivity, 1.35), "profiles and settings reload from disk")
+	restored.queue_free()
+	if app.preferences.supports_fullscreen and DisplayServer.get_name() != "headless":
+		var fullscreen := app.menu.find_child("FullscreenToggle", true, false) as CheckButton
+		fullscreen.button_pressed = true
+		_press("ApplySettingsButton")
+		await _settle()
+		_expect(root.mode == Window.MODE_FULLSCREEN, "fullscreen setting changes the native window")
+		fullscreen.button_pressed = false
+		_press("ApplySettingsButton")
+		await _settle()
+		_expect(root.mode == Window.MODE_WINDOWED, "windowed mode can be restored from settings")
+	await _capture("startup-settings.png")
+	_press("BackButton")
+	await _settle()
+	_key(KEY_ENTER)
+	await _settle()
+	_expect(app.gameplay != null and not app.menu.visible, "keyboard activates Play")
+	_expect(not Input.emulate_mouse_from_touch, "touch emulation disabled in play")
+	_expect(is_equal_approx(app.gameplay.look_sensitivity, 1.35), "saved sensitivity reaches game")
+	var yaw: float = app.gameplay._yaw
+	app.gameplay._apply_look(Vector2(50.0, 0.0))
+	_expect(is_equal_approx(absf(angle_difference(yaw, app.gameplay._yaw)), 50.0 * 0.0031 * 1.35), "sensitivity scales the gameplay camera")
+	var map_credit_found := false
+	for label: Label in app.gameplay.hud.find_children("*", "Label", true, false):
+		map_credit_found = map_credit_found or label.text.contains("OpenStreetMap")
+	_expect(not map_credit_found, "map credit stays off the normal driving HUD")
+	_key(KEY_ESCAPE)
+	await _settle()
+	_expect(paused and app.menu.visible and _button("ResumeButton") != null, "Escape pauses and opens menu")
+	await _capture("startup-paused.png")
+	_press("CreditsButton")
+	await _settle()
+	_expect(_has_label("Map data") and paused, "credits reachable from pause")
+	_key(KEY_ESCAPE)
+	await _settle()
+	_expect(_button("ResumeButton") != null and paused, "Escape closes paused subpage first")
+	_press("ResumeButton")
+	await _settle()
+	_expect(not paused and not app.menu.visible, "resume restores play")
+	if app.gameplay.hud.touch_enabled:
+		var hud: CanvasLayer = app.gameplay.hud
+		hud.move_axis = Vector2.UP
+		var touch := InputEventScreenTouch.new()
+		touch.index = 6
+		touch.position = hud._touch_surface.get_global_transform_with_canvas() * hud._pause_rect().get_center()
+		touch.pressed = true
+		root.push_input(touch, true)
+		await _settle()
+		_expect(paused and hud.move_axis == Vector2.ZERO, "touch Pause opens the menu and clears held gameplay input")
+	else:
+		_key(KEY_ESCAPE)
+	await _settle()
+	_press("MainMenuButton")
+	await _settle()
+	_expect(app.gameplay == null and app.menu.visible and not paused, "main menu disposes the level")
+	for path in [storage, storage + ".bak", storage + ".tmp"]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	print("Startup smoke: %d failures in %d checks" % [_failures, _checks])
+	quit(0 if _failures == 0 else 1)
+
+
+func _settle() -> void:
+	for i in range(5):
+		await process_frame
+
+
+func _capture(name: String) -> void:
+	if not _capture_enabled or DisplayServer.get_name() == "headless":
+		return
+	await RenderingServer.frame_post_draw
+	var path := "user://" + name
+	var status := root.get_texture().get_image().save_png(path)
+	_expect(status == OK, "write screenshot " + name)
+
+
+func _button(node_name: String) -> Button:
+	return app.menu.find_child(node_name, true, false) as Button
+
+
+func _press(node_name: String) -> void:
+	var button := _button(node_name)
+	if button != null:
+		button.pressed.emit()
+	else:
+		_expect(false, "missing action " + node_name)
+
+
+func _key(key: Key) -> void:
+	for pressed: bool in [true, false]:
+		var event := InputEventKey.new()
+		event.keycode = key
+		event.physical_keycode = key
+		event.pressed = pressed
+		root.push_input(event)
+
+
+func _has_label(text: String) -> bool:
+	for label: Label in app.menu.find_children("*", "Label", true, false):
+		if label.text == text:
+			return true
+	return false
+
+
+func _has_button_text(text: String) -> bool:
+	for button: Button in app.menu.find_children("*", "Button", true, false):
+		if button.text == text:
+			return true
+	return false
+
+
+func _expect(condition: bool, description: String) -> void:
+	_checks += 1
+	if not condition:
+		_failures += 1
+		printerr("FAIL: " + description)
+	else:
+		print("PASS: " + description)

@@ -1,5 +1,7 @@
 extends Node3D
 
+signal pause_requested
+
 const World := preload("res://world/phase1_world.gd")
 const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
 const Car := preload("res://vehicle/phase1_car.gd")
@@ -25,6 +27,8 @@ var camera := Camera3D.new()
 var hud := Hud.new()
 var pedestrians: Array[Pedestrian] = []
 var active_vehicle: Vehicle
+var startup_pause_enabled := false
+var look_sensitivity := 1.0
 var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var driving: bool:
 	get:
@@ -57,9 +61,11 @@ func _ready() -> void:
 	camera.far = 570.0
 	add_child(camera)
 	camera.make_current()
+	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
 	hud.interact_pressed.connect(_request_interact)
 	hud.reset_pressed.connect(_request_reset)
+	hud.pause_pressed.connect(func() -> void: pause_requested.emit())
 	hud.look_dragged.connect(_apply_look)
 	_update_camera(0.0)
 	if not hud.touch_enabled and DisplayServer.get_name() != "headless":
@@ -180,8 +186,8 @@ func _request_reset() -> void:
 
 
 func _apply_look(motion: Vector2) -> void:
-	_yaw = wrapf(_yaw - motion.x * 0.0031, -PI, PI)
-	_pitch = clampf(_pitch + motion.y * 0.0027, 0.10, 1.00)
+	_yaw = wrapf(_yaw - motion.x * 0.0031 * look_sensitivity, -PI, PI)
+	_pitch = clampf(_pitch + motion.y * 0.0027 * look_sensitivity, 0.10, 1.00)
 	_manual_look_time = 1.5
 
 
