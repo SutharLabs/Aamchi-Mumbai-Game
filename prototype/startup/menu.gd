@@ -12,6 +12,7 @@ const DEVANAGARI := "res://startup/art/NotoSansDevanagari.ttf"
 const CREDITS := "res://startup/credits_data.gd"
 const Controls := preload("res://startup/control_bindings.gd")
 const RanwarMap := preload("res://startup/ranwar_map.gd")
+const DistrictServicesView := preload("res://startup/district_services_map.gd")
 const NAVY := Color("0c1725")
 const PANEL := Color("182638")
 const BORDER := Color("405268")
@@ -26,6 +27,7 @@ var _map_roads: Array[PackedVector3Array] = []
 var _map_footway := PackedVector3Array()
 var _map_position := Vector3.ZERO
 var _map_destination := Vector3.INF
+var _map_facilities: Array[Dictionary] = []
 var _can_abandon_job := false
 var _session_status := ""
 var _page: StringName = &"top"
@@ -39,6 +41,7 @@ var _profile_name: LineEdit
 var _volume: HSlider
 var _look: HSlider
 var _fullscreen: CheckButton
+var _live_map: CheckButton
 var _binding_device := Controls.KEYBOARD
 var _binding_action := ""
 var _binding_button: Button
@@ -75,6 +78,7 @@ func show_home() -> void:
 	_map_roads = []
 	_map_footway = PackedVector3Array()
 	_map_destination = Vector3.INF
+	_map_facilities = []
 	_can_abandon_job = false
 	_session_status = ""
 	show()
@@ -82,13 +86,15 @@ func show_home() -> void:
 
 
 func show_pause(character_name: String, roads: Array[PackedVector3Array], footway: PackedVector3Array,
-		position: Vector3, destination: Vector3 = Vector3.INF, can_abandon_job: bool = false, session_status: String = "") -> void:
+		position: Vector3, destination: Vector3 = Vector3.INF, can_abandon_job: bool = false,
+		session_status: String = "", facilities: Array[Dictionary] = []) -> void:
 	_paused_menu = true
 	_character_name = character_name
 	_map_roads = roads
 	_map_footway = footway
 	_map_position = position
 	_map_destination = destination
+	_map_facilities = facilities
 	_can_abandon_job = can_abandon_job
 	_session_status = session_status
 	show()
@@ -98,7 +104,10 @@ func show_pause(character_name: String, roads: Array[PackedVector3Array], footwa
 func back_requested() -> bool:
 	if not is_visible_in_tree() or _page == &"top":
 		return false
-	_show_page(&"settings" if _page == &"bindings" else &"top")
+	match _page:
+		&"bindings": _show_page(&"settings")
+		&"district_services": _show_page(&"map")
+		_: _show_page(&"top")
 	return true
 
 
@@ -126,6 +135,7 @@ func _show_page(page: StringName) -> void:
 		&"bindings": _show_bindings()
 		&"help": _show_help()
 		&"map": _show_map()
+		&"district_services": _show_district_services()
 		&"credits": _show_credits()
 		_: _show_top()
 
@@ -183,6 +193,8 @@ func _show_top() -> void:
 func _show_map() -> void:
 	_page_header("Ranwar map")
 	_focus.call_deferred(_back_button())
+	if not _map_facilities.is_empty():
+		_route_button("DistrictServicesButton", "District services", &"district_services")
 	var map_view := RanwarMap.new()
 	map_view.name = "RanwarMap"
 	map_view.set_snapshot(_map_roads, _map_footway, _map_position, _map_destination)
@@ -191,6 +203,21 @@ func _show_map() -> void:
 	_label(_content, "Nagrana Lane (dashed walking route)", 17, RanwarMap.FOOTWAY)
 	if _map_destination.is_finite():
 		_label(_content, "Objective (orange diamond)", 17, RanwarMap.DESTINATION)
+
+
+func _show_district_services() -> void:
+	_page_header("District services")
+	_focus.call_deferred(_button(_content, "BackButton", "Back to Ranwar", _show_page.bind(&"map")))
+	var map_view := DistrictServicesView.new()
+	map_view.name = "DistrictServicesMap"
+	map_view.set_data(_map_roads, _map_facilities)
+	_content.add_child(map_view)
+	for index in _map_facilities.size():
+		var record := _map_facilities[index]
+		var playable: bool = record["playable"]
+		var district_label := "  ·  Beyond playable streets" if not playable else ""
+		var caption := "%d. %s  ·  %s%s" % [index + 1, record["label"], record["kind"], district_label]
+		_label(_content, caption, 16, CREAM if playable else MUTED).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
 func _show_profiles() -> void:
@@ -265,6 +292,12 @@ func _show_settings() -> void:
 	_fullscreen.button_pressed = preferences.fullscreen
 	_fullscreen.disabled = not preferences.supports_fullscreen
 	_content.add_child(_fullscreen)
+	_live_map = CheckButton.new()
+	_live_map.name = "LiveMapToggle"
+	_live_map.text = "Live map"
+	_live_map.custom_minimum_size.y = 48
+	_live_map.button_pressed = preferences.live_map
+	_content.add_child(_live_map)
 	_notice = _label(_content, "", 17, GOLD)
 	_button(_content, "ApplySettingsButton", "Apply settings", _apply_settings, true)
 	if not Controls.uses_touch_ui():
@@ -274,7 +307,7 @@ func _show_settings() -> void:
 
 
 func _apply_settings() -> void:
-	var result: Error = preferences.set_settings(_volume.value, _fullscreen.button_pressed, _look.value)
+	var result: Error = preferences.set_settings(_volume.value, _fullscreen.button_pressed, _look.value, _live_map.button_pressed)
 	_notice.text = "Settings saved." if result == OK else "Settings could not be saved."
 
 
@@ -529,7 +562,7 @@ func _position_content() -> void:
 	var left := clampf(size.x * 0.052, 22.0, 80.0)
 	var top := clampf(size.y * 0.063, 16.0, 48.0)
 	var preferred_width := 460.0 if _page == &"top" else 510.0
-	if _page == &"map":
+	if _page == &"map" or _page == &"district_services":
 		preferred_width = 620.0
 	_scroll.position = Vector2(left, top)
 	_scroll.size = Vector2(minf(preferred_width, size.x - left * 2.0), size.y - top * 2.0)

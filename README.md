@@ -17,6 +17,8 @@ The original project is source-available. You may inspect the public code and ru
 
 Open `prototype/project.godot` in Godot **4.7.2** and press **F5** to launch the title menu from source. The playtest guide covers controls and export commands. [Godot project](prototype/project.godot) · [Playtest guide](prototype/README.md)
 
+Run `.\tools\make-dev.ps1` to export and validate the local Windows build at `builds/local/Aamchi Mumbai Game.exe`. Use the same path for each playtest. [Development builds and releases](docs/BUILD_WORKFLOW.md)
+
 | Document | Purpose |
 |---|---|
 | [Project record](docs/PROJECT_RECORD.md) | User requirements, decisions versus proposals, completed evidence, open decisions and risks |

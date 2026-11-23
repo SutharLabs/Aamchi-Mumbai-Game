@@ -49,6 +49,8 @@ The render meshes use original shaped profiles, rounded tires, fitted glazing an
 
 The design uses unbranded procedural meshes. The Iris Xe review covered front, side and rear or three-quarter views. Populated-scene and minimum-device performance still require measurement.
 
+`ranwar_fleet.gd` provides `create(kind: StringName)` for `hatch`, `sedan`, `suv`, `mpv`, `rickshaw`, `commuter`, `classic`, `roadster`, `scrambler`, `scooter`, and `electric_scooter`. The sedan, SUV and MPV have separate cabin silhouettes and share the right-hand-drive cabin, chassis and damage behavior. The classic, roadster and scrambler use different body sections and lighting while keeping the rider rig. The electric scooter uses a floor battery tray, apron headlight and motor swingarm. [Manufacturer reference and asset decisions](../../research/OPEN_MODEL_CATALOGUE.md#contemporary-ranwar-fleet-reference-and-reuse-decisions--23-november-2026)
+
 ## Baseline controller receipt — 22 November 2026
 
 Godot 4.7.2 standard console passed `--check-only` on this script. An isolated headless floor/wall fixture passed at fixed rendering cadences of 30 and 60 with the same physics rate. At both cadences: 180 forward ticks reached z=-33.9000 m and 18.0 m/s; braking stopped within 9.9756 m; reverse capped at 5.0 m/s with opposite yaw response; right steering moved toward +X; a wall centered at z=-8 stopped the car center at z=-5.5733. Upright/zero-velocity reset, non-finite control rejection, fall recovery, and parking on driver deactivation passed. The temporary harness is under `.toolchain/car_contract_check.gd` and is not a runtime dependency.

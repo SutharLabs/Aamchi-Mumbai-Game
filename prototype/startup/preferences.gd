@@ -34,6 +34,9 @@ var fullscreen: bool:
 var look_sensitivity: float:
 	get:
 		return _state["settings"]["look_sensitivity"]
+var live_map: bool:
+	get:
+		return _state["settings"]["live_map"]
 var supports_fullscreen: bool:
 	get:
 		return OS.has_feature("pc") and not OS.has_feature("web")
@@ -108,16 +111,19 @@ func select_profile(id: String) -> Error:
 	return _commit(next_state)
 
 
-func set_settings(volume: float, use_fullscreen: bool, sensitivity: float) -> Error:
+func set_settings(volume: float, use_fullscreen: bool, sensitivity: float, show_live_map: Variant = null) -> Error:
 	if not is_finite(volume) or volume < 0.0 or volume > 1.0:
 		return ERR_INVALID_PARAMETER
 	if not is_finite(sensitivity) or sensitivity < MIN_LOOK_SENSITIVITY or sensitivity > MAX_LOOK_SENSITIVITY:
+		return ERR_INVALID_PARAMETER
+	if show_live_map != null and not show_live_map is bool:
 		return ERR_INVALID_PARAMETER
 	var desktop_fullscreen := use_fullscreen if supports_fullscreen else fullscreen
 	var next_settings := {
 		"master_volume": volume,
 		"fullscreen": desktop_fullscreen,
 		"look_sensitivity": sensitivity,
+		"live_map": live_map if show_live_map == null else show_live_map,
 	}
 	if next_settings == _state["settings"]:
 		return OK
@@ -158,7 +164,7 @@ func _default_state() -> Dictionary:
 		"version": _SCHEMA_VERSION,
 		"profiles": entries,
 		"active_profile_id": "1",
-		"settings": {"master_volume": 1.0, "fullscreen": false, "look_sensitivity": 1.0},
+		"settings": {"master_volume": 1.0, "fullscreen": false, "look_sensitivity": 1.0, "live_map": true},
 		"control_bindings": Controls.defaults(),
 	}
 
@@ -199,6 +205,8 @@ func _normalize(raw: Dictionary) -> Dictionary:
 		saved_settings.get("look_sensitivity"), 1.0, MIN_LOOK_SENSITIVITY, MAX_LOOK_SENSITIVITY)
 	if saved_settings.get("fullscreen") is bool:
 		settings["fullscreen"] = saved_settings["fullscreen"]
+	if saved_settings.get("live_map") is bool:
+		settings["live_map"] = saved_settings["live_map"]
 	normalized["control_bindings"] = Controls.normalized(raw.get("control_bindings"))
 	return normalized
 

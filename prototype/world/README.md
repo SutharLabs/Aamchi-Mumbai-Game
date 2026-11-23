@@ -1,10 +1,10 @@
 ﻿# Ranwar traversal world
 
-Updated **22 November 2026** for the selected **present-day Mumbai** direction.
+Updated **23 November 2026** for the selected **present-day Mumbai** direction.
 
 `phase1_world.gd` extends `Node3D` and builds local mesh/collision geometry in `_ready()`. Attach it below the game's main scene. The main project supplies lighting, camera, player, vehicles and UI.
 
-Player start: `(0, 0.5, 5)`. Car start: `(0, 0.55, 0)`. Auto-rickshaw start: `(-3.4, 0.55, 0)`. Motorcycle start: `(-6.2, 0.55, 1)`. Scooter start: `(-8.7, 0.55, 1.5)`. All vehicles point along negative Z. The first road leaves the origin approximately along negative Z; follow its bends rather than driving indefinitely straight.
+New players arrive at the St Peter's Church bus stop on Hill Road. The practice start is `(0, 0.5, 5)`. Car start is `(0, 0.55, 0)`, auto-rickshaw start is `(-3.4, 0.55, 0)`, motorcycle start is `(-6.2, 0.55, 1)`, and scooter start is `(-8.7, 0.55, 1.5)`. The four practice vehicles point along negative Z. Hill Road bends as it extends from the origin. [Bandra facility references](../../docs/BANDRA_FACILITIES.md)
 
 ## Route and provenance
 
@@ -18,7 +18,9 @@ Map data from **OpenStreetMap contributors**, under **ODbL 1.0**. Retain the raw
 
 ## Map and asset placement
 
-The current playable area covers the Ranwar pocket of Bandra West. The road and footway mesh uses selected bends and junctions from the saved OpenStreetMap extract. All 30 coordinate entries used by the game were checked against nodes on the corresponding five saved ways. The St Peter's Church site comes from its mapped footprint, with a designed setback and simplified building dimensions. The five fictional shops and seven village-house frontages are placed in authored lots along those streets. The shop parcels, practice bays, handling yard, street widths and curb geometry are authored gameplay elements. **Pause → Map** draws the same projected roads and Nagrana Lane footway with the paused position of Omkar or his active vehicle. Current parcel and street-condition checks are tracked separately. [Source map and acquisition](../../research/BANDRA_REFERENCE_AREA_AND_MAP.md)
+The current playable area covers the Ranwar pocket of Bandra West. The road and footway mesh uses selected bends and junctions from the saved OpenStreetMap extract. All 30 route coordinates were checked against nodes on the corresponding five saved ways. The St Peter's Church site comes from its mapped footprint, with a designed setback and simplified building dimensions. The five fictional shops and seven village-house frontages are placed in authored lots along those streets. The shop parcels, practice bays, handling yard, street widths and curb geometry are authored gameplay elements. **Pause → Map** draws the same projected roads and Nagrana Lane footway with the paused position of Omkar or his active vehicle. Current parcel and street-condition checks are tracked separately. [Source map and acquisition](../../research/BANDRA_REFERENCE_AREA_AND_MAP.md)
+
+The District services page places eight real sites on a north-up map. The Ranwar circuit and the modeled arrival stop are playable. Nearby hospitals, police, fire and transport stations are geographic references for extending the playable streets. [Facility source details](../../docs/BANDRA_FACILITIES.md)
 
 ## Left-hand lane graph
 

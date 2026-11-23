@@ -14,6 +14,7 @@ const DETAIN_SECONDS := 2.4
 var health := MAX_HEALTH
 var wanted := 0
 var parcel_completed := false
+var arrival_seen: bool
 var lead_seen: bool:
 	get:
 		return _lead_seen
@@ -36,6 +37,13 @@ func _init(store: Progress) -> void:
 	var saved := _store.load_career()
 	_spent = saved.get("spent", 0)
 	_lead_seen = saved.get("lead_seen", false)
+	arrival_seen = _store.arrival_seen()
+
+
+func record_arrival() -> void:
+	# Keep session state even if the local device cannot write the receipt.
+	arrival_seen = true
+	_store.save_arrival()
 
 
 func has_lead() -> bool:
@@ -79,10 +87,18 @@ func damage(amount: float) -> void:
 func report_collision() -> bool:
 	if _incident_cooldown > 0.0:
 		return false
-	wanted = mini(2, wanted + 1)
+	_raise_alert(1)
+	return true
+
+
+func report_theft(police_vehicle: bool) -> void:
+	_raise_alert(2 if police_vehicle else 1)
+
+
+func _raise_alert(increase: int) -> void:
+	wanted = mini(2, wanted + increase)
 	_incident_cooldown = 2.0
 	_quiet_seconds = 0.0
-	return true
 
 
 func step(delta: float, patrol_in_sight: bool, can_detain: bool) -> bool:

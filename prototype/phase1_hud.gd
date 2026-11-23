@@ -7,7 +7,11 @@ signal pause_pressed
 signal look_dragged(relative: Vector2)
 
 const Controls := preload("res://startup/control_bindings.gd")
+const MapView := preload("res://startup/ranwar_map.gd")
+const StatusView := preload("res://startup/player_status.gd")
 const PROMPT_WIDTH := 342.0
+const HUD_MARGIN := 24.0
+const TOUCH_DOCK_CLEARANCE := 225.0
 
 var touch_enabled := false
 var pause_enabled := false
@@ -15,7 +19,6 @@ var move_axis := Vector2.ZERO
 var brake_held := false
 var _status_panel: PanelContainer
 var _objective := Label.new()
-var _condition := Label.new()
 var _speed := Label.new()
 var _prompt_row := HBoxContainer.new()
 var _interact_key := Label.new()
@@ -29,17 +32,23 @@ var _look_finger := -1
 var _brake_finger := -1
 var _stick_radius := 67.0
 var _touch_driving := false
+var _canvas: Control
+var _navigation_dock: VBoxContainer
+var _live_map := MapView.new()
+var _player_status := StatusView.new()
+var _live_map_enabled := true
 
 
 func _ready() -> void:
 	touch_enabled = Controls.uses_touch_ui()
-	var canvas := Control.new()
-	add_child(canvas)
-	canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_canvas = Control.new()
+	add_child(_canvas)
+	_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_build_navigation_dock()
 	_status_panel = _card()
 	_status_panel.position = Vector2(18, 18)
-	canvas.add_child(_status_panel)
+	_canvas.add_child(_status_panel)
 	var details := VBoxContainer.new()
 	details.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	details.add_theme_constant_override("separation", 4)
@@ -48,10 +57,6 @@ func _ready() -> void:
 	_objective.add_theme_color_override("font_color", Color("ffe0bc"))
 	_objective.add_theme_font_size_override("font_size", 17)
 	details.add_child(_objective)
-	_condition.name = "PlayerCondition"
-	_condition.add_theme_color_override("font_color", Color("ffb8a6"))
-	_condition.add_theme_font_size_override("font_size", 17)
-	details.add_child(_condition)
 	_speed.add_theme_color_override("font_color", Color("deebef"))
 	_speed.add_theme_font_size_override("font_size", 17)
 	details.add_child(_speed)
@@ -69,7 +74,7 @@ func _ready() -> void:
 	update_display(false, 0.0, "", "", false)
 	if touch_enabled:
 		_touch_surface = Control.new()
-		canvas.add_child(_touch_surface)
+		_canvas.add_child(_touch_surface)
 		_touch_surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		_touch_surface.mouse_filter = Control.MOUSE_FILTER_STOP
 		_touch_surface.gui_input.connect(_touch_input)
@@ -77,7 +82,7 @@ func _ready() -> void:
 	elif pause_enabled:
 		_pause_card = _card()
 		_pause_card.name = "PauseHint"
-		canvas.add_child(_pause_card)
+		_canvas.add_child(_pause_card)
 		_pause_hint = Label.new()
 		_pause_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_pause_hint.add_theme_font_size_override("font_size", 15)
@@ -86,6 +91,49 @@ func _ready() -> void:
 		_pause_card.offset_top = 18.0
 		_pause_card.offset_right = -18.0
 	refresh_bindings()
+
+
+func _build_navigation_dock() -> void:
+	_navigation_dock = VBoxContainer.new()
+	_navigation_dock.name = "NavigationDock"
+	_navigation_dock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_navigation_dock.add_theme_constant_override("separation", 6)
+	_canvas.add_child(_navigation_dock)
+	_live_map.name = "LiveMap"
+	_live_map.live = true
+	_navigation_dock.add_child(_live_map)
+	_live_map.visible = _live_map_enabled
+	_player_status.name = "PlayerStatus"
+	_navigation_dock.add_child(_player_status)
+	_canvas.resized.connect(_layout_navigation_dock)
+	_navigation_dock.resized.connect(_layout_navigation_dock)
+	_navigation_dock.minimum_size_changed.connect(func() -> void: _layout_navigation_dock.call_deferred())
+	_layout_navigation_dock.call_deferred()
+
+
+func _layout_navigation_dock() -> void:
+	_navigation_dock.size = _navigation_dock.get_combined_minimum_size()
+	var bottom := TOUCH_DOCK_CLEARANCE if touch_enabled else HUD_MARGIN
+	_navigation_dock.position = _canvas.size - _navigation_dock.size - Vector2(HUD_MARGIN, bottom)
+
+
+func set_live_map_enabled(enabled: bool) -> void:
+	_live_map_enabled = enabled
+	_live_map.visible = enabled
+
+
+func set_map_geometry(roads: Array[PackedVector3Array], footway: PackedVector3Array,
+		points: PackedVector3Array = PackedVector3Array()) -> void:
+	_live_map.set_geometry(roads, footway, points)
+
+
+func update_live_map(actor_position: Vector3, forward: Vector3, destination: Vector3 = Vector3.INF) -> void:
+	if _live_map_enabled:
+		_live_map.set_tracking(actor_position, forward, destination)
+
+
+func update_player_status(health: float, wanted: int, cash: int, vehicle: int = -1) -> void:
+	_player_status.set_values(health, wanted, cash, vehicle)
 
 
 func set_gamepad_input(active: bool) -> void:
@@ -123,7 +171,7 @@ func _card() -> PanelContainer:
 
 
 func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String, can_interact: bool,
-		objective: String = "", condition: String = "") -> void:
+		objective: String = "") -> void:
 	if touch_enabled and driving != _touch_driving:
 		_touch_driving = driving
 		_brake_finger = -1
@@ -132,13 +180,11 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 	var speed_text := "%s  ·  %d km/h" % [vehicle_label, roundi(speed * 3.6)] if driving else ""
 	var show_key := can_interact and not touch_enabled
 	var changed := (_speed.text != speed_text or _prompt.text != prompt or _interact_key.visible != show_key
-		or _objective.text != objective or _condition.text != condition)
+		or _objective.text != objective)
 	if _speed.text != speed_text:
 		_speed.text = speed_text
 	if _objective.text != objective:
 		_objective.text = objective
-	if _condition.text != condition:
-		_condition.text = condition
 	if _prompt.text != prompt:
 		_prompt.text = prompt
 		var font := _prompt.get_theme_font("font")
@@ -147,10 +193,9 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		_prompt.custom_minimum_size.x = minf(ceilf(text_width) + 1.0, PROMPT_WIDTH)
 	_speed.visible = driving
 	_objective.visible = not objective.is_empty()
-	_condition.visible = not condition.is_empty()
 	_prompt_row.visible = not prompt.is_empty()
 	_interact_key.visible = show_key
-	_status_panel.visible = driving or _prompt_row.visible or _objective.visible or _condition.visible
+	_status_panel.visible = driving or _prompt_row.visible or _objective.visible
 	if changed and _status_panel.visible:
 		_status_panel.reset_size.call_deferred()
 

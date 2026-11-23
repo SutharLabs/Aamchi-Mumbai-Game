@@ -1,5 +1,5 @@
 extends "res://vehicle/phase1_vehicle.gd"
-## Original Indian-market tall hatch. Forward is local -Z.
+## Original compact Indian-market car variants. Forward is local -Z.
 
 const BodyMesh := preload("res://vehicle/vehicle_body_mesh.gd")
 const AXLE := 1.215
@@ -8,7 +8,14 @@ const FRONT_SEAT_OFFSET := 0.35
 const STEERING_POSE := Transform3D(Basis(Vector3.RIGHT, 1.25), Vector3(FRONT_SEAT_OFFSET, 0.64, -0.48))
 const CHASSIS_SIZE := Vector3(1.64, 0.92, 3.8)
 const CHASSIS_CENTER := Vector3(0.0, -0.04, 0.0)
+enum BodyStyle { HATCH, SEDAN, SUV, MPV }
 enum DamageZone { FRONT, REAR, LEFT, RIGHT }
+const BODY_STYLES := {
+	BodyStyle.HATCH: {"label": "Car", "paint": Color("233741"), "roof": Color("cc9b3e"), "mass": 1100.0},
+	BodyStyle.SEDAN: {"label": "Compact Sedan", "paint": Color("7b8a91"), "roof": Color("7b8a91"), "mass": 1150.0},
+	BodyStyle.SUV: {"label": "Compact SUV", "paint": Color("8c5142"), "roof": Color("232b32"), "mass": 1350.0},
+	BodyStyle.MPV: {"label": "Family MPV", "paint": Color("c3b395"), "roof": Color("c3b395"), "mass": 1320.0},
+}
 
 var _panel_damage := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
 var _panel_centers := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
@@ -22,12 +29,16 @@ var _front_lenses: MeshInstance3D
 var _rear_lenses: MeshInstance3D
 var _scrapes: MeshInstance3D
 var _chassis: CollisionShape3D
+var _body_style: BodyStyle
 
 
-func _init(patrol: bool = false) -> void:
+func _init(patrol: bool = false, body_style: BodyStyle = BodyStyle.HATCH) -> void:
 	super()
 	name = "Phase1Car"
-	vehicle_label = "Car"
+	_body_style = body_style
+	var style: Dictionary = BODY_STYLES[body_style]
+	vehicle_label = style.label
+	chassis_mass = style.mass
 	exit_side_offset = 1.48
 	preferred_exit_side = 1.0
 	follow_distance = 6.9
@@ -37,10 +48,11 @@ func _init(patrol: bool = false) -> void:
 
 
 func _build_bodywork(patrol: bool) -> void:
-	var paint := _material(Color("d7e1e3") if patrol else Color("233741"))
+	var style: Dictionary = BODY_STYLES[_body_style]
+	var paint := _material(Color("d7e1e3") if patrol else style.paint)
 	paint.roughness = 0.36
 	paint.metallic = 0.12
-	var roof := _material(Color("273858") if patrol else Color("cc9b3e"))
+	var roof := _material(Color("273858") if patrol else style.roof)
 	roof.roughness = 0.41
 	var glass := _material(Color("63879745"))
 	glass.roughness = 0.22
@@ -70,6 +82,8 @@ func _build_bodywork(patrol: bool) -> void:
 	_build_cabin(roof, glass, trim)
 	_build_cabin_interior()
 	_build_fascias(trim, satin)
+	if _body_style == BodyStyle.SUV:
+		_build_suv_cladding(trim, satin)
 	if patrol:
 		_build_patrol_details(trim)
 	for side: float in [-1.0, 1.0]:
@@ -112,6 +126,9 @@ func _body_ring(z: float, width: float, bottom: float, shoulder: float) -> Packe
 
 
 func _build_cabin(roof: Material, glass: Material, trim: Material) -> void:
+	if _body_style != BodyStyle.HATCH:
+		_build_variant_cabin(roof, glass, trim)
+		return
 	var windscreen_low := Vector3(0.731, 0.447, -0.968)
 	var windscreen_top := Vector3(0.590, 1.010, -0.493)
 	var hatch_low := Vector3(0.732, 0.450, 1.565)
@@ -145,6 +162,65 @@ func _build_cabin(roof: Material, glass: Material, trim: Material) -> void:
 		_roof_ring(1.334, 0.572, 0.970, 1.008),
 	], roof)
 	BodyMesh.bar(self, "RearWiper", Vector3(-0.23, 0.539, 1.527), Vector3(0.204, 0.627, 1.475), 0.010, trim)
+
+
+func _build_variant_cabin(roof: Material, glass: Material, trim: Material) -> void:
+	# Each profile describes the windscreen, roof crown, rear glass and rear deck.
+	var front_low := Vector3(0.733, 0.455, -0.95)
+	var front_top := Vector3(0.565, 0.985, -0.42)
+	var rear_top := Vector3(0.574, 0.971, 0.56)
+	var rear_low := Vector3(0.698, 0.468, 1.24)
+	var crown := 1.064
+	match _body_style:
+		BodyStyle.SUV:
+			front_low = Vector3(0.742, 0.455, -0.99)
+			front_top = Vector3(0.616, 1.081, -0.51)
+			rear_top = Vector3(0.607, 1.058, 1.02)
+			rear_low = Vector3(0.726, 0.447, 1.53)
+			crown = 1.162
+		BodyStyle.MPV:
+			front_low = Vector3(0.748, 0.448, -1.20)
+			front_top = Vector3(0.626, 1.116, -0.45)
+			rear_top = Vector3(0.615, 1.107, 1.30)
+			rear_low = Vector3(0.641, 0.430, 1.64)
+			crown = 1.207
+	var left := Vector3(-1.0, 1.0, 1.0)
+	var panes: Array[PackedVector3Array] = [
+		PackedVector3Array([front_low, front_top, front_top * left, front_low * left]),
+		PackedVector3Array([rear_low * left, rear_top * left, rear_top, rear_low]),
+	]
+	for side: float in [-1.0, 1.0]:
+		var mirror := Vector3(side, 1.0, 1.0)
+		var pane := PackedVector3Array([front_low * mirror, front_top * mirror, rear_top * mirror, rear_low * mirror])
+		if side > 0.0:
+			pane.reverse()
+		panes.append(pane)
+		BodyMesh.bar(self, "RakedWindscreenPillar", front_low * mirror, front_top * mirror, 0.038, roof)
+		BodyMesh.bar(self, "RearGlassPillar", rear_low * mirror, rear_top * mirror, 0.051, roof)
+		BodyMesh.bar(self, "CabinBeltline", front_low * mirror, rear_low * mirror, 0.024, trim)
+		BodyMesh.bar(self, "CentrePillar", Vector3(0.729, 0.453, 0.26) * mirror,
+			front_top.lerp(rear_top, 0.53) * mirror, 0.026, trim)
+		if _body_style == BodyStyle.MPV:
+			BodyMesh.bar(self, "RearQuarterPillar", rear_low.lerp(front_low, 0.24) * mirror,
+				rear_top.lerp(front_top, 0.28) * mirror, 0.026, trim)
+	BodyMesh.faces(self, "ShapedCabinGlazing", panes, glass)
+	BodyMesh.loft(self, "CrownedRoof", [
+		_roof_ring(front_top.z - 0.04, front_top.x - 0.015, front_top.y - 0.015, front_top.y + 0.03),
+		_roof_ring(front_top.z + 0.13, front_top.x + 0.027, front_top.y + 0.008, crown - 0.015),
+		_roof_ring(lerpf(front_top.z, rear_top.z, 0.53), rear_top.x + 0.035, rear_top.y + 0.012, crown),
+		_roof_ring(rear_top.z - 0.12, rear_top.x + 0.026, rear_top.y + 0.004, crown - 0.013),
+		_roof_ring(rear_top.z + 0.05, rear_top.x - 0.012, rear_top.y - 0.015, rear_top.y + 0.025),
+	], roof)
+
+
+func _build_suv_cladding(trim: Material, satin: Material) -> void:
+	var first_trim := get_child_count()
+	for side: float in [-1.0, 1.0]:
+		var x := side * 0.818
+		BodyMesh.bar(self, "RaisedSillCladding", Vector3(x, -0.207, -0.83), Vector3(x, -0.207, 0.83), 0.030, trim)
+		BodyMesh.bar(self, "RaisedRoofRail", Vector3(side * 0.43, 1.191, -0.35), Vector3(side * 0.43, 1.18, 0.94), 0.020, satin)
+	BodyMesh.bar(self, "LowerSkidTrim", Vector3(-0.43, -0.171, -1.856), Vector3(0.43, -0.171, -1.856), 0.019, satin)
+	_track_trim(first_trim)
 
 
 func _build_cabin_interior() -> void:

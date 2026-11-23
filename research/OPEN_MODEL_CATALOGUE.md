@@ -79,6 +79,36 @@ These are meshes to evaluate, not working vehicle controllers. Mounting, steerin
 
 The official [Sketchfab download API](https://sketchfab.com/developers/download-api) describes glTF/GLB/USDZ delivery through an authenticated workflow. Original FBX/OBJ/`.blend` availability was not checked for these individual models. Do not promise those original formats from a preview or API license response.
 
+### Contemporary Ranwar fleet reference and reuse decisions | 23 November 2026
+
+The in-game fleet uses eleven unbranded models authored from shaped profiles and simple materials. Manufacturer pages supplied reference proportions and silhouette cues. The game assets use project-authored geometry, lighting, detailing and surfaces. Vehicle names and tuning identify fictional gameplay variants. The manufacturer list is a reference sample and has no district-level registration or fleet-share data.
+
+| Fleet type | Present-day Indian-market reference and visible cues |
+| --- | --- |
+| `hatch` | Tall urban hatch with a compact footprint, large cabin and short ends. [Maruti Suzuki WagonR](https://www.marutisuzuki.com/arena/wagon-r) |
+| `sedan` | Compact three-box car with a raked rear screen and visible rear deck. [Maruti Suzuki Dzire](https://www.marutisuzuki.com/arena/dzire) |
+| `suv` | Compact crossover with taller cabin, rail accents and dark lower cladding. [Tata Nexon brochure](https://cars.tatamotors.com/content/dam/tml/pv/products/nexon/year-2024/ice/promoting-vc/brochures/oct-2024/nexon-brochure.pdf) |
+| `mpv` | Family MPV with a longer roof over the rear seats and separated rear quarter glazing. [Maruti Suzuki Ertiga](https://www.marutisuzuki.com/arena/ertiga) |
+| `rickshaw` | Passenger three-wheeler with open side entrances, a rear bench and a black-and-yellow Mumbai treatment. [Bajaj RE](https://www.bajajauto.com/three-wheelers/re) |
+| `commuter` | Upright, narrow motorcycle with an air-cooled engine and practical passenger saddle. [Hero Splendor+](https://www.heromotocorp.com/en-in/motorcycles/splendor-plus.html) |
+| `classic` | Rounded headlamp, deeper tank, full painted fenders and satin metal pipework. [Royal Enfield Classic 350](https://www.royalenfield.com/in/en/app/motorcycles/classic-350/) |
+| `roadster` | Low modern-classic motorcycle with a tapered tank, compact circular lamp and dark engine hardware. [Jawa 42 model range](https://www.jawayezdimotorcycles.com/collections/all-motorcycles) |
+| `scrambler` | Wider bar, taller front mudguard, a narrower rear saddle and rising exhaust. [Yezdi Scrambler model range](https://www.jawayezdimotorcycles.com/collections/all-motorcycles) |
+| `scooter` | Everyday petrol step-through with a lamp in the handlebar cowl, low floorboard and enclosed drive. [Honda Activa scooter range](https://www.honda2wheelersindia.com/scooter) |
+| `electric_scooter` | Sharper step-through with an apron lamp, floor battery tray and a compact motor/swingarm. [Ather 450](https://www.atherenergy.com/450/specifications) |
+
+The vehicle controller, wheel pivots and occupant rigs are reused across the models. The car variants retain the current damage meshes and right-hand-drive cabin. They share one collision footprint. The shapes prioritize silhouettes and moving parts for repeated use in the district. [Vehicle implementation](../prototype/vehicle/README.md)
+
+| Reuse candidate | Decision |
+| --- | --- |
+| Kenney Car Kit and KayKit City Builder Bits | Confirmed CC0 from the publishers. Suitable for distant/filler vehicles when the project needs them. Their compact toy or city-builder shapes do not match this third-person street treatment. [Kenney](https://kenney.nl/assets/car-kit?part=e68f4c97-d968-4f08-a3da-e1f770a3d0bb), [KayKit GitHub license](https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/blob/main/LICENSE.txt) |
+| Acquired Sketchfab Activa scooter and Indian auto-rickshaw | Original archive and declared CC BY 4.0 intake are documented above. The fused Activa mesh requires separated moving parts. The auto requires wheel/pivot conversion and texture review. |
+| Royal Enfield Classic 350 by Mansoor | Listing declares CC Attribution and offers a download. Its 733,100 listed triangles place it well beyond the existing vehicle budgets. Archive, derivative branding and source provenance remain unverified. [Creator listing](https://sketchfab.com/3d-models/royal-enfield-classic-350-f6495bfbffe443e89c499a2ba8766c88) |
+| Custom Jawa by kreems | Listing declares CC Attribution and offers a download. The 42,600-triangle custom motorcycle has a distinct custom design. It needs geometry, archive provenance and texture review if used for an optional hero vehicle. [Creator listing](https://sketchfab.com/3d-models/motorcycle-custom-bike-jawa-low-poly-13771fe558604aedae09b5157029e790) |
+| Exact Yezdi, Hero, Ather and current sedan, crossover or MPV production assets | Still pending suitable sources with verified redistribution terms and provenance. The third-party simulator extraction remains excluded. |
+
+Exact branded models remain a separate acquisition task. Capture license and provenance for the mesh, materials and visible source elements, separate steering and wheels, verify driver fit/collision, and measure the populated scene on the Android and Windows targets before adopting any replacement. [Creative Commons Attribution 4.0 deed](https://creativecommons.org/licenses/by/4.0/)
+
 ## 3. Mumbai building/landmark metadata - current locality and asset gates pending
 
 All six entries below also returned **CC BY 4.0** and **Downloadable = true**. Place them according to the actual map, not merely wherever the first district needs decoration.
@@ -121,4 +151,4 @@ No vetted complete open model was established for Bandra station, Mount Mary, Ba
 4. Review the denser scans/scenes only if their accuracy and reusable components justify optimization time. Keep key Bandra/heritage modeling gaps visible.
 5. Record exact archive/hash, author, license/version, required credit, modifications, source-model provenance, current reference evidence, geometry/material/texture counts, scale, moving parts and import outcome in the asset ledger. Test exported populated streets on the named Windows integrated-GPU device and Android phone, with the four drivable families, drivers/riders and platform input active. Neither device has a measured accepted budget yet.
 
-The current result is a sourced acquisition shortlist and metadata snapshot. No model has yet passed archive, geometry, authenticity, gameplay or target-device acceptance.
+The original catalogue remains an acquisition shortlist. The later authenticated intake and the contemporary fleet section record current decisions and integration status. Exact branded vehicle sourcing and target-device acceptance remain open.

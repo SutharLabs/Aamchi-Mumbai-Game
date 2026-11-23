@@ -16,7 +16,7 @@ var _session_careers: Dictionary[String, Career] = {}
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(preferences)
-	preferences.changed.connect(_update_look_sensitivity)
+	preferences.changed.connect(_apply_gameplay_preferences)
 	menu.preferences = preferences
 	var menu_layer := CanvasLayer.new()
 	menu_layer.layer = 10
@@ -73,7 +73,7 @@ func _start_game() -> void:
 	var profile_id := preferences.active_profile_id
 	gameplay.delivery_progress = MissionProgress.new(profile_id, mission_progress_directory)
 	gameplay.career = _session_careers.get(profile_id)
-	_update_look_sensitivity()
+	_apply_gameplay_preferences()
 	gameplay.pause_requested.connect(_pause_game)
 	add_child(gameplay)
 	_session_careers[profile_id] = gameplay.career
@@ -89,7 +89,8 @@ func _pause_game() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Input.emulate_mouse_from_touch = true
 	menu.show_pause(gameplay.player.display_name, gameplay.world._roads, gameplay.world._gully,
-		gameplay._actor_position(), gameplay.story_target(), gameplay.delivery.can_abandon(), gameplay.session_status())
+		gameplay._actor_position(), gameplay.story_target(), gameplay.delivery.can_abandon(), gameplay.session_status(),
+		gameplay.world.facility_markers())
 
 
 func _abandon_job() -> void:
@@ -125,6 +126,7 @@ func _show_title() -> void:
 	menu.show_home()
 
 
-func _update_look_sensitivity() -> void:
+func _apply_gameplay_preferences() -> void:
 	if gameplay != null:
 		gameplay.look_sensitivity = preferences.look_sensitivity
+		gameplay.hud.set_live_map_enabled(preferences.live_map)

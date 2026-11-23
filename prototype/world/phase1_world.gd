@@ -8,6 +8,7 @@ const RanwarSurfaceMaterials := preload("res://world/ranwar_surface_materials.gd
 const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
 const MeenaHillRoad := preload("res://world/meena_hill_road.gd")
+const BandraFacilities := preload("res://world/bandra_facilities.gd")
 const PAAN_SHOP := preload("res://world/props/indian_street_shop.glb")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
 const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
@@ -45,12 +46,15 @@ const ROAD_SOURCE: Array = [
 const GULLY_SOURCE: Array[Vector2] = [Vector2(72.8275960,19.0541387), Vector2(72.8276071,19.0542799), Vector2(72.8276677,19.0544493), Vector2(72.8277695,19.0546053), Vector2(72.8278068,19.0547279)]
 
 var lane_graph: RanwarLaneGraph
+var spawn_at_arrival := false
 var _roads: Array[PackedVector3Array] = []
 var _gully := PackedVector3Array()
 var _lots: Array[Vector3] = []
 var _materials: Dictionary = {}
 var _visual_chunks := RanwarVisualChunks.new()
 var _meena_lot := Rect2()
+var _arrival_position := PLAYER_START
+var _arrival_yaw := 0.0
 
 
 func _ready() -> void:
@@ -75,10 +79,12 @@ func _ready() -> void:
 	_build_recovery_yard()
 	_build_st_peters()
 	_build_meena_hill_road()
+	_build_arrival_stop()
 	_visual_chunks.name = "BackgroundFrontageVisuals"
 	add_child(_visual_chunks)
 	_build_frontages()
-	_visual_chunks.start("--stream-visual-chunks" in OS.get_cmdline_user_args(), PLAYER_START)
+	var visual_focus := _arrival_position if spawn_at_arrival else PLAYER_START
+	_visual_chunks.start("--stream-visual-chunks" in OS.get_cmdline_user_args(), visual_focus)
 	_build_vehicle_bays()
 	_build_boundary()
 	_build_markers()
@@ -86,6 +92,29 @@ func _ready() -> void:
 
 func visual_residency_stats() -> Dictionary:
 	return _visual_chunks.stats()
+
+
+func arrival_position() -> Vector3:
+	return _arrival_position
+
+
+func arrival_yaw() -> float:
+	return _arrival_yaw
+
+
+func facility_markers() -> Array[Dictionary]:
+	var markers: Array[Dictionary] = []
+	for site: Dictionary in BandraFacilities.SITES:
+		markers.append({
+			"id": site["id"], "label": site["label"], "kind": site["kind"],
+			"position": _project(site["coordinate"]), "playable": site["playable"],
+		})
+	return markers
+
+
+static func map_north_up(point: Vector3) -> Vector2:
+	return Vector2(point.x * AXIS_FORWARD.y - point.z * AXIS_FORWARD.x,
+		point.x * AXIS_FORWARD.x + point.z * AXIS_FORWARD.y)
 
 
 func _project(coordinate: Vector2) -> Vector3:
@@ -297,6 +326,49 @@ func _build_st_peters() -> void:
 	church.position = ST_PETERS_FRONT
 	church.rotation.y = PI * 0.5
 	add_child(church)
+
+
+func _build_arrival_stop() -> void:
+	var anchor := _project(BandraFacilities.ARRIVAL)
+	var hill_road := _roads[0]
+	var center := hill_road[0]
+	var along := Vector3.FORWARD
+	for index in range(hill_road.size() - 1):
+		var nearest := Geometry3D.get_closest_point_to_segment(anchor, hill_road[index], hill_road[index + 1])
+		if nearest.distance_squared_to(anchor) < center.distance_squared_to(anchor):
+			center = nearest
+			along = (hill_road[index + 1] - hill_road[index]).normalized()
+	var church_side := Vector3(-along.z, 0.0, along.x)
+	var curb_edge := ROAD_WIDTHS[0] * 0.5
+	# Set the curbside structure west of the bend to meet the continuous pavement.
+	var shelter := center + church_side * (curb_edge + SIDEWALK_WIDTH + 1.05) - along * 3.9
+	var shelter_yaw := atan2(-church_side.x, -church_side.z)
+	var west := -along
+	# Start on the clear pavement next to the shelter, facing toward the district.
+	_arrival_position = center + church_side * (curb_edge + SIDEWALK_WIDTH * 0.5) - along * 1.1
+	_arrival_position.y = SIDEWALK_HEIGHT + 0.35
+	_arrival_yaw = atan2(-west.x, -west.z)
+	var deck_top := SIDEWALK_HEIGHT
+	_box("StPetersStopPlatform", shelter + Vector3.UP * (deck_top * 0.5), Vector3(5.0, deck_top, 2.30), "paving", true, shelter_yaw)
+	_box("StPetersStopCanopy", shelter + Vector3.UP * 2.57, Vector3(4.85, 0.12, 2.05), "bay", false, shelter_yaw)
+	var bench := shelter + church_side * 0.49
+	for end: float in [-1.0, 1.0]:
+		var post := shelter + along * (2.08 * end) + church_side * 0.69
+		_box("StPetersStopPost", post + Vector3.UP * 1.31, Vector3(0.12, 2.5, 0.12), "dark", true, shelter_yaw)
+		var leg := bench + along * (1.20 * end) + Vector3.UP * 0.31
+		_box("StPetersStopBenchLeg", leg, Vector3(0.12, 0.42, 0.35), "dark", false, shelter_yaw)
+	_box("StPetersStopBenchSeat", bench + Vector3.UP * 0.57, Vector3(2.97, 0.12, 0.50), "curb", true, shelter_yaw)
+	_box("StPetersStopBack", shelter + church_side * 0.70 + Vector3.UP * 1.60,
+		Vector3(4.18, 1.65, 0.10), "bay", true, shelter_yaw)
+	var fascia := _box("StPetersStopFascia", shelter - church_side * 1.01 + Vector3.UP * 2.35,
+		Vector3(4.85, 0.35, 0.08), "bay", false, shelter_yaw)
+	_add_shop_label(fascia, "ST PETER'S CHURCH  /  HILL ROAD", Vector3(0.0, 0.0, 0.048), 0.0, 0.0057)
+	_box("StPetersStopTrim", shelter - church_side * 1.055 + Vector3.UP * 2.54,
+		Vector3(4.85, 0.055, 0.07), "roof", false, shelter_yaw)
+	# A small sign on the shelter end makes the stop legible from the arrival position.
+	var end_sign := _box("StPetersStopSign", shelter + along * 2.1 + Vector3.UP * 1.88,
+		Vector3(1.45, 0.33, 0.07), "bay", false, atan2(along.x, along.z))
+	_add_shop_label(end_sign, "BUS STOP", Vector3(0.0, 0.0, 0.042), 0.0, 0.0070)
 
 
 func _build_meena_hill_road() -> void:

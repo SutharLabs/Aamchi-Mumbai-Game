@@ -1,6 +1,6 @@
 # Aamchi Mumbai Game · Phase 1 playtest
 
-Walk and drive around Ranwar, Bandra West, in present-day Mumbai. Four drivable vehicles start in marked bays near the starting point. From the car, head left past the auto-rickshaw to find the motorcycle and scooter. The route includes a walking shortcut and an open handling yard. Up to two ambient hatchbacks follow the Ranwar roads and yield when the lane is blocked. [Route and source notes](world/README.md)
+Walk and drive around Ranwar, Bandra West, in present-day Mumbai. A new profile arrives as Omkar, a worker new to the city, at the St Peter’s Church BEST stop. A loan motorcycle is parked near the stop. Follow Hill Road west to the practice yard and job board. There are twelve parked vehicles, up to four civilian traffic cars on desktop and three on mobile, and a separate patrol when police respond. [Route and source notes](world/README.md) · [District facilities](../docs/BANDRA_FACILITIES.md)
 
 Play as **Omkar Shirodkar (ओंकार शिरोडकर)**, wearing an indigo sadara, an ivory dhotar and Kolhapuri-style chappals. His original skinned mesh uses the captured idle, walk and jog clips. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
 
@@ -25,6 +25,14 @@ To follow the ambient traffic circuit, take western Waroda Road from the start t
 Walk up to Mira or Rafiq on Hill Road and press **E** or **A** on a gamepad, or tap **Interact**, when the talk prompt appears. Each pauses to face you and offers a short route tip, then continues walking. Pedestrians yield when their route is blocked and are solid to the player and all four vehicles.
 
 To try the curb crossing, drive slowly across the raised west-side curb on Hill Road. All four can climb the curb and come down to street or yard level. The handling yard also has a 22 cm test curb and a solid impact wall. The driving camera softens changes in height as the vehicle crosses the curb. [Vehicle handling notes](vehicle/README.md)
+
+## Arrival, street traffic and vehicle access
+
+Approach a vehicle and use **Interact**. The prompt shows **Unlock** for loan vehicles with keys and **Steal** for other vehicles. A stopped traffic vehicle can transfer to your control. Its driver or a nearby witness can raise the police alert. **Recover** takes you back to the practice yard. Later visits from the title also start there once this profile’s arrival has been recorded.
+
+The hood, roof, lamp and tail shapes vary across four car silhouettes, an auto-rickshaw, four motorcycles and two scooters. The parked roster and traffic mix use the same collision, damage and rider systems as the original playtest. [Vehicle catalogue and manufacturer references](../research/OPEN_MODEL_CATALOGUE.md) · [Vehicle notes](vehicle/README.md)
+
+The lower-right **live map** follows Omkar or the vehicle he is driving and shows nearby routes and objectives. Health, cash, police alert and vehicle condition have their own HUD readouts. Use **Settings → Live map → Apply** to turn the map off. **Pause → Map → District services** shows the real positions of mapped transport and public services beyond the playable stop. [Bandra map scope and sources](../docs/BANDRA_FACILITIES.md)
 
 ## Surface and collision playtest
 
@@ -57,6 +65,7 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1800 --script res://tests/vehicle_damage_smoke.gd
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1900 --script res://tests/pedestrian_impact_smoke.gd
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1300 --script res://tests/mocap_actions_smoke.gd -- --touch-preview
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 1100 --script res://tests/ranwar_arrival_ownership_smoke.gd
 ```
 
 The startup smoke exercises menu navigation, profile reload, settings, Help, credits, pause and the Ranwar map. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. The parcel playtest uses isolated profiles and exercises the title-to-delivery loop, checkpoint reload and the shortcut in both directions. `--touch-preview` enables the overlay on a desktop build. When preparing an explicitly requested release, include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices. [Project license](../LICENSE)
@@ -77,14 +86,16 @@ For the Windows 10 minimum-device check, use a matching exported build at 1280x7
 
 ## Local debug exports
 
-The presets output into `builds/local/` for private verification. Only prepare numbered release packages on explicit request. [Repository release rule](../AGENTS.md#mandatory-git-commit-and-push-workflow)
+Refresh the stable Windows playtest at `builds/local/Aamchi Mumbai Game.exe` from the repository root. The command exports to a staging folder, verifies startup, and replaces the playable EXE after it passes. It writes the build identity alongside the executable. [Development build and release workflow](../docs/BUILD_WORKFLOW.md)
+
+```powershell
+.\tools\make-dev.ps1
+```
 
 To export for Android, use the **Android Debug** preset with the matching Godot 4.7.2 standard templates. Set the Java SDK and Android SDK paths in Godot's editor settings. This Windows build used project-local Eclipse Temurin 17 and AOSP tools for APK signing and ADB. The debug certificate stays with the local toolchain. [Godot Android export documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html)
 
 ```powershell
 New-Item -ItemType Directory -Force -Path '.\builds\local' | Out-Null
-$exe = Join-Path (Get-Location) 'builds\local\Aamchi Mumbai Game.exe'
-& $editor --headless --path prototype --export-debug 'Windows Desktop' $exe
 $apk = Join-Path (Get-Location) 'builds\local\Aamchi-Mumbai-Game-Android-arm64.apk'
 & $editor --headless --path prototype --export-debug 'Android Debug' $apk
 ```

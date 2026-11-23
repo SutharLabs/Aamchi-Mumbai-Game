@@ -10,6 +10,7 @@ const RECEIPT_SUFFIX := ".receipt"
 var _profile_id: String
 var _path := ""
 var _career_path := ""
+var _arrival_path := ""
 
 
 func _init(profile_id: String, directory: String = "user://") -> void:
@@ -22,6 +23,7 @@ func _init(profile_id: String, directory: String = "user://") -> void:
 		return
 	_path = directory.path_join("mission-progress-%s.json" % profile_id)
 	_career_path = directory.path_join("career-progress-%s.json" % profile_id)
+	_arrival_path = directory.path_join("arrival-%s.json" % profile_id)
 
 
 func load_snapshot() -> Dictionary:
@@ -36,6 +38,24 @@ func load_snapshot() -> Dictionary:
 func has_incompatible_save() -> bool:
 	return not _path.is_empty() and _has_protected_document(
 		_read_document(_path), _read_document(_path + ".bak"), _read_document(_path + RECEIPT_SUFFIX))
+
+
+func arrival_seen() -> bool:
+	if _arrival_path.is_empty():
+		return false
+	var record := _read_document(_arrival_path)
+	return record.size() == 3 and record.get("profile_id") == _profile_id \
+		and _supported_version(record.get("version")) and record.get("arrived") == true
+
+
+func save_arrival() -> bool:
+	if _arrival_path.is_empty() or _protected_document(_read_document(_arrival_path)):
+		return false
+	if arrival_seen():
+		return true
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(_arrival_path.get_base_dir())) != OK:
+		return false
+	return _write_atomic(_arrival_path, {"version": VERSION, "profile_id": _profile_id, "arrived": true})
 
 
 func load_career() -> Dictionary:

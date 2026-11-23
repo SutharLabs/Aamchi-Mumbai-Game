@@ -372,6 +372,7 @@ func _finish() -> void:
 		var career_path := _test_directory.path_join("career-progress-%s.json" % id)
 		_remove_fixture(career_path)
 		_remove_fixture(career_path + ".bak")
+		_remove_fixture(_test_directory.path_join("arrival-%s.json" % id))
 	if DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_test_directory)):
 		_expect(DirAccess.remove_absolute(ProjectSettings.globalize_path(_test_directory)) == OK, "isolated mission fixtures removed")
 	_remove_fixture(_settings)

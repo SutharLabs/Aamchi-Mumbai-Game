@@ -1,18 +1,21 @@
 extends "res://vehicle/phase1_two_wheeler.gd"
 ## Original contemporary step-through scooter, facing local -Z.
-## Proportion reference: https://www.suzukimotorcycle.co.in/product-details/all-new-access-125-bluetooth-enabled/features
+## Original petrol and electric step-through variants share one rider and collision rig.
+
+var _electric: bool
 
 
-func _init() -> void:
+func _init(electric: bool = false) -> void:
 	super()
 	name = "Phase1Scooter"
-	vehicle_label = "Scooter"
-	chassis_mass = 195.0
+	_electric = electric
+	vehicle_label = "Electric Scooter" if _electric else "Scooter"
+	chassis_mass = 206.0 if _electric else 195.0
 	exit_side_offset = 1.0
 	follow_distance = 5.6
-	max_forward_speed = 14.0
+	max_forward_speed = 17.0 if _electric else 14.0
 	max_reverse_speed = 1.8
-	acceleration = 6.8
+	acceleration = 8.4 if _electric else 6.8
 	brake_deceleration = 13.0
 	coast_deceleration = 3.2
 	turn_rate = 2.05
@@ -27,7 +30,7 @@ func _init() -> void:
 
 
 func _build_body() -> void:
-	var paint := _finish(Color("456e84"), 0.38, 0.16)
+	var paint := _finish(Color("96ad9d") if _electric else Color("456e84"), 0.38, 0.16)
 	var plastic := _finish(Color("303538"), 0.67)
 	var saddle := _finish(Color("514138"), 0.89)
 	var alloy := _finish(Color("a6a7a2"), 0.45, 0.26)
@@ -38,12 +41,18 @@ func _build_body() -> void:
 	_fender(front, 0.269, 0.147, paint, 1.30)
 	_fender(rear, 0.268, 0.143, plastic, 1.02)
 
-	_profile(lean_visual, "TaperedSideFairing", [
+	var rear_shell: Array[Vector4] = [
 		Vector4(-0.124, -0.055, 0.153, 0.099), Vector4(-0.028, 0.000, 0.183, 0.179),
 		Vector4(0.129, 0.016, 0.228, 0.214), Vector4(0.338, 0.021, 0.250, 0.224),
 		Vector4(0.569, 0.028, 0.241, 0.220), Vector4(0.748, 0.050, 0.198, 0.170),
 		Vector4(0.856, 0.072, 0.118, 0.099), Vector4(0.906, 0.082, 0.076, 0.048),
-	], paint, 0.81)
+	]
+	if _electric:
+		rear_shell[3] = Vector4(0.338, 0.040, 0.235, 0.194)
+		rear_shell[4] = Vector4(0.569, 0.075, 0.214, 0.168)
+		rear_shell[5] = Vector4(0.748, 0.100, 0.168, 0.122)
+		rear_shell[6] = Vector4(0.856, 0.111, 0.097, 0.075)
+	_profile(lean_visual, "TaperedSideFairing", rear_shell, paint, 0.57 if _electric else 0.81)
 	_profile(lean_visual, "PaddedSaddle", [
 		Vector4(-0.044, 0.182, 0.122, 0.023), Vector4(0.036, 0.230, 0.163, 0.051),
 		Vector4(0.214, 0.245, 0.191, 0.075), Vector4(0.404, 0.265, 0.200, 0.067),
@@ -65,7 +74,7 @@ func _build_front_apron(front: Node3D, paint: Material, plastic: Material, alloy
 		Vector4(-0.218, 0.484, 0.155, 0.089), Vector4(-0.111, 0.506, 0.201, 0.105),
 		Vector4(0.048, 0.507, 0.232, 0.109), Vector4(0.211, 0.505, 0.224, 0.100),
 		Vector4(0.372, 0.508, 0.178, 0.085), Vector4(0.498, 0.486, 0.110, 0.063),
-	], paint, 0.69)
+	], paint, 0.49 if _electric else 0.69)
 	apron.rotation.x = -PI * 0.5
 	var inside := _profile(lean_visual, "InnerLegShield", [
 		Vector4(-0.211, 0.404, 0.124, 0.038), Vector4(-0.099, 0.422, 0.173, 0.049),
@@ -82,6 +91,11 @@ func _build_front_apron(front: Node3D, paint: Material, plastic: Material, alloy
 			Vector4(-0.570, 0.167, 0.037, 0.038),
 		], indicators)
 		lamp.position.x = side * 0.148
+	if _electric:
+		_profile(lean_visual, "ApronHeadlamp", [
+			Vector4(-0.638, 0.310, 0.091, 0.017), Vector4(-0.632, 0.310, 0.143, 0.031),
+			Vector4(-0.610, 0.307, 0.143, 0.033),
+		], _lens(Color("d4e4df"), 0.46), 0.45)
 
 
 func _build_cockpit(paint: Material, plastic: Material, alloy: Material, rubber: Material, glass: Material) -> void:
@@ -91,7 +105,14 @@ func _build_cockpit(paint: Material, plastic: Material, alloy: Material, rubber:
 		Vector4(-0.227, -0.007, 0.138, 0.085), Vector4(-0.163, -0.017, 0.183, 0.095),
 		Vector4(-0.056, -0.015, 0.197, 0.093), Vector4(0.048, 0.014, 0.143, 0.052),
 		Vector4(0.103, 0.008, 0.092, 0.043),
-	], paint, 0.68)
+	], paint, 0.47 if _electric else 0.68)
+	if not _electric:
+		_build_cowl_headlamp(alloy)
+	_round_part(_cockpit, "InstrumentSurround", Vector3(0.108, 0.021, 0.078), Vector3(0, 0.073, -0.071), plastic)
+	_round_part(_cockpit, "InstrumentFace", Vector3(0.076, 0.012, 0.057), Vector3(0, 0.092, -0.064), glass)
+
+
+func _build_cowl_headlamp(alloy: Material) -> void:
 	_profile(_cockpit, "HeadlampBezel", [
 		Vector4(-0.245, -0.021, 0.108, 0.052), Vector4(-0.225, -0.019, 0.139, 0.065),
 		Vector4(-0.205, -0.018, 0.148, 0.068),
@@ -101,8 +122,6 @@ func _build_cockpit(paint: Material, plastic: Material, alloy: Material, rubber:
 		Vector4(-0.250, -0.024, 0.082, 0.041), Vector4(-0.241, -0.023, 0.112, 0.045),
 		Vector4(-0.227, -0.022, 0.124, 0.052),
 	], lamp, 0.65)
-	_round_part(_cockpit, "InstrumentSurround", Vector3(0.108, 0.021, 0.078), Vector3(0, 0.073, -0.071), plastic)
-	_round_part(_cockpit, "InstrumentFace", Vector3(0.076, 0.012, 0.057), Vector3(0, 0.092, -0.064), glass)
 
 
 func _build_rear_trim(plastic: Material, alloy: Material) -> void:
@@ -111,6 +130,21 @@ func _build_rear_trim(plastic: Material, alloy: Material) -> void:
 		Vector4(0.782, 0.112, 0.155, 0.041), Vector4(0.836, 0.104, 0.144, 0.047),
 		Vector4(0.883, 0.093, 0.109, 0.037), Vector4(0.919, 0.085, 0.075, 0.022),
 	], _brake_material, 0.71)
+	if _electric:
+		_profile(lean_visual, "UnderfloorBatteryTray", [
+			Vector4(-0.502, -0.277, 0.114, 0.023), Vector4(-0.380, -0.287, 0.185, 0.038),
+			Vector4(0.110, -0.284, 0.181, 0.042), Vector4(0.232, -0.271, 0.113, 0.024),
+		], plastic, 0.48)
+		Geometry.bar(lean_visual, "MotorSwingarm", Vector3(-0.131, -0.189, 0.270), Vector3(-0.131, -0.255, 0.63), 0.032, alloy)
+	else:
+		_build_transmission(plastic, alloy)
+	Geometry.bar(lean_visual, "RearGrabRail", Vector3(-0.168, 0.281, 0.741), Vector3(0.168, 0.281, 0.741), 0.015, alloy)
+	for side: float in [-1.0, 1.0]:
+		Geometry.bar(lean_visual, "GrabRailSupport", Vector3(side * 0.184, 0.245, 0.508),
+			Vector3(side * 0.168, 0.281, 0.741), 0.015, alloy)
+
+
+func _build_transmission(plastic: Material, alloy: Material) -> void:
 	var transmission := _profile(lean_visual, "TransmissionCover", [
 		Vector4(0.167, -0.181, 0.034, 0.054), Vector4(0.249, -0.179, 0.066, 0.076),
 		Vector4(0.427, -0.223, 0.051, 0.062), Vector4(0.567, -0.233, 0.059, 0.073),
@@ -118,7 +152,3 @@ func _build_rear_trim(plastic: Material, alloy: Material) -> void:
 	], alloy)
 	transmission.position.x = -0.119
 	Geometry.bar(lean_visual, "Silencer", Vector3(0.156, -0.254, 0.400), Vector3(0.156, -0.212, 0.793), 0.044, plastic)
-	Geometry.bar(lean_visual, "RearGrabRail", Vector3(-0.168, 0.281, 0.741), Vector3(0.168, 0.281, 0.741), 0.015, alloy)
-	for side: float in [-1.0, 1.0]:
-		Geometry.bar(lean_visual, "GrabRailSupport", Vector3(side * 0.184, 0.245, 0.508),
-			Vector3(side * 0.168, 0.281, 0.741), 0.015, alloy)

@@ -4,6 +4,7 @@ const Start := preload("res://startup/startup.tscn")
 const Preferences := preload("res://startup/preferences.gd")
 const Controls := preload("res://startup/control_bindings.gd")
 const RanwarMap := preload("res://startup/ranwar_map.gd")
+const World := preload("res://world/phase1_world.gd")
 var _failures := 0
 var _checks := 0
 var _capture_enabled := false
@@ -191,6 +192,8 @@ func _run() -> void:
 	for path in [storage, storage + ".bak", storage + ".tmp"]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(app.mission_progress_directory.path_join("arrival-1.json")))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(app.mission_progress_directory))
 	print("Startup smoke: %d failures in %d checks" % [_failures, _checks])
 	quit(0 if _failures == 0 else 1)
 
@@ -281,7 +284,7 @@ func _check_gamepad_gameplay() -> void:
 	await _joy_game(JOY_BUTTON_A)
 	_expect(not game.driving, "gamepad Interact exits after stopping")
 	await _joy_game(JOY_BUTTON_Y)
-	_expect(game.player.position.distance_to(start) < 0.2, "gamepad reset returns Omkar to the start")
+	_expect(game.player.position.distance_to(World.PLAYER_START) < 0.2, "gamepad reset returns Omkar to the practice yard")
 	_joy_menu(JOY_BUTTON_START)
 	await _settle()
 	_expect(paused and app.menu.visible, "gamepad Start opens Pause")

@@ -1,8 +1,10 @@
 extends Node3D
-## A loop-following pilot and one nearby car use the same arcade chassis.
+## The pilot, nearby civilian cars, and a separate patrol follow the directed lane loop.
 
+const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
 const Car := preload("res://vehicle/phase1_car.gd")
 const CarDriver := preload("res://vehicle/phase1_car_driver.gd")
+const Fleet := preload("res://vehicle/ranwar_fleet.gd")
 const CRUISE_SPEED := 5.5
 const CORNER_SPEED := 2.6
 const STEERING_LOOK_AHEAD := 3.6
@@ -15,9 +17,12 @@ const SPAWN_SPACING := 30.0
 const VISIBILITY_MARGIN := 3.0
 const POPULATION_INTERVAL := 0.5
 const STUCK_TIME := 8.0
+const MAX_CIVILIAN_LIMIT := 4
+const LOCAL_MODELS: Array[StringName] = [&"sedan", &"suv", &"mpv"]
 const PATROL_SPAWN_OFFSETS: Array[float] = [38.0, 56.0, 78.0]
 const PATROL_MIN_DISTANCE := 24.0
 const PATROL_MAX_DISTANCE := 125.0
+const PATROL_SPAWN_SPACING := 14.0
 const PATROL_RETIRE_DISTANCE := 35.0
 const PATROL_APPROACH_DISTANCE := 13.0
 const PATROL_APPROACH_SPEED := 3.0
@@ -25,32 +30,38 @@ const PATROL_APPROACH_SPEED := 3.0
 
 class Driver:
 	var car: Car
+	var occupant: CarDriver
 	var segment: int
 	var idle_seconds := 0.0
 
 
+@export_range(1, 4) var civilian_limit := 2
 var _drivers: Array[Driver] = []
+var _pilot: Driver
 var _camera: Camera3D
 var _route := PackedVector3Array()
 var _spawn_segment := 0
 var _spawn_pose := Transform3D.IDENTITY
+var _spawn_shape := BoxShape3D.new()
 var _reset_tick := -1
 var _population_clock := 0.0
+var _local_serial := 0
 var _patrol: Driver
 var _alert_level := 0
 var _alert_target := Vector3.ZERO
 
 
 func start(route: PackedVector3Array, spawn_distance: float, observer: Camera3D) -> void:
-	if not _drivers.is_empty() or route.size() < 4 or not route[0].is_equal_approx(route[-1]):
+	if not _route.is_empty() or not is_finite(spawn_distance) or route.size() < 4 or not route[0].is_equal_approx(route[-1]):
 		return
 	for index in range(route.size() - 1):
 		if not route[index].is_finite() or route[index].distance_squared_to(route[index + 1]) < 0.0001:
 			return
 	_route = route
 	_camera = observer
+	_spawn_shape.size = Car.CHASSIS_SIZE
 	_place_start(maxf(0.0, spawn_distance))
-	_add_car(_spawn_pose, _spawn_segment, "TrafficCar", Color("bd8a55"))
+	_add_pilot(_spawn_pose, _spawn_segment)
 
 
 func _place_start(distance: float) -> void:
@@ -72,20 +83,31 @@ func _lane_pose(segment: int, distance: float) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, heading), position_on_lane + Vector3.UP * SPAWN_HEIGHT)
 
 
-func _add_car(pose: Transform3D, segment: int, car_name: String, shirt: Color) -> void:
-	_drivers.append(_create_car(pose, segment, car_name, shirt, false))
+func _add_pilot(pose: Transform3D, segment: int) -> void:
+	_pilot = _create_car(Car.new(), pose, segment, "TrafficCar", Color("bd8a55"))
+	_drivers.push_front(_pilot)
 
 
-func _create_car(pose: Transform3D, segment: int, car_name: String, shirt: Color, patrol: bool) -> Driver:
+func _add_local(pose: Transform3D, segment: int) -> void:
+	var model := &"hatch"
+	if civilian_limit > 2:
+		model = LOCAL_MODELS[_local_serial % LOCAL_MODELS.size()]
+	_local_serial += 1
+	var car_name := "LocalTrafficCar%d" % _local_serial if has_node("LocalTrafficCar") else "LocalTrafficCar"
+	var car := Fleet.create(model) as Car
+	_drivers.append(_create_car(car, pose, segment, car_name, Color("789a82")))
+
+
+func _create_car(car: Car, pose: Transform3D, segment: int, car_name: String, shirt: Color, patrol: bool = false) -> Driver:
 	var driver := Driver.new()
-	driver.car = Car.new(patrol)
+	driver.car = car
 	driver.car.name = car_name
 	driver.car.reset_to(pose)
 	driver.car.set_driver_active(true)
-	var occupant := CarDriver.new()
-	occupant.shirt_color = shirt
-	occupant.wears_overshirt = patrol
-	driver.car.add_child(occupant)
+	driver.occupant = CarDriver.new()
+	driver.occupant.shirt_color = shirt
+	driver.occupant.wears_overshirt = patrol
+	driver.car.add_child(driver.occupant)
 	driver.segment = segment
 	add_child(driver.car)
 	return driver
@@ -101,6 +123,37 @@ func police_vehicle() -> Car:
 	return _patrol.car if _patrol != null else null
 
 
+func interaction_vehicles() -> Array[Vehicle]:
+	var vehicles: Array[Vehicle] = []
+	for driver: Driver in _drivers:
+		vehicles.append(driver.car)
+	if _patrol != null:
+		vehicles.append(_patrol.car)
+	return vehicles
+
+
+func take_for_player(vehicle: Vehicle) -> bool:
+	if _patrol != null and _patrol.car == vehicle:
+		_release_driver(_patrol)
+		_patrol = null
+		return true
+	for driver: Driver in _drivers:
+		if driver.car == vehicle:
+			if driver == _pilot:
+				_pilot = null
+			_release_driver(driver)
+			_drivers.erase(driver)
+			return true
+	return false
+
+
+func _release_driver(driver: Driver) -> void:
+	# Keep the vehicle and damage state available to the player after removing its AI.
+	driver.occupant.hide()
+	driver.car.set_driver_active(false)
+	driver.car.name = "ClaimedTraffic%d" % driver.car.get_instance_id()
+
+
 func reset() -> void:
 	_alert_level = 0
 	_remove_patrol()
@@ -109,25 +162,22 @@ func reset() -> void:
 
 
 func _pose_clear(pose: Transform3D, excluded: Array[RID]) -> bool:
-	var car := _drivers[0].car
-	var chassis := car.get_node("ChassisCollision") as CollisionShape3D
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = chassis.shape
-	query.transform = pose * chassis.transform
-	query.collision_mask = car.collision_mask
+	query.shape = _spawn_shape
+	query.transform = Transform3D(pose.basis, pose * Car.CHASSIS_CENTER)
+	query.collision_mask = Vehicle.WORLD_LAYER | Vehicle.PERSON_LAYER | 4
 	query.exclude = excluded
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 func _physics_process(delta: float) -> void:
-	if _drivers.is_empty():
+	if _route.is_empty():
 		return
 	if _reset_tick >= 0 and Engine.get_physics_frames() >= _reset_tick:
 		_reset_tick = -1
-		var pilot := _drivers[0]
-		if _pose_clear(_spawn_pose, [pilot.car.get_rid()]):
-			pilot.segment = _spawn_segment
-			pilot.car.reset_to(_spawn_pose)
+		if _pilot != null and _pose_clear(_spawn_pose, [_pilot.car.get_rid()]):
+			_pilot.segment = _spawn_segment
+			_pilot.car.reset_to(_spawn_pose)
 	_population_clock += delta
 	if _population_clock >= POPULATION_INTERVAL:
 		_population_clock = 0.0
@@ -148,31 +198,47 @@ func _refresh_local_traffic() -> void:
 		return
 	var observer := _camera.global_position
 	var frustum := _camera.get_frustum()
-	if _drivers.size() == 2:
-		var local := _drivers[1]
+	for local: Driver in _drivers.duplicate():
+		if local == _pilot:
+			continue
 		var distance_squared := observer.distance_squared_to(local.car.global_position)
 		var distant := distance_squared > DESPAWN_DISTANCE * DESPAWN_DISTANCE
 		var stuck_away := local.idle_seconds >= STUCK_TIME and distance_squared > SPAWN_NEAR * SPAWN_NEAR
 		if (distant or stuck_away) and _outside_view(local.car.global_position, frustum):
-			_drivers.pop_back()
+			_drivers.erase(local)
 			local.car.queue_free()
+	if _drivers.size() >= clampi(civilian_limit, 1, MAX_CIVILIAN_LIMIT):
 		return
-	var pilot_position := _drivers[0].car.global_position
+	if _pilot == null and _spawn_clear(_spawn_pose, observer, frustum):
+		_add_pilot(_spawn_pose, _spawn_segment)
+		return
 	for segment in range(_route.size() - 1):
 		var span := _route[segment].distance_to(_route[segment + 1])
 		if span < 12.0:
 			continue
-		var candidate := _lane_pose(segment, span * 0.5)
-		if _spawn_clear(candidate, observer, pilot_position, frustum):
-			_add_car(candidate, segment, "LocalTrafficCar", Color("789a82"))
-			return
+		for fraction: float in [0.5, 0.25, 0.75]:
+			var candidate := _lane_pose(segment, span * fraction)
+			if _spawn_clear(candidate, observer, frustum):
+				if _pilot == null:
+					_add_pilot(candidate, segment)
+				else:
+					_add_local(candidate, segment)
+				return
 
 
-func _spawn_clear(candidate: Transform3D, observer: Vector3, pilot_position: Vector3, frustum: Array[Plane]) -> bool:
+func _spawn_clear(candidate: Transform3D, observer: Vector3, frustum: Array[Plane]) -> bool:
 	var distance_squared := observer.distance_squared_to(candidate.origin)
 	return distance_squared >= SPAWN_NEAR * SPAWN_NEAR and distance_squared <= SPAWN_FAR * SPAWN_FAR \
-		and pilot_position.distance_squared_to(candidate.origin) >= SPAWN_SPACING * SPAWN_SPACING \
-		and _outside_view(candidate.origin, frustum) and _pose_clear(candidate, [])
+		and _outside_view(candidate.origin, frustum) and _spaced_from_traffic(candidate.origin, SPAWN_SPACING) \
+		and _pose_clear(candidate, [])
+
+
+func _spaced_from_traffic(position_on_road: Vector3, spacing: float) -> bool:
+	var spacing_squared := spacing * spacing
+	for driver: Driver in _drivers:
+		if driver.car.global_position.distance_squared_to(position_on_road) < spacing_squared:
+			return false
+	return _patrol == null or _patrol.car.global_position.distance_squared_to(position_on_road) >= spacing_squared
 
 
 func _refresh_patrol() -> void:
@@ -214,8 +280,9 @@ func _refresh_patrol() -> void:
 		var spawn := _lane_pose(segment, offset)
 		var distance_squared := spawn.origin.distance_squared_to(_alert_target)
 		if distance_squared >= PATROL_MIN_DISTANCE ** 2 and distance_squared <= PATROL_MAX_DISTANCE ** 2 \
-				and _outside_view(spawn.origin, frustum) and _pose_clear(spawn, []):
-			_patrol = _create_car(spawn, segment, "PatrolCar", Color("8296a8"), true)
+				and _outside_view(spawn.origin, frustum) and _spaced_from_traffic(spawn.origin, PATROL_SPAWN_SPACING) \
+				and _pose_clear(spawn, []):
+			_patrol = _create_car(Car.new(true), spawn, segment, "PatrolCar", Color("8296a8"), true)
 			return
 
 
