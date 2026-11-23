@@ -3,6 +3,7 @@ extends CharacterBody3D
 const Visual := preload("res://character/locomotion_visual.gd")
 const ImpactReaction := preload("res://character/vehicle_impact_reaction.gd")
 const WALK_SPEED := 0.98
+const HURRY_SPEED := 2.40
 const BODY_HEIGHT := 1.68
 const BODY_RADIUS := 0.29
 const TURN_RESPONSE := 7.0
@@ -26,6 +27,7 @@ var animation_player: AnimationPlayer:
 var _target: Vector3
 var _blocked_time := 0.0
 var _conversation_time := 0.0
+var _hurry_time := 0.0
 var _speaker_position := Vector3.ZERO
 var _collider := CollisionShape3D.new()
 var _impact := ImpactReaction.new()
@@ -56,6 +58,7 @@ func reset_to_path() -> void:
 	_target = path_end
 	_blocked_time = 0.0
 	_conversation_time = 0.0
+	_hurry_time = 0.0
 	_return_to_path = false
 	if is_reacting():
 		_impact.reset(_collider, visual)
@@ -72,10 +75,16 @@ func begin_conversation(speaker_position: Vector3, duration: float) -> void:
 		_blocked_time = 0.0
 
 
+func hurry_for(seconds: float) -> void:
+	if not is_reacting() and is_finite(seconds):
+		_hurry_time = maxf(_hurry_time, seconds)
+
+
 func receive_vehicle_impact(direction: Vector3, closing_speed: float) -> void:
 	_impact.apply(self, direction, closing_speed)
 	if is_reacting():
 		_conversation_time = 0.0
+		_hurry_time = 0.0
 		_return_to_path = true
 
 
@@ -105,7 +114,9 @@ func _physics_process(delta: float) -> void:
 	_face(direction, delta)
 	# Give the walker time to turn around before advancing along the path.
 	var alignment := maxf(0.0, (-global_basis.z).dot(direction))
-	var speed := minf(WALK_SPEED * alignment, toward_target.length() / delta)
+	var pace := HURRY_SPEED if _hurry_time > 0.0 else WALK_SPEED
+	_hurry_time = maxf(0.0, _hurry_time - delta)
+	var speed := minf(pace * alignment, toward_target.length() / delta)
 	var travel := _move(direction * speed, delta)
 	if speed > 0.2 and travel.dot(direction) < 0.12:
 		_blocked_time += delta

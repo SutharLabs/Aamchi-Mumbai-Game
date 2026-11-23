@@ -12,10 +12,13 @@ const StatusView := preload("res://startup/player_status.gd")
 const PROMPT_WIDTH := 342.0
 const HUD_MARGIN := 24.0
 const TOUCH_DOCK_CLEARANCE := 225.0
+const TOUCH_RUN_ENTER := 0.92
+const TOUCH_RUN_EXIT := 0.83
 
 var touch_enabled := false
 var pause_enabled := false
 var move_axis := Vector2.ZERO
+var run_held := false
 var brake_held := false
 var _status_panel: PanelContainer
 var _objective := Label.new()
@@ -37,6 +40,7 @@ var _navigation_dock: VBoxContainer
 var _live_map := MapView.new()
 var _player_status := StatusView.new()
 var _live_map_enabled := true
+var _arrival_intro := false
 
 
 func _ready() -> void:
@@ -122,6 +126,12 @@ func set_live_map_enabled(enabled: bool) -> void:
 	_live_map.visible = enabled
 
 
+func set_arrival_intro(active: bool) -> void:
+	_arrival_intro = active
+	_navigation_dock.visible = not active
+	clear_touch_input()
+
+
 func set_map_geometry(roads: Array[PackedVector3Array], footway: PackedVector3Array,
 		points: PackedVector3Array = PackedVector3Array()) -> void:
 	_live_map.set_geometry(roads, footway, points)
@@ -176,6 +186,7 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		_touch_driving = driving
 		_brake_finger = -1
 		brake_held = false
+		run_held = false
 		_touch_surface.queue_redraw()
 	var speed_text := "%s  ·  %d km/h" % [vehicle_label, roundi(speed * 3.6)] if driving else ""
 	var show_key := can_interact and not touch_enabled
@@ -210,6 +221,7 @@ func clear_touch_input() -> void:
 	_look_finger = -1
 	_brake_finger = -1
 	move_axis = Vector2.ZERO
+	run_held = false
 	brake_held = false
 	if is_instance_valid(_touch_surface) and _touch_surface.is_inside_tree():
 		_touch_surface.queue_redraw()
@@ -231,6 +243,9 @@ func _touch_input(event: InputEvent) -> void:
 func _start_touch(index: int, point: Vector2) -> void:
 	if pause_enabled and _pause_rect().has_point(point):
 		pause_pressed.emit()
+	elif _arrival_intro:
+		if _button_rect(0).has_point(point):
+			interact_pressed.emit()
 	elif point.distance_to(_stick_center()) < 105.0 and _move_finger < 0:
 		_move_finger = index
 		_update_stick(point)
@@ -253,6 +268,7 @@ func _end_touch(index: int) -> void:
 	if index == _move_finger:
 		_move_finger = -1
 		move_axis = Vector2.ZERO
+		run_held = false
 	elif index == _look_finger:
 		_look_finger = -1
 	elif index == _brake_finger:
@@ -263,7 +279,10 @@ func _end_touch(index: int) -> void:
 
 func _update_stick(point: Vector2) -> void:
 	var axis := (point - _stick_center()) / _stick_radius
-	move_axis = axis.limit_length() if axis.length() > 0.12 else Vector2.ZERO
+	var magnitude := axis.length()
+	move_axis = axis.limit_length() if magnitude > 0.12 else Vector2.ZERO
+	var run_threshold := TOUCH_RUN_EXIT if run_held else TOUCH_RUN_ENTER
+	run_held = not _touch_driving and magnitude >= run_threshold
 	_touch_surface.queue_redraw()
 
 
@@ -280,9 +299,15 @@ func _pause_rect() -> Rect2:
 
 
 func _draw_touch() -> void:
+	if _arrival_intro:
+		_draw_touch_button(_button_rect(0), "Skip intro", Color("14283ae0"))
+		if pause_enabled:
+			_draw_touch_button(_pause_rect(), "Pause", Color("14283ae0"))
+		return
 	var center := _stick_center()
 	_touch_surface.draw_circle(center, _stick_radius, Color("12232fc4"))
-	_touch_surface.draw_arc(center, _stick_radius, 0.0, TAU, 36, Color("a3c4cab0"), 2.0, true)
+	var rim := Color("f1cf91") if run_held else Color("a3c4cab0")
+	_touch_surface.draw_arc(center, _stick_radius, 0.0, TAU, 36, rim, 3.0 if run_held else 2.0, true)
 	_touch_surface.draw_circle(center + move_axis * (_stick_radius - 16.0), 22.0, Color("6dc1cdeb"))
 	var button_text := ["Interact", "Brake" if _touch_driving else "Jump", "Reset"]
 	for index in range(button_text.size()):

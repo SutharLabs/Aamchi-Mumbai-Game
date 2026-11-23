@@ -5,6 +5,7 @@ tools/*.py text eol=lf
 tools/modeling/*.py text eol=lf
 tools/mocap/*.py text eol=lf
 prototype/character/motion/phase1_motions.tres text eol=lf
+prototype/character/motion/cmu_run.tres text eol=lf
 
 # Preserve the exact upstream font license, including its original whitespace.
 prototype/startup/art/NotoSansDevanagari-OFL.txt -text -whitespace

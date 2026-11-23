@@ -95,16 +95,29 @@ func condition_percent() -> int:
 
 
 func reset_to(pose: Transform3D) -> void:
+	if not _apply_stationary_pose(pose):
+		return
+	_home_transform = global_transform if is_inside_tree() else transform
+	if _damage > 0.0:
+		_damage = 0.0
+		_restore_bodywork()
+
+
+func recover_to(pose: Transform3D) -> void:
+	_apply_stationary_pose(pose)
+
+
+func _apply_stationary_pose(pose: Transform3D) -> bool:
 	# The caller chooses a clear, grounded pose. Reject corrupt transforms and
 	# retain only heading so resets cannot leave this upright arcade car tilted.
 	if not pose.origin.is_finite():
-		return
+		return false
 	if not pose.basis.x.is_finite() or not pose.basis.y.is_finite() or not pose.basis.z.is_finite():
-		return
+		return false
 	var forward: Vector3 = -pose.basis.z
 	forward.y = 0.0
 	if forward.length_squared() < 0.0001:
-		return
+		return false
 	forward = forward.normalized()
 	var heading: float = atan2(-forward.x, -forward.z)
 	var upright_pose := Transform3D(Basis(Vector3.UP, heading), pose.origin)
@@ -113,7 +126,6 @@ func reset_to(pose: Transform3D) -> void:
 		reset_physics_interpolation()
 	else:
 		transform = upright_pose
-	_home_transform = upright_pose
 	velocity = Vector3.ZERO
 	_signed_speed = 0.0
 	_throttle = 0.0
@@ -121,10 +133,8 @@ func reset_to(pose: Transform3D) -> void:
 	_braking = true
 	_wheel_angle = 0.0
 	_impact_drift = Vector3.ZERO
-	if _damage > 0.0:
-		_damage = 0.0
-		_restore_bodywork()
 	_update_wheels(0.0)
+	return true
 
 
 func _physics_process(delta: float) -> void:

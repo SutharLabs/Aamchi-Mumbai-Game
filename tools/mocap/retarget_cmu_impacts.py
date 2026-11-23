@@ -76,7 +76,7 @@ def read_axes(asf: str):
     return table
 
 
-def read_samples(amc: str, first: int, last: int, table):
+def read_samples(amc: str, first: int, last: int, table, *, include_root: bool = False):
     frames = []
     current = None
     frame = 0
@@ -90,6 +90,11 @@ def read_samples(amc: str, first: int, last: int, table):
             current = {} if first <= frame <= last and (frame - first) % 4 == 0 else None
             if current is not None:
                 frames.append(current)
+        elif current is not None and name == "root" and include_root:
+            root = tuple(map(float, columns[1:]))
+            if len(root) != 6 or not all(map(math.isfinite, root)):
+                raise ValueError(f"AMC frame {frame} contains invalid root channels")
+            current[name] = root
         elif current is not None and name in table:
             channels, basis = table[name]
             angles = tuple(map(float, columns[1:]))
@@ -97,7 +102,8 @@ def read_samples(amc: str, first: int, last: int, table):
                 raise ValueError(f"AMC frame {frame} contains non-finite angles")
             local = rotation(channels, angles)
             current[name] = q_multiply(q_multiply(basis, local), q_inverse(basis))
-    if len(frames) != (last - first) // 4 + 1 or any(sample.keys() != REQUIRED for sample in frames):
+    expected = REQUIRED | {"root"} if include_root else REQUIRED
+    if len(frames) != (last - first) // 4 + 1 or any(sample.keys() != expected for sample in frames):
         raise ValueError("AMC selection is incomplete")
     return frames
 

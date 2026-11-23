@@ -3,6 +3,7 @@
 ## Modern OSM-derived polylines: see README.md and layout.json beside this script.
 
 const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
+const RanwarMappedBuildings := preload("res://world/ranwar_mapped_buildings.gd")
 const RanwarLaneFinish := preload("res://world/ranwar_lane_finish.gd")
 const RanwarSurfaceMaterials := preload("res://world/ranwar_surface_materials.gd")
 const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
@@ -10,6 +11,7 @@ const StPetersApproach := preload("res://world/st_peters_approach.gd")
 const MeenaHillRoad := preload("res://world/meena_hill_road.gd")
 const BandraFacilities := preload("res://world/bandra_facilities.gd")
 const BandraLandmarks := preload("res://world/bandra_landmarks.gd")
+const RanwarDistrictEdges := preload("res://world/ranwar_district_edges.gd")
 const PAAN_SHOP := preload("res://world/props/indian_street_shop.glb")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
 const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
@@ -47,6 +49,7 @@ const ROAD_SOURCE: Array = [
 const GULLY_SOURCE: Array[Vector2] = [Vector2(72.8275960,19.0541387), Vector2(72.8276071,19.0542799), Vector2(72.8276677,19.0544493), Vector2(72.8277695,19.0546053), Vector2(72.8278068,19.0547279)]
 
 var lane_graph: RanwarLaneGraph
+var district_edges := RanwarDistrictEdges.new()
 var spawn_at_arrival := false
 var _roads: Array[PackedVector3Array] = []
 var _gully := PackedVector3Array()
@@ -57,6 +60,7 @@ var _meena_lot := Rect2()
 var _arrival_position := PLAYER_START
 var _arrival_yaw := 0.0
 var _waroda_cross_position := Vector3.ZERO
+var mapped_buildings := RanwarMappedBuildings.new()
 
 
 func _ready() -> void:
@@ -85,6 +89,9 @@ func _ready() -> void:
 	_build_waroda_cross()
 	_visual_chunks.name = "BackgroundFrontageVisuals"
 	add_child(_visual_chunks)
+	mapped_buildings.name = "MappedBuildings"
+	mapped_buildings.configure(_materials["frontage_kit"])
+	add_child(mapped_buildings)
 	_build_frontages()
 	var visual_focus := _arrival_position if spawn_at_arrival else PLAYER_START
 	_visual_chunks.start("--stream-visual-chunks" in OS.get_cmdline_user_args(), visual_focus)
@@ -103,6 +110,10 @@ func arrival_position() -> Vector3:
 
 func arrival_yaw() -> float:
 	return _arrival_yaw
+
+
+func building_entrances() -> Array[Dictionary]:
+	return mapped_buildings.entrances
 
 
 func facility_markers() -> Array[Dictionary]:
@@ -462,6 +473,9 @@ func _build_frontages() -> void:
 					var tall: bool = road_index == 0 and building_count % 3 == 0
 					var height := 11.0 if tall else 5.5+float(building_count%3)*1.5
 					var angle := atan2(along.x,along.z)
+					if mapped_buildings.overlaps_placeholder(point, angle):
+						building_count += 1
+						continue
 					var wall_color := palette[building_count % palette.size()]
 					var hill_sample := building_count < SHOP_LABELS.size()
 					var mouth_distance := point.distance_to(_gully[0])
@@ -572,10 +586,8 @@ func _paint_vehicle_bay(prefix: String, spawn: Vector3, width: float, length: fl
 
 
 func _build_boundary() -> void:
-	_box("WestBoundary",Vector3(-108,1.2,-245),Vector3(1,2.4,680),"dark",true)
-	_box("EastBoundary",Vector3(286,1.2,-245),Vector3(1,2.4,680),"dark",true)
-	_box("NorthBoundary",Vector3(90,1.2,-584),Vector3(394,2.4,1),"dark",true)
-	_box("SouthBoundary",Vector3(90,1.2,94),Vector3(394,2.4,1),"dark",true)
+	district_edges.configure(_roads, _project, _materials["asphalt"])
+	add_child(district_edges)
 
 
 func _label(text: String, at: Vector3) -> void:

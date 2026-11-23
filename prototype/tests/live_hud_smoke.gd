@@ -36,6 +36,8 @@ func _run() -> void:
 	_press("PlayButton")
 	await _settle()
 	var game: Node3D = _app.gameplay
+	game.finish_arrival()
+	await _settle()
 	var hud: CanvasLayer = game.hud
 	var map := hud.find_child("LiveMap", true, false) as MapView
 	var status := hud.find_child("PlayerStatus", true, false) as StatusView

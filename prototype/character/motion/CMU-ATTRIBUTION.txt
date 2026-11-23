@@ -12,3 +12,8 @@ Aamchi Mumbai Game cropped two falls from Subject 90 trials 16 and 17,
 converted the Acclaim joint axes, retargeted the spine and limbs, removed
 root travel and resampled the result to 30 Hz. The game controls the
 fall direction, landing and character collision capsule.
+
+Aamchi Mumbai Game also cropped the running cycle from Subject 35 trial 18.
+The adaptation corrects the joint axes, normalizes the heading, removes
+horizontal pelvis travel, closes the loop seam, aligns sole height and
+resamples the animation to 30 Hz.

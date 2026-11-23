@@ -11,7 +11,7 @@ const ACTION_LABELS := {
 	"look_down": "Look down",
 	"look_left": "Look left",
 	"look_right": "Look right",
-	"run": "Jog",
+	"run": "Run",
 	"interact": "Interact",
 	"brake": "Jump / brake",
 	"recover": "Reset",

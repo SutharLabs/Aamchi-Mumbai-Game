@@ -21,6 +21,7 @@ func _run() -> void:
 	app.mission_progress_directory = profile
 	root.add_child(app)
 	app.menu.play_requested.emit()
+	app.gameplay.finish_arrival()
 	await physics_frame
 	await physics_frame
 	var game: Node3D = app.gameplay

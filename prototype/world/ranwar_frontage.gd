@@ -272,22 +272,7 @@ static func _tiled_roof(surface: SurfaceTool, y: float, height: float, variant: 
 
 static func _box(surface: SurfaceTool, center: Vector3, size: Vector3, color: Color,
 		finish: int = Surfaces.PLAIN) -> void:
-	var low := center - size * 0.5
-	var high := center + size * 0.5
-	var a := low
-	var b := Vector3(high.x, low.y, low.z)
-	var c := Vector3(high.x, high.y, low.z)
-	var d := Vector3(low.x, high.y, low.z)
-	var e := Vector3(low.x, low.y, high.z)
-	var f := Vector3(high.x, low.y, high.z)
-	var g := high
-	var h := Vector3(low.x, high.y, high.z)
-	_quad(surface, a, b, c, d, color, finish)
-	_quad(surface, f, e, h, g, color, finish)
-	_quad(surface, b, f, g, c, color, finish)
-	_quad(surface, e, a, d, h, color, finish)
-	_quad(surface, e, f, b, a, color, finish)
-	_quad(surface, d, c, g, h, color, finish)
+	Surfaces.add_box(surface, center, size, color, finish)
 
 
 static func _quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, color: Color,

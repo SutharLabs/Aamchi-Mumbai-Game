@@ -1,8 +1,8 @@
 # Aamchi Mumbai Game · Phase 1 playtest
 
-Walk and drive around Ranwar, Bandra West, in present-day Mumbai. A new profile arrives as Omkar, a worker new to the city, at the St Peter’s Church BEST stop. A loan motorcycle is parked near the stop. Follow Hill Road west to the practice yard and job board. There are twelve parked vehicles, up to four civilian traffic cars on desktop and three on mobile, and a separate patrol when police respond. [Route and source notes](world/README.md) · [District facilities](../docs/BANDRA_FACILITIES.md)
+Walk and drive around Ranwar, Bandra West, in present-day Mumbai. On a new profile, Omkar steps off a bus at the mapped St Peter’s Church BEST stop. Anjali can point him toward a loan motorcycle and the first print-shop job. Follow Hill Road west to the practice yard and job board. There are twelve parked vehicles, up to four civilian traffic cars on desktop and three on mobile, and a separate patrol when police respond. [Route and source notes](world/README.md) · [District facilities](../docs/BANDRA_FACILITIES.md)
 
-Play as **Omkar Shirodkar (ओंकार शिरोडकर)**, wearing an indigo sadara, an ivory dhotar and Kolhapuri-style chappals. His original skinned mesh uses the captured idle, walk and jog clips. Two pedestrians use the same captured walk along the western Hill Road sidewalk and eastern frontage. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt)
+Play as **Omkar Shirodkar (ओंकार शिरोडकर)**, wearing an indigo sadara, an ivory dhotar and Kolhapuri-style chappals. His skinned mesh uses captured idle, walk and a separate Carnegie Mellon run. Pedestrians can hurry after a witnessed theft. [100STYLE motion credits](character/motion/100STYLE-ATTRIBUTION.txt) · [CMU motion credits](character/motion/CMU-ATTRIBUTION.txt)
 
 Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. Use the editor to try changes from the current checkout. The earlier **0.0.2** local playtest packages are retained under `../builds/dev/0.0.2/`. [Published 0.0.1 playtest](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1)
 
@@ -11,14 +11,14 @@ The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profil
 | Default input | Action |
 |---|---|
 | **WASD** or **arrows** | Walk, or steer and control speed while driving. |
-| **Shift** with movement | Jog on foot. |
+| **Shift** with movement | Run on foot. |
 | **Mouse** | Look around. |
 | **Esc** | Pause or resume. Return from a menu page to the preceding menu. |
 | **E** | Talk to a nearby pedestrian or get into the nearest vehicle. Stop and press again to exit a vehicle. |
 | **Space** | Jump on foot or brake while driving. |
 | **R** | Return on foot and reset the vehicles and pedestrians. |
-| Windows gamepad | Left stick to move or drive, right stick to look, X to jog, A to interact, LB to jump or brake, Y to reset, Start to pause and B to go back. |
-| Touch controls | Walk or drive with the left stick and drag the right side to look. On foot the action button reads Jump, and while driving it reads Brake. Interact, Reset and Pause remain available. |
+| Windows gamepad | Left stick to move or drive, right stick to look, X to run, A to interact, LB to jump or brake, Y to reset, Start to pause and B to go back. |
+| Touch controls | Move with the left stick and drag the right side to look. Push the stick near the outer ring to run on foot. The action button reads Jump on foot and Brake while driving. Interact, Reset and Pause remain available. |
 
 To follow the ambient traffic circuit, take western Waroda Road from the start toward Veronica. Continue on eastern Waroda to Chapel, take St Peter's Road to Hill Road, then follow Hill Road past the church back toward the start. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
@@ -28,7 +28,9 @@ To try the curb crossing, drive slowly across the raised west-side curb on Hill 
 
 ## Arrival, street traffic and vehicle access
 
-Approach a vehicle and use **Interact**. The prompt shows **Unlock** for loan vehicles with keys and **Steal** for other vehicles. A stopped traffic vehicle can transfer to your control. Its driver or a nearby witness can raise the police alert. **Recover** takes you back to the practice yard. Later visits from the title also start there once this profile’s arrival has been recorded.
+The opening lasts about seven seconds. **Interact** skips it. Completion or a skip is recorded for the profile. On later visits Omkar starts at the practice yard. Each Play session reshuffles the parked fleet among approved bays away from the two player starting points. The loan bike remains in one of three Hill Road bays west of the stop.
+
+Approach a vehicle and use **Interact**. The prompt shows **Unlock** for loan vehicles with keys and **Steal** for other vehicles. A stopped traffic vehicle can transfer to your control. Its driver or a nearby witness can raise the police alert. **Recover** takes you back to the practice yard. Marked road closures let you turn back normally. A fall through the map uses the most recent safe position and retains the active job and vehicle damage. [Free-roam and recovery rules](../docs/RANWAR_GAME_RULES.md)
 
 The hood, roof, lamp and tail shapes vary across four car silhouettes, an auto-rickshaw, four motorcycles and two scooters. Omkar is visible in the right-hand driver's seat of all four car types, including stopped traffic cars you take over. Rotate the camera to see him through the driver's window or windshield. [Vehicle catalogue and manufacturer references](../research/OPEN_MODEL_CATALOGUE.md) · [Vehicle notes](vehicle/README.md)
 
@@ -37,6 +39,8 @@ The lower-right **live map** follows Omkar or the vehicle he is driving and show
 Look for the wayside cross beside Waroda Road. Open **Pause → Map → Bandra landmarks** for St Peter's Church, Meena, Mount Mary Basilica, Bandra Fort and the real Sea Link route. Select **View 3D Sea Link** to inspect three views of the 600 m Bandra channel span. [Landmark placement and sources](../docs/BANDRA_LANDMARKS.md)
 
 ## Surface and collision playtest
+
+Walk through the open street doors at **Hill Road Tea Room**, across from the arrival stop, and **Chapel Corner Grocer**. These furnished interiors occupy mapped parcels. The surrounding streets use 38 building footprints, with documented setbacks where the gameplay road is wider. Sunlight and sky colors change through the day. The district uses Godot's procedural sky and a shadowless night fill. [Mapped facades and interiors](world/README.md#mapped-frontage-and-walk-in-shops)
 
 At walking speed, check the asphalt, concrete, façades, roofs and timber around the Ranwar loop and Nagrana Lane. The Windows scene uses a daylight sky and nearby sun shadows. Open the world notes for the material sources and placement. [Ranwar world and texture sources](world/README.md)
 

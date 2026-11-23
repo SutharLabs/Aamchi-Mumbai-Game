@@ -119,6 +119,23 @@ The Godot 4.7.2 Windows Compatibility check rendered the front and angled Hill R
 
 The skyline across Hill Road from Nagrana Lane includes a Meena building study registered to the ten vertices of OSM way 255362104. The study uses the mapped 15 levels and an estimated 3.05 m per level. The textured shell and collider use the same projected footprint, and the generated background buildings give the site space. Current elevation, facade openings and materials remain for field comparison. [Engine site controls](layout.json) · [Capture targets](../../docs/RANWAR_REFERENCE_CHECKLIST.md#current-photo-searches-and-registered-building-pilot) · [OSM data offer and attribution](../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/ATTRIBUTION.md)
 
+## Mapped frontage and walk-in shops
+
+The mapped frontage pass uses 38 building footprints from the **20 November 2026** OpenStreetMap extract. It samples Hill Road, St Peter’s Road and both Waroda segments. Overlapping placeholder boxes make way for mapped buildings. The church, Meena, Nagrana Lane and authored showcase frontages retain their approaches. Twenty-three footprints use their projected positions. Fifteen footprints use setbacks of **3–6.5 m** to make room for the wider gameplay streets. The compact house sequence near Chapel and the Waroda junction uses those authored setbacks to narrow the visible gaps without obstructing the sidewalks. The [footprint source](ranwar_building_footprints.gd) lists each offset and the original projected vertices. [Saved OSM data and attribution](../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md) · [Bandra precinct survey](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf)
+
+| Walk-in shop | Find it | Placement and art |
+| --- | --- | --- |
+| Hill Road Tea Room | Across Hill Road from the St Peter’s stop, a short walk west along the opposite pavement. | Fictional ground-floor tenant at the mapped Libra Tower footprint. The floor plan, access opening, paint and height are game estimates. [OSM building 360291657](https://www.openstreetmap.org/way/360291657) |
+| Chapel Corner Grocer | On the Chapel side of the Waroda circuit, before the turn toward St Peter’s Road. | Fictional shop on the map’s Tony Stores parcel with the 6.5 m gameplay setback. The plan and finishes are original art. [OSM building 357472313](https://www.openstreetmap.org/way/357472313) |
+
+Walk through either open doorway to enter and use the same doorway to leave. The pavement and shop floor meet at a shallow ramp. Each building uses a single mesh surface with existing materials. Public rooms add a local light, a nameplate and a menu board. The preview uses floor-level collisions for both rooms and their counters. Nearby homes have solid collision shells. Upper floors of the two shops are exterior scenery. The layout check measures roadway and lane clearance, and the stock Jolt player capsule tests entry and exit at both venues. Street-facing doors, finishes and heights remain estimates where current field evidence is unavailable. [Frontage reference checklist](../../docs/RANWAR_REFERENCE_CHECKLIST.md)
+
+```powershell
+$editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe'
+& $editor --headless --path prototype --fixed-fps 60 --script res://tests/ranwar_building_smoke.gd
+& $editor --path prototype --resolution 1024x576 --disable-vsync --fixed-fps 90 --script res://tests/ranwar_building_smoke.gd -- --capture
+```
+
 ## Focused world check
 
 The 22 November 2026 isolated Godot 4.7.2 headless probe cleared all five actor-sized spawn volumes against world colliders and confirmed the ground beneath the auto bay. It constructed 564 direct world children. The temporary extended probe used the ignored `.toolchain/world_clearance_check.gd` fixture and added motorcycle/scooter box checks; it was removed after the run. This verifies world startup and environmental clearances, not vehicle-to-vehicle interactions or minimum-device performance. The integrated Phase 1 smoke test owns mounting, controls, steering/lean, recovery and route checks. [Playtest and verification commands](../README.md)

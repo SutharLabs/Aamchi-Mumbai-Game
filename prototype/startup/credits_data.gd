@@ -38,10 +38,11 @@ const SECTIONS: Array[Dictionary] = [
 		],
 	},
 	{
-		"title": "Motion capture · impact falls",
-		"body": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217. Aamchi Mumbai Game cropped and retargeted Subject 90 trials 16 and 17. The publisher permits commercial product use and restricts direct data resale.",
+		"title": "Motion capture · running and impact falls",
+		"body": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217. Aamchi Mumbai Game cropped and retargeted Subject 35 trial 18 and Subject 90 trials 16 and 17. The publisher permits commercial product use and restricts direct data resale.",
 		"links": [
 			{"label": "CMU Motion Capture Database and terms", "url": "https://mocap.cs.cmu.edu/"},
+			{"label": "Subject 35 recordings", "url": "https://mocap.cs.cmu.edu/search.php?subjectnumber=35"},
 			{"label": "Subject 90 recordings", "url": "https://mocap.cs.cmu.edu/search.php?subjectnumber=90"},
 		],
 	},

@@ -1,0 +1,26 @@
+# Ranwar free-roam rules
+
+The active prototype covers one connected district in Bandra West. The bundled OpenStreetMap road extract supplies the short outward approaches at Hill Road, Chapel Road and Bazar Road. Roadworks signage and gate placement are authored. The limits refer to the game's current playable district. [Ranwar map source and credits](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/ATTRIBUTION.md)
+
+| Event | Player-facing rule | State affected |
+| --- | --- | --- |
+| Approach a route outside the loaded district | A signed concrete barrier is visible from the approach. The HUD says to turn back toward Ranwar. Walk or reverse back without leaving the current session. | Mission checkpoint, health, money, alert, and occupied vehicle stay in place. A high-speed physical impact uses the usual crash rules. |
+| Walk or drive to an outside compound wall | A solid wall and a short HUD notice mark the edge of the district. The player can turn back on the same road or path. | Ordinary world collision. |
+| Fall below the scene or escape the perimeter through a physics fault | The current on-foot actor or occupied vehicle returns to its latest firm position and stops. The spawn point acts as fallback when no firm position was sampled. | No clinic fee, mission interruption, alert clearance, parking reassignment or vehicle repair. |
+| Run out of health | Clinic recovery restores health and returns Omkar to the recovery point. | The existing clinic fee and mission retry rules apply. |
+| Stop with a visible patrol close enough to detain | The existing detention timer begins. Moving away or losing the patrol's line of sight stops the timer. | Detention clears the alert and applies the existing fine and mission retry rules. |
+| Select Recover | Explicit recovery returns to the practice yard. The same action with an active alert invokes detention. | The original Recover action still interrupts an active delivery and keeps its retry checkpoint. |
+| Complete a delivery or return to the title | The delivery saves its checkpoint and its one-time receipt. | The profile's progress and economy survive reopening. |
+| Complete or skip the first bus arrival | The introductory ride gives control at the St Peter's Church stop. Anjali's first conversation links the loan bike and the job board. | Completion writes the existing arrival receipt. A fresh profile can see the sequence again. |
+| Start a regular Play session | A new parking assignment uses existing paved yard and stop-side bays away from both player starts. | Recovery reuses the session's arrangement. The introductory bus is a separate cinematic actor. |
+
+## Open-source design references
+
+- OpenMW separates outdoor cells, which can transition by walking into a neighbour, from interiors reached through a door. This is a useful model for adding adjacent Bandra districts later. The first Ranwar slice has a plainly marked closure at routes without a neighbouring cell. [OpenMW world and cell documentation](https://openmw.readthedocs.io/en/latest/manuals/openmw-cs/tables-world.html)
+- Luanti configures world generation limits separately from player spawn behavior. Ranwar uses the same separation between the authored traversal area, technical recovery and mission rules. [Luanti world boundaries](https://docs.luanti.org/for-players/world-boundaries/) · [Luanti player spawn algorithm](https://docs.luanti.org/for-creators/spawn-algorithm/)
+- Godot's static collision and route surfaces divide the work. Physics stops actors at a barrier. The route graph governs where ordinary traffic can go. Shallow curb and bollard rules remain part of the existing street implementation. [Godot StaticBody3D](https://docs.godotengine.org/en/stable/classes/class_staticbody3d.html) · [Godot navigation meshes](https://docs.godotengine.org/en/stable/tutorials/navigation/navigation_using_navigationmeshes.html)
+- Godot's freely available procedural sky and environment provide the sky, sun, dusk, and night lighting. The story uses the same distance, solid geometry and dialogue interaction checks as other pedestrians. The scripted bus scene and dialogue are original. The bus proportions draw on the Tata Ultra Urban 9 m bus delivered to BEST. [Godot procedural sky](https://docs.godotengine.org/en/stable/classes/class_proceduralskymaterial.html) · [Godot ray queries](https://docs.godotengine.org/en/stable/tutorials/physics/ray-casting.html) · [Tata Motors BEST bus release](https://static-assets.tatamotors.com/Production/www-tatamotors-com-NEW/wp-content/uploads/2025/05/press-04dec20.pdf)
+
+Future neighbouring areas can replace authored gates with continuous road or doorway transitions. Keep active mission state when moving between loaded districts. Extend this approach to doors, street access and private premises through clear interaction prompts and collision supplied by the world. Decide separate trespass and mission-specific restriction rules only when the story uses them.
+
+The focused [rule smoke test](../prototype/tests/ranwar_rules_smoke.gd) covers blocked mapped approaches, turning back, concurrent mission and HUD notices, on-foot and occupied-car position recovery, retained career and vehicle state, and the existing explicit Recover action.

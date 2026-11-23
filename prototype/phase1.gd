@@ -18,6 +18,9 @@ const DeliveryRoute := preload("res://mission/ranwar_delivery_route.gd")
 const MissionProgress := preload("res://mission/mission_progress.gd")
 const Delivery := preload("res://mission/ranwar_delivery.gd")
 const Career := preload("res://mission/ranwar_career.gd")
+const ArrivalIntro := preload("res://mission/ranwar_arrival_intro.gd")
+const Daylight := preload("res://world/district_daylight.gd")
+const Parking := preload("res://world/ranwar_parking.gd")
 const PLAYER_START := World.PLAYER_START
 const CAR_START := World.VEHICLE_START
 const RICKSHAW_START := World.RICKSHAW_START
@@ -34,6 +37,7 @@ const WITNESS_RANGE := 17.0
 const CLAIMED_RETIRE_RANGE := 225.0
 
 var world := World.new()
+var daylight := Daylight.new()
 var traffic := Traffic.new()
 var ambient_traffic_enabled := true
 var player := Walker.new()
@@ -51,6 +55,9 @@ var delivery_progress: MissionProgress
 var delivery: DeliveryRoute
 var career: Career
 var _mira: Pedestrian
+var _arrival_guide: Pedestrian
+var _arrival_intro: ArrivalIntro
+var _arrival_guided := false
 var _player_car_driver: CarDriver
 var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var _vehicle_keys: Dictionary[Vehicle, bool] = {}
@@ -73,7 +80,7 @@ var _message_time := 0.0
 
 
 func _ready() -> void:
-	_add_lighting()
+	add_child(daylight)
 	if delivery_progress != null:
 		if career == null:
 			career = Career.new(delivery_progress)
@@ -88,16 +95,21 @@ func _ready() -> void:
 	if _first_arrival:
 		_yaw = world.arrival_yaw()
 		player.rotation.y = _yaw
-		career.record_arrival()
 	add_child(player)
 	_mira = _add_pedestrian("Mira", "The open practice yard is just west of Hill Road.", 1.0, 0.08, Color("a4654d"))
 	_add_pedestrian("Rafiq", "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.", -1.0, 0.25, Color("50617b"), true)
-	_add_practice_vehicle(car, "PracticeCar", CAR_START)
-	_add_practice_vehicle(rickshaw, "PracticeRickshaw", RICKSHAW_START)
-	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", World.MOTORCYCLE_START)
-	_add_practice_vehicle(scooter, "PracticeScooter", World.SCOOTER_START)
+	var parking: Array[Transform3D] = [Transform3D(Basis.IDENTITY, CAR_START), Transform3D(Basis.IDENTITY, RICKSHAW_START),
+		Transform3D(Basis.IDENTITY, World.MOTORCYCLE_START), Transform3D(Basis.IDENTITY, World.SCOOTER_START)]
 	if career != null:
-		_populate_streets()
+		var bay_rng := RandomNumberGenerator.new()
+		bay_rng.randomize()
+		parking = Parking.plan(world.arrival_position(), world.arrival_yaw(), bay_rng)
+	_add_practice_vehicle(car, "PracticeCar", parking[0])
+	_add_practice_vehicle(rickshaw, "PracticeRickshaw", parking[1])
+	_add_practice_vehicle(motorcycle, "PracticeMotorcycle", parking[2])
+	_add_practice_vehicle(scooter, "PracticeScooter", parking[3])
+	if career != null:
+		_populate_streets(parking)
 		traffic.civilian_limit = 3 if OS.has_feature("mobile") else 4
 	traffic.name = "AmbientTraffic"
 	add_child(traffic)
@@ -115,8 +127,6 @@ func _ready() -> void:
 		delivery.setup(delivery_progress, world._gully)
 		career.parcel_completed = delivery.flow.state == Delivery.COMPLETED
 		_add_first_aid_sign()
-		if _first_arrival:
-			_show_message("First day in Mumbai. Take the loan bike and find work in Ranwar.", 5.0)
 	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
 	var local_facilities := PackedVector3Array()
@@ -130,14 +140,20 @@ func _ready() -> void:
 	hud.pause_pressed.connect(func() -> void: pause_requested.emit())
 	hud.look_dragged.connect(_apply_look)
 	_update_camera(0.0)
+	if _first_arrival:
+		_arrival_intro = ArrivalIntro.new()
+		_arrival_intro.name = "BandraBusArrival"
+		add_child(_arrival_intro)
+		_arrival_intro.setup(player, world.arrival_position(), world.arrival_yaw())
+		hud.set_arrival_intro(true)
+		_update_arrival_intro(0.0)
 	if not hud.touch_enabled and DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3, with_key := true, yaw := 0.0) -> void:
-	var pose := Transform3D(Basis(Vector3.UP, yaw), spawn)
+func _add_practice_vehicle(vehicle: Vehicle, node_name: String, pose: Transform3D, with_key := true) -> void:
 	vehicle.name = node_name
-	vehicle.position = spawn
+	vehicle.transform = pose
 	add_child(vehicle)
 	vehicle.reset_to(pose)
 	_parking_poses[vehicle] = pose
@@ -165,20 +181,17 @@ func _spawn_pedestrian(speaker: String, greeting: String, path: PackedVector3Arr
 	return pedestrian
 
 
-func _populate_streets() -> void:
+func _populate_streets(parking: Array[Transform3D]) -> void:
 	var arrival := world.arrival_position()
 	var west := Vector3.FORWARD.rotated(Vector3.UP, world.arrival_yaw())
 	var church_side := Vector3(west.z, 0.0, -west.x)
 	_loan_bike = Fleet.create(&"commuter")
 	var stops: Array[Vehicle] = [_loan_bike, Fleet.create(&"sedan"), Fleet.create(&"electric_scooter")]
 	for index in stops.size():
-		var spot := arrival + west * (13.0 + 7.0 * index) + church_side * 2.85
-		spot.y = 0.55
-		_add_practice_vehicle(stops[index], "StopVehicle%d" % index, spot, index == 0, world.arrival_yaw())
+		_add_practice_vehicle(stops[index], "StopVehicle%d" % index, parking[Parking.FIRST_YARD_COUNT + index], index == 0)
 	var yard_kinds: Array[StringName] = [&"classic", &"roadster", &"scrambler", &"mpv", &"suv"]
 	for index in yard_kinds.size():
-		_add_practice_vehicle(Fleet.create(yard_kinds[index]), "YardVehicle%d" % index,
-			Vector3(-47.0 + 7.3 * index, 0.55, 9.0), false)
+		_add_practice_vehicle(Fleet.create(yard_kinds[index]), "YardVehicle%d" % index, parking[4 + index], false)
 	var names := ["Anjali", "Sameer", "Farah", "Nitin", "Leena", "Iqbal"]
 	var colours := [Color("8b513c"), Color("587e77"), Color("6c536f"), Color("a5744f"), Color("809262"), Color("62788d")]
 	for index in (4 if OS.has_feature("mobile") else names.size()):
@@ -188,40 +201,38 @@ func _populate_streets() -> void:
 		start.y = World.SIDEWALK_HEIGHT
 		var end := start + west * 15.0
 		var path := PackedVector3Array([end, start] if index % 3 == 1 else [start, end])
-		_spawn_pedestrian(names[index], "The Hill Road job board is west of here.", path,
+		var walker := _spawn_pedestrian(names[index], "The Hill Road job board is west of here.", path,
 			0.15 + floorf(float(index) * 0.5) * 0.31, colours[index], index % 2 == 1)
+		if index == 0:
+			_arrival_guide = walker
 
 
-func _add_lighting() -> void:
-	var lighting := WorldEnvironment.new()
-	lighting.environment = Environment.new()
-	var sky_material := ProceduralSkyMaterial.new()
-	sky_material.sky_top_color = Color("698ca8")
-	sky_material.sky_horizon_color = Color("c9d1c9")
-	sky_material.ground_horizon_color = sky_material.sky_horizon_color
-	sky_material.ground_bottom_color = Color("8a8578")
-	sky_material.sun_angle_max = 13.0
-	var sky := Sky.new()
-	sky.sky_material = sky_material
-	sky.radiance_size = Sky.RADIANCE_SIZE_64
-	lighting.environment.background_mode = Environment.BG_SKY
-	lighting.environment.sky = sky
-	lighting.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	lighting.environment.ambient_light_color = Color("c7d9e4")
-	lighting.environment.ambient_light_energy = 0.58
-	lighting.environment.ambient_light_sky_contribution = 0.0
-	add_child(lighting)
-	var sun := DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-46.0, -36.0, 0.0)
-	sun.light_color = Color("fff1d9")
-	sun.light_energy = 1.08
-	sun.shadow_enabled = not OS.has_feature("mobile")
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_split_1 = 0.20
-	sun.directional_shadow_max_distance = 68.0
-	sun.directional_shadow_fade_start = 0.82
-	add_child(sun)
+func _update_arrival_intro(delta: float) -> void:
+	var skip := _arrival_intro.elapsed >= 0.25 and (
+		_interact_requested or Input.is_action_just_pressed(&"interact"))
+	_interact_requested = false
+	_reset_requested = false
+	if skip or _arrival_intro.advance(delta, camera):
+		finish_arrival()
+	else:
+		hud.update_display(false, 0.0, "Skip intro", "", true, _arrival_intro.subtitle())
+
+
+func finish_arrival() -> void:
+	if _arrival_intro == null:
+		return
+	_arrival_intro.hide()
+	_arrival_intro.queue_free()
+	_arrival_intro = null
+	_yaw = world.arrival_yaw()
+	_pitch = 0.32
+	player.global_position = world.arrival_position()
+	player.rotation.y = _yaw
+	player.set_on_foot(true)
+	hud.set_arrival_intro(false)
+	career.record_arrival()
+	_show_message("Talk to Anjali near the parked bikes or head to the Hill Road job board.", 5.0)
+	_update_camera(0.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -241,6 +252,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _arrival_intro != null:
+		_update_arrival_intro(delta)
+		return
 	if not _resolve_recovery(delta) and (_interact_requested or Input.is_action_just_pressed(&"interact")):
 		_try_interact()
 	_reset_requested = false
@@ -252,7 +266,7 @@ func _physics_process(delta: float) -> void:
 		active_vehicle.set_controls(-intent.y, intent.x, Input.is_action_pressed(&"brake") or hud.brake_held)
 	else:
 		player.direction = Basis(Vector3.UP, _yaw) * Vector3(intent.x, 0.0, intent.y)
-		player.running = Input.is_action_pressed(&"run")
+		player.running = Input.is_action_pressed(&"run") or hud.run_held
 	var look := Input.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 	if look != Vector2.ZERO:
 		_apply_look(look * GAMEPAD_LOOK_SPEED * delta)
@@ -277,6 +291,8 @@ func _physics_process(delta: float) -> void:
 				prompt = "Talk to %s" % nearby.display_name
 				if nearby == _mira and career != null and career.has_lead():
 					prompt = "Ask Mira about the parcel"
+				elif nearby == _arrival_guide and _first_arrival and not _arrival_guided:
+					prompt = "Ask Anjali about work"
 			elif nearby is Vehicle:
 				prompt = _entry_prompt(nearby)
 		can_interact = not prompt.is_empty()
@@ -288,6 +304,9 @@ func _physics_process(delta: float) -> void:
 		objective = "Find work at the Hill Road job board · %d m" % roundi(_actor_position().distance_to(delivery.target()))
 	if objective.is_empty() and career != null and career.has_lead():
 		objective = "Talk to Mira on Hill Road · %d m" % roundi(_actor_position().distance_to(_mira.global_position))
+	var edge_notice := world.district_edges.notice_at(_actor_position())
+	if not edge_notice.is_empty():
+		objective = edge_notice if objective.is_empty() else objective + "\n" + edge_notice
 	var forward := -active_vehicle.global_basis.z if driving else -player.global_basis.z
 	var condition := active_vehicle.condition_percent() if driving else -1
 	hud.update_live_map(_actor_position(), forward, story_target())
@@ -370,17 +389,25 @@ func _on_vehicle_impact(vehicle: Vehicle, collider: Object, speed: float) -> voi
 
 func _resolve_recovery(delta: float) -> bool:
 	var requested := _reset_requested or Input.is_action_just_pressed(&"recover")
-	var fell := _actor_position().y < -8.0
-	if career == null:
-		if requested or fell:
-			_reset_run()
-		return requested or fell
-	if career.health <= 0.0 or fell:
+	if career != null and career.health <= 0.0:
 		_reset_run(&"clinic")
 		return true
 	if requested:
-		_reset_run(&"detained" if career.wanted > 0 else &"")
+		_reset_run(&"detained" if career != null and career.wanted > 0 else &"")
 		return true
+	var controlled_body: CharacterBody3D = active_vehicle if driving else player
+	var safe := world.district_edges.recovery_pose(controlled_body, Transform3D(Basis.IDENTITY, PLAYER_START))
+	if safe.origin.is_finite():
+		if driving:
+			active_vehicle.recover_to(safe)
+		else:
+			player.global_transform = safe
+			player.reset_physics_interpolation()
+			player.set_on_foot(true)
+		_show_message("Returned to nearby solid ground.")
+		return true
+	if career == null:
+		return false
 	var previous_alert := career.wanted
 	var patrol := traffic.police_vehicle()
 	var seen := false
@@ -443,13 +470,14 @@ func _entry_prompt(vehicle: Vehicle) -> String:
 	return "Unlock the %s" % label if _vehicle_keys.get(vehicle, false) else "Steal the %s" % label
 
 
-func _theft_seen(vehicle: Vehicle) -> bool:
+func _witness_reports_theft(vehicle: Vehicle) -> bool:
 	var near := vehicle.global_position + Vector3.UP * 0.6
 	for pedestrian in pedestrians:
 		if pedestrian.is_reacting() or pedestrian.global_position.distance_squared_to(near) > WITNESS_RANGE ** 2:
 			continue
 		var sight := PhysicsRayQueryParameters3D.create(pedestrian.global_position + Vector3.UP * 1.4, near, 1)
 		if get_world_3d().direct_space_state.intersect_ray(sight).is_empty():
+			pedestrian.hurry_for(4.0)
 			return true
 	return false
 
@@ -529,6 +557,10 @@ func _try_interact() -> void:
 		if target == _mira and career != null and career.has_lead():
 			target.begin_conversation(player.global_position, 8.0)
 			_show_message(MIRA_LEAD if career.record_lead() else "Mira’s lead could not be saved. Try again.", 8.0)
+		elif target == _arrival_guide and _first_arrival and not _arrival_guided:
+			_arrival_guided = true
+			target.begin_conversation(player.global_position, 7.0)
+			_show_message("Anjali: Mira left the loan bike for you. Head west to the job board and ask about the print-shop delivery.", 7.0)
 		else:
 			target.begin_conversation(player.global_position, TALK_TIME)
 			_show_message("%s: %s" % [target.display_name, target.greeting], TALK_TIME)
@@ -555,7 +587,7 @@ func _try_interact() -> void:
 	if first_entry:
 		if with_key:
 			_show_message("Unlocked with a loan key.")
-		elif career != null and (occupied or _theft_seen(vehicle)):
+		elif career != null and (occupied or _witness_reports_theft(vehicle)):
 			career.report_theft(patrol)
 			_show_message("Theft reported · Police alert %d" % career.wanted, 3.0)
 		else:
@@ -632,6 +664,7 @@ func _reset_run(reason: StringName = &"") -> void:
 	_pitch = 0.32
 	_manual_look_time = 0.0
 	traffic.reset()
+	world.district_edges.clear_checkpoint()
 	var message := delivery.on_recovery() if delivery != null else ""
 	if career != null and reason != &"":
 		var treatment := reason == &"clinic"

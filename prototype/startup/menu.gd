@@ -459,7 +459,7 @@ func _show_help() -> void:
 	_focus.call_deferred(_back_button())
 	if Controls.uses_touch_ui():
 		_control_group("On foot", {
-			"Left stick": "Walk",
+			"Left stick": "Walk near the center, run at the outer edge",
 			"Drag the right side": "Look around",
 			"Jump": "Jump",
 			"Interact": "Talk, enter or mount",
@@ -476,7 +476,7 @@ func _show_help() -> void:
 		var movement := Controls.direction_label(Controls.MOVE_ACTIONS, keys)
 		_control_group("On foot", {
 			movement: "Walk",
-			Controls.label("run", keys): "Jog while moving",
+			Controls.label("run", keys): "Run while moving",
 			Controls.label("brake", keys): "Jump",
 			"Mouse": "Look around",
 			Controls.label("interact", keys): "Talk, enter or mount",
@@ -493,7 +493,7 @@ func _show_help() -> void:
 		_control_group("Gamepad", {
 			Controls.direction_label(Controls.MOVE_ACTIONS, pad): "Walk, steer and control speed",
 			Controls.direction_label(Controls.LOOK_ACTIONS, pad): "Look around",
-			Controls.label("run", pad): "Jog while moving",
+			Controls.label("run", pad): "Run while moving",
 			Controls.label("interact", pad): "Talk, enter, mount or exit",
 			Controls.label("brake", pad): "Jump on foot / brake while driving",
 			Controls.label("recover", pad): "Return to the start",

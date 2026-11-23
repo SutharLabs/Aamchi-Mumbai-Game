@@ -119,6 +119,7 @@ func _run() -> void:
 	if app.gameplay == null:
 		quit(1)
 		return
+	app.gameplay.finish_arrival()
 	_expect(not Input.emulate_mouse_from_touch, "touch emulation disabled in play")
 	_expect(is_equal_approx(app.gameplay.look_sensitivity, 1.35), "saved sensitivity reaches game")
 	var yaw: float = app.gameplay._yaw

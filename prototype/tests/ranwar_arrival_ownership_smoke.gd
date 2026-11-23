@@ -26,6 +26,7 @@ func _run() -> void:
 	_app.mission_progress_directory = _directory
 	root.add_child(_app)
 	_app.menu.play_requested.emit()
+	_app.gameplay.finish_arrival()
 	await _frames(9)
 	var game: Node3D = _app.gameplay
 	var stop: Vector3 = game.world.arrival_position()
@@ -73,9 +74,10 @@ func _run() -> void:
 		_expect(not game.driving and not occupant.is_visible_in_tree() and game.player.visible,
 			"%s exit restores only the walking character" % parked.vehicle_label)
 
+	game.career.clear_alert()
 	var street: Vehicle = game.traffic.interaction_vehicles()[0]
 	street.set_physics_process(false)
-	street.reset_to(Transform3D(Basis.IDENTITY, Vector3(-38.0, 0.55, -18.0)))
+	street.reset_to(Transform3D(Basis.IDENTITY, Vector3(-38.0, 0.55, 4.0)))
 	await _place_alongside(street)
 	await _interact()
 	_expect(game.active_vehicle == street and not game.traffic.interaction_vehicles().has(street),

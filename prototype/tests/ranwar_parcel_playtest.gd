@@ -224,7 +224,7 @@ func _check_vehicle_handoffs(pickup: Vector3) -> void:
 	var pickup_basis := Basis(Vector3.UP, atan2(-direction.x, -direction.z))
 	for vehicle: Node3D in [_game.car, _game.rickshaw, _game.motorcycle, _game.scooter]:
 		var parked := vehicle.global_transform
-		await _place_player(parked.origin + Vector3.BACK * 2.45)
+		await _place_player(parked.origin + parked.basis.x * 2.25)
 		await _interact()
 		var entered: bool = _game.active_vehicle == vehicle
 		_expect(entered, "Interacting takes control of the %s" % vehicle.vehicle_label)
@@ -321,6 +321,7 @@ func _play() -> void:
 	_press("PlayButton")
 	await _settle_menu()
 	_game = _app.gameplay
+	_game.finish_arrival()
 	await _frames(12)
 
 

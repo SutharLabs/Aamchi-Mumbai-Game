@@ -69,6 +69,23 @@ static func add_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector
 		surface.add_vertex(point)
 
 
+static func add_box(surface: SurfaceTool, center: Vector3, size: Vector3, color: Color,
+		finish: int = PLAIN, axes: Basis = Basis.IDENTITY) -> void:
+	var half := size * 0.5
+	var a := center + axes * Vector3(-half.x, -half.y, -half.z)
+	var b := center + axes * Vector3(half.x, -half.y, -half.z)
+	var c := center + axes * Vector3(half.x, half.y, -half.z)
+	var d := center + axes * Vector3(-half.x, half.y, -half.z)
+	var e := center + axes * Vector3(-half.x, -half.y, half.z)
+	var f := center + axes * Vector3(half.x, -half.y, half.z)
+	var g := center + axes * Vector3(half.x, half.y, half.z)
+	var h := center + axes * Vector3(-half.x, half.y, half.z)
+	for face: Array in [[a, b, c, d], [f, e, h, g], [b, f, g, c],
+			[e, a, d, h], [e, f, b, a], [d, c, g, h]]:
+		add_triangle(surface, face[0], face[1], face[2], color, finish)
+		add_triangle(surface, face[0], face[2], face[3], color, finish)
+
+
 static func _apply_tile(material: StandardMaterial3D, albedo: Texture2D, width: float,
 		normal: Texture2D = null, strength: float = 0.0) -> void:
 	material.albedo_texture = albedo

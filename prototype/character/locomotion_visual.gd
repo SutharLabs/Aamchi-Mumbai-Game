@@ -2,10 +2,13 @@ extends "res://character/player_character.gd"
 
 const MOTIONS := preload("res://character/motion/phase1_motions.tres")
 const FALLS := preload("res://character/motion/cmu_falls.tres")
+const CAPTURED_RUN := preload("res://character/motion/cmu_run.tres")
 const WALK_REFERENCE_SPEED := 0.893
-const RUN_REFERENCE_SPEED := 1.743
+const RUN_REFERENCE_SPEED := 2.937
 const RUN_THRESHOLD := 1.44
+const RUN_EXIT_THRESHOLD := 1.28
 
+static var _ground_motions: AnimationLibrary
 var animation_player := AnimationPlayer.new()
 
 
@@ -14,7 +17,11 @@ func _ready() -> void:
 	animation_player.name = "Locomotion"
 	animation_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	add_child(animation_player)
-	animation_player.add_animation_library(&"", MOTIONS)
+	if _ground_motions == null:
+		_ground_motions = MOTIONS.duplicate() as AnimationLibrary
+		_ground_motions.remove_animation(&"run")
+		_ground_motions.add_animation(&"run", CAPTURED_RUN)
+	animation_player.add_animation_library(&"", _ground_motions)
 	animation_player.add_animation_library(&"impacts", FALLS)
 	animation_player.play(&"idle")
 
@@ -22,7 +29,8 @@ func _ready() -> void:
 func set_ground_speed(speed: float) -> void:
 	var clip := &"idle"
 	var playback_rate := 1.0
-	if speed >= RUN_THRESHOLD:
+	var was_running := animation_player.current_animation == &"run"
+	if speed >= (RUN_EXIT_THRESHOLD if was_running else RUN_THRESHOLD):
 		clip = &"run"
 		playback_rate = clampf(speed / RUN_REFERENCE_SPEED, 0.55, 1.35)
 	elif speed > 0.18:
@@ -30,7 +38,7 @@ func set_ground_speed(speed: float) -> void:
 		playback_rate = clampf(speed / WALK_REFERENCE_SPEED, 0.35, 1.4)
 	animation_player.speed_scale = playback_rate
 	if animation_player.current_animation != clip:
-		animation_player.play(clip, 0.16)
+		animation_player.play(clip, 0.10 if clip == &"run" else 0.16)
 
 
 func play_action(clip: StringName, duration: float, blend: float) -> void:

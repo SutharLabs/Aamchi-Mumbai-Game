@@ -10,6 +10,8 @@
 
 The converter trims the takes, retargets their joints to the prototype rig, and samples at 30 Hz from the 60 Hz captures. It removes horizontal root travel and the capture heading, retains vertical pelvis motion, calibrates shoe height and closes the loop seams. Runtime playback uses Godot's `AnimationPlayer` and targets the rig's `Skeleton3D` bone paths. Character movement and collision use the gameplay controller.
 
+`cmu_run.tres` supplies the active running clip. It uses Subject 35 Trial 18, one-based frames 60–152 at 120 Hz, with a 0.767 s cycle and a retargeted reference speed of 2.937 m/s. The converter normalizes heading, removes horizontal pelvis travel, closes the loop seam, aligns sole height and samples at 30 Hz. The game selects the clip using actual horizontal travel speed, including when a pedestrian briefly hurries. Use Shift or gamepad X with movement, or push the touch stick to its outer edge, to run. [Subject 35 recordings](https://mocap.cs.cmu.edu/search.php?subjectnumber=35) · [CMU attribution](CMU-ATTRIBUTION.txt)
+
 ## Captured jump and impact falls
 
 Three one-shot clips use a single hop from `TwoFootJump_FW.bvh`. Takeoff uses source frames 710–720, air uses 720–736, and landing uses 736–748, with zero-based inclusive frames. The converter keeps the recorded leg and torso motion while removing travel and aligning the soles to the controller. The walking capsule supplies takeoff, flight and landing. Space or gamepad LB jumps on foot and brakes while driving. The touch button switches between Jump and Brake. Existing control overrides apply in both contexts. [100STYLE attribution](100STYLE-ATTRIBUTION.txt)
@@ -18,11 +20,12 @@ Three one-shot clips use a single hop from `TwoFootJump_FW.bvh`. Takeoff uses so
 
 ## Regenerate
 
-Download the three original Neutral BVH files and `TwoFootJump_FW.bvh` from the dataset page. Download `90.asf`, `90_16.amc` and `90_17.amc` from CMU's Subject 90 page. Put the original files in `.toolchain/mocap-sources` with their filenames intact. From the project root, run the two converters.
+Download the three original Neutral BVH files and `TwoFootJump_FW.bvh` from the dataset page. Download `90.asf`, `90_16.amc` and `90_17.amc` from CMU's Subject 90 page, and `35.asf` and `35_18.amc` from Subject 35. Put the original files in `.toolchain/mocap-sources` with their filenames intact. Run the converters from the project root.
 
 ```powershell
 python tools/mocap/retarget_100style.py .toolchain/mocap-sources
 python tools/mocap/retarget_cmu_impacts.py .toolchain/mocap-sources
+python tools/mocap/retarget_cmu_run.py .toolchain/mocap-sources
 ```
 
 The converter verifies the source files against their reviewed SHA-256 hashes. The game uses the small generated library in this folder. [Converter](../../../tools/mocap/retarget_100style.py)

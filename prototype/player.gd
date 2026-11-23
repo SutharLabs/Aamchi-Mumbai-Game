@@ -3,7 +3,7 @@ extends CharacterBody3D
 const Visual := preload("res://character/locomotion_visual.gd")
 const ImpactReaction := preload("res://character/vehicle_impact_reaction.gd")
 const WALK_SPEED := 1.12
-const RUN_SPEED := 2.18
+const RUN_SPEED := 3.05
 const BODY_HEIGHT := 1.68
 const BODY_RADIUS := 0.31
 const STREET_SOLIDS := 1 | 2 | 4
