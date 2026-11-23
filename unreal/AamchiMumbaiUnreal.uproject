@@ -2,7 +2,7 @@
   "FileVersion": 3,
   "EngineAssociation": "5.8",
   "Category": "Games",
-  "Description": "Aamchi Mumbai Game - Bandra-Worli Sea Link visual pilot",
+  "Description": "Aamchi Mumbai Game - Ranwar third-person development and Bandra-Worli Sea Link study",
   "Modules": [
     {
       "Name": "MumbaiPilot",
@@ -13,6 +13,11 @@
   "Plugins": [
     {
       "Name": "PythonScriptPlugin",
+      "Enabled": true,
+      "TargetAllowList": ["Editor"]
+    },
+    {
+      "Name": "EditorScriptingUtilities",
       "Enabled": true,
       "TargetAllowList": ["Editor"]
     }

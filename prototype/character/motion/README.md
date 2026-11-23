@@ -10,7 +10,7 @@
 
 The converter trims the takes, retargets their joints to the prototype rig, and samples at 30 Hz from the 60 Hz captures. It removes horizontal root travel and the capture heading, retains vertical pelvis motion, calibrates shoe height and closes the loop seams. Runtime playback uses Godot's `AnimationPlayer` and targets the rig's `Skeleton3D` bone paths. Character movement and collision use the gameplay controller.
 
-`cmu_run.tres` supplies the active running clip. It uses Subject 35 Trial 18, one-based frames 60–152 at 120 Hz, with a 0.767 s cycle and a retargeted reference speed of 2.937 m/s. The converter normalizes heading, removes horizontal pelvis travel, closes the loop seam, aligns sole height and samples at 30 Hz. The game selects the clip using actual horizontal travel speed, including when a pedestrian briefly hurries. Use Shift or gamepad X with movement, or push the touch stick to its outer edge, to run. [Subject 35 recordings](https://mocap.cs.cmu.edu/search.php?subjectnumber=35) · [CMU attribution](CMU-ATTRIBUTION.txt)
+`cmu_run.tres` supplies the active running clip. It uses Subject 35 Trial 18, one-based frames 60–152 at 120 Hz, with a 0.767 s cycle and a retargeted reference speed of 2.937 m/s. The converter normalizes heading, matches the capture's angled leg rest axes to the game's straighter rig, removes forward root travel and closes the 30 Hz loop. It bakes the stance against the shoe sole and matches planted forefoot travel to the controller's speed. The in-place animation retains the captured heel roll and the airborne stride. The game selects the clip using actual horizontal travel speed, including when a pedestrian briefly hurries. Use Shift or gamepad X with movement, or push the touch stick to its outer edge, to run. [Subject 35 recordings](https://mocap.cs.cmu.edu/search.php?subjectnumber=35) · [CMU attribution](CMU-ATTRIBUTION.txt)
 
 ## Captured jump and impact falls
 
@@ -29,3 +29,5 @@ python tools/mocap/retarget_cmu_run.py .toolchain/mocap-sources
 ```
 
 The converter verifies the source files against their reviewed SHA-256 hashes. The game uses the small generated library in this folder. [Converter](../../../tools/mocap/retarget_100style.py)
+
+The [run contact smoke test](../../tests/run_foot_contact_smoke.gd) samples the game rig and weighted chappal sole vertices at 120 Hz. It checks ankle separation, grounded support, the airborne phase, planted forefoot motion and speed-dependent cycle timing. Run it with `godot --headless --path prototype --script res://tests/run_foot_contact_smoke.gd` from the repository root.

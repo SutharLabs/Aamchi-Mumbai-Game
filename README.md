@@ -15,6 +15,8 @@ The original project is source-available. You may inspect the public code and ru
 
 ## Start here
 
+New development targets **Unreal Engine 5.8**. The Ranwar migration includes the mapped neighborhood and the original Omkar character and motions. The remote workflow and first native test are documented in [Remote Unreal development](unreal/REMOTE_DEVELOPMENT.md).
+
 Open `prototype/project.godot` in Godot **4.7.2** and press **F5** to launch the title menu from source. The playtest guide covers controls and export commands. [Godot project](prototype/project.godot) · [Playtest guide](prototype/README.md)
 
 Run `.\tools\make-dev.ps1` to export and validate the local Windows build at `builds/local/Aamchi Mumbai Game.exe`. Use the same path for each playtest. [Development builds and releases](docs/BUILD_WORKFLOW.md)
@@ -79,7 +81,7 @@ Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://gith
 
 The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The Windows playtest opens with a Marathi-branded title menu, local profiles, settings and credits. It has four drivable vehicles and uses captured locomotion for the player and two pedestrians. The release schedule will be re-estimated after both-platform testing with the provisional ten human hours per week. [Playtest guide](prototype/README.md)
 
-**Godot 4.7.2 standard, Compatibility rendering and typed GDScript** are selected for implementation. The first development release **0.0.1** has Windows x64 and signed Android ARM64 builds. The 8 GB Windows 10 device check and detailed performance measurements on both target devices remain open. [Technology selection](research/TECH_STACK_SELECTION.md) · [Playtest guide](prototype/README.md)
+The current playable prototype uses **Godot 4.7.2 standard, Compatibility rendering and typed GDScript**. Development release **0.0.1** has Windows x64 and signed Android ARM64 builds. Unreal's compiled gameplay and target-device performance still need verification. [Prototype technology selection](research/TECH_STACK_SELECTION.md) · [Unreal development](unreal/README.md)
 
 The first procedural Blender batch **completed all eleven jobs**. All **77 generated files are collected and match accepted checkpoint hashes**, recorded at **20 November 2026, 06:57:50 IST** in the [collection receipt](reports/remote/epyc24/asset-collection-2026-11-20.json). [Preliminary review](reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first; local architectural, cultural, rig, collision and game checks remain open. The [handoff](docs/OVERNIGHT_HANDOFF.md) preserves earlier observations. No new batch was started.
 

@@ -32,7 +32,7 @@ func set_ground_speed(speed: float) -> void:
 	var was_running := animation_player.current_animation == &"run"
 	if speed >= (RUN_EXIT_THRESHOLD if was_running else RUN_THRESHOLD):
 		clip = &"run"
-		playback_rate = clampf(speed / RUN_REFERENCE_SPEED, 0.55, 1.35)
+		playback_rate = clampf(speed / RUN_REFERENCE_SPEED, 0.40, 1.35)
 	elif speed > 0.18:
 		clip = &"walk"
 		playback_rate = clampf(speed / WALK_REFERENCE_SPEED, 0.35, 1.4)

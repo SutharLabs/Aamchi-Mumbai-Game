@@ -1,6 +1,10 @@
-# Aamchi Mumbai Game Unreal pilot
+# Aamchi Mumbai Game in Unreal
 
-The pilot starts with the 600 m Bandra channel section of the Bandra–Worli Sea Link. It includes a Windows first-person walking controller and an editor script that imports the bridge, creates carriageway collision, places a player start, and lights an isolated daylight level. The bridge uses original geometry informed by engineering references. The surrounding city, traffic, missions and Omkar's character belong to the existing Ranwar playtest.
+The next game slice targets Unreal Engine 5.8. The native third-person Ranwar level starts at St Peter's BEST stop and uses the mapped street loop, the two walk-in shops, and the original Omkar rig with corrected run animation. [Remote development and editor setup](REMOTE_DEVELOPMENT.md) · [Ranwar street exchange](ContentSource/RANWAR_STREET.md)
+
+## Separate Sea Link study
+
+The first Unreal study uses the 600 m Bandra channel section of the Bandra–Worli Sea Link. It has a first-person walking controller and a separate editor script that imports the bridge, creates carriageway collision and lights an isolated daylight level. The bridge uses original geometry informed by engineering references.
 
 The span uses the operator's 50 + 250 + 250 + 50 m arrangement, twin four-lane carriageways and a 20 m navigation clearance. The engineering paper informed the paired pylons and stay cables. The model treats the deck as straight and level, uses authored finish details, and omits the connecting approach roads. The walking route is a closed pilot environment. [MSRDC bridge summary](https://msrdc.in/Site/Common/ProjectListDetails.aspx?ID=66&MainId=18) · [MSRDC RFP Schedule A](https://msrdc.in/Site/Upload/GR/3_RGSL%20RFP%20Vol%20III%20-%20Schedule%20-18-10-2013%20R8.pdf) · [Bandra cable-stayed bridge engineering paper](https://doi.org/10.2749/222137813808627587)
 

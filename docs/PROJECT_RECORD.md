@@ -94,6 +94,7 @@ The status column distinguishes a user choice, an implemented operation and an u
 | DEC-21 | Setup status | GitHub baseline and export setup resumed on 22 November | GitHub source rebaselined. The portable Godot editor and both debug presets are exercised. Device acceptance remains open. |
 | DEC-22 | First development release and Android test phone | **0.0.1** on Windows and Android. The user will install and test on a **Redmi Note 9 Pro Max (India)**. | Xiaomi lists Snapdragon 720G, Adreno 618 and 6/8 GB RAM variants. The handset's installed Android/MIUI and RAM variant need to be recorded during the test. [Xiaomi India specifications](https://www.mi.com/in/redmi-note-9-pro-max/specs) |
 | DEC-23 | Phase 1 verification timing | Defer the outstanding Phase 1 checks while Phase 2 continues. The user reports the game runs on the current Windows machine and an Android 12 phone. | Record the quick play report and keep the minimum-device, detailed input/performance and fresh-player checklist for later. [Phase tracker](PHASE_PROGRESS.md) |
+| DEC-24 | Engine migration | Unreal Engine 5.8 for new development. Use epyc24 for remote development and Blender work, with xeon32 as a second modeling node. | The licensed Linux editor install and native acceptance are open. Windows and Android performance need separate checks with the Unreal build. [Remote development](../unreal/REMOTE_DEVELOPMENT.md) |
 
 ## Evidence inventory
 
