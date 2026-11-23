@@ -15,10 +15,10 @@ The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profil
 | **Mouse** | Look around. |
 | **Esc** | Pause or resume. Return from a menu page to the preceding menu. |
 | **E** | Talk to a nearby pedestrian or get into the nearest vehicle. Stop and press again to exit a vehicle. |
-| **Space** | Brake while driving. |
+| **Space** | Jump on foot or brake while driving. |
 | **R** | Return on foot and reset the vehicles and pedestrians. |
-| Windows gamepad | Left stick to move or drive, right stick to look, X to jog, A to interact, LB to brake, Y to reset, Start to pause and B to go back. |
-| Touch controls | Walk or drive with the left stick, drag the right side to look, and use Interact, Brake, Reset and Pause. |
+| Windows gamepad | Left stick to move or drive, right stick to look, X to jog, A to interact, LB to jump or brake, Y to reset, Start to pause and B to go back. |
+| Touch controls | Walk or drive with the left stick and drag the right side to look. On foot the action button reads Jump, and while driving it reads Brake. Interact, Reset and Pause remain available. |
 
 To follow the ambient traffic circuit, take western Waroda Road from the start toward Veronica. Continue on eastern Waroda to Chapel, take St Peter's Road to Hill Road, then follow Hill Road past the church back toward the start. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
@@ -30,7 +30,9 @@ To try the curb crossing, drive slowly across the raised west-side curb on Hill 
 
 At walking speed, check the asphalt, concrete, façades, roofs and timber around the Ranwar loop and Nagrana Lane. The Windows scene uses a daylight sky and nearby sun shadows. Open the world notes for the material sources and placement. [Ranwar world and texture sources](world/README.md)
 
-Use the handling yard’s impact wall to compare a slow tap with a faster crash in the hatchback. A hard impact can dent the affected bodywork, break a lamp and lower the vehicle’s condition. Damage affects handling until **Recover**. Moderate vehicle contacts can stagger a pedestrian, while harder impacts can knock them down in the contact direction. Their collision capsule follows the posture and they get up when space is clear. [Vehicle damage details](vehicle/README.md)
+On Hill Road, look for the red paan kiosk beside **Grocery & Daily Needs**. At the Hill Road end of Nagrana Lane, **Meena at 82 Hill Road** stands across the road. Meena’s footprint and level count come from the saved OpenStreetMap extract. Its height per floor and façade details are authored estimates. [Kiosk provenance](world/props/SOURCES.md) · [Site controls and capture checklist](../docs/RANWAR_REFERENCE_CHECKLIST.md)
+
+Use the handling yard’s impact wall to compare a slow tap with a faster crash in the hatchback. A hard impact can dent the affected bodywork, break a lamp and lower the vehicle’s condition. Damage affects handling until **Recover**. Moderate vehicle contacts can stagger a pedestrian. Harder impacts select a recorded forward or backward fall by contact direction, while the collision capsule controls movement and ground contact. Jumping uses a recorded takeoff, flight and landing, with the capsule preserving ceiling and ground collisions. [Vehicle damage details](vehicle/README.md) · [Motion capture and sources](character/motion/README.md)
 
 ## Ranwar Parcel Run
 
@@ -54,6 +56,7 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 6200 --script res://tests/ranwar_parcel_playtest.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1800 --script res://tests/vehicle_damage_smoke.gd
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1900 --script res://tests/pedestrian_impact_smoke.gd
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 1300 --script res://tests/mocap_actions_smoke.gd -- --touch-preview
 ```
 
 The startup smoke exercises menu navigation, profile reload, settings, Help, credits, pause and the Ranwar map. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. The parcel playtest uses isolated profiles and exercises the title-to-delivery loop, checkpoint reload and the shortcut in both directions. `--touch-preview` enables the overlay on a desktop build. When preparing an explicitly requested release, include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices. [Project license](../LICENSE)

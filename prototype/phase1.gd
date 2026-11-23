@@ -95,6 +95,7 @@ func _ready() -> void:
 	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
 	hud.interact_pressed.connect(_request_interact)
+	hud.jump_pressed.connect(player.request_jump)
 	hud.reset_pressed.connect(_request_reset)
 	hud.pause_pressed.connect(func() -> void: pause_requested.emit())
 	hud.look_dragged.connect(_apply_look)
@@ -208,7 +209,7 @@ func _physics_process(delta: float) -> void:
 		if speed <= EXIT_SPEED:
 			prompt = "Dismount" if active_vehicle.is_two_wheeler else "Get out"
 			can_interact = true
-	elif not player.is_reacting():
+	elif player.can_interact():
 		prompt = _special_interaction()
 		if prompt.is_empty():
 			var nearby := _nearby_interaction()
@@ -412,7 +413,7 @@ func _try_interact() -> void:
 		active_vehicle = null
 		_message_time = 0.0
 		return
-	if player.is_reacting():
+	if not player.can_interact():
 		return
 	if delivery != null and not delivery.prompt_for(player.global_position).is_empty():
 		var message := delivery.interact()

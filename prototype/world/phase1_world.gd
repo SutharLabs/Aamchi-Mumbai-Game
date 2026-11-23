@@ -7,6 +7,8 @@ const RanwarLaneFinish := preload("res://world/ranwar_lane_finish.gd")
 const RanwarSurfaceMaterials := preload("res://world/ranwar_surface_materials.gd")
 const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
+const MeenaHillRoad := preload("res://world/meena_hill_road.gd")
+const PAAN_SHOP := preload("res://world/props/indian_street_shop.glb")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
 const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
 const ST_PETERS_LOT := Rect2(22.6, -375.3, 31.0, 25.4)
@@ -14,6 +16,7 @@ const SHOP_LABELS: Array[String] = [
 	"MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY",
 	"LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"
 ]
+const GROCERY_FRONTAGE := 2
 
 const ORIGIN := Vector2(72.8260536, 19.0546940)
 const EAST_METERS := 105220.0
@@ -47,6 +50,7 @@ var _gully := PackedVector3Array()
 var _lots: Array[Vector3] = []
 var _materials: Dictionary = {}
 var _visual_chunks := RanwarVisualChunks.new()
+var _meena_lot := Rect2()
 
 
 func _ready() -> void:
@@ -70,6 +74,7 @@ func _ready() -> void:
 	_build_gully()
 	_build_recovery_yard()
 	_build_st_peters()
+	_build_meena_hill_road()
 	_visual_chunks.name = "BackgroundFrontageVisuals"
 	add_child(_visual_chunks)
 	_build_frontages()
@@ -294,6 +299,19 @@ func _build_st_peters() -> void:
 	add_child(church)
 
 
+func _build_meena_hill_road() -> void:
+	var footprint := PackedVector3Array()
+	for coordinate: Vector2 in MeenaHillRoad.FOOTPRINT_LON_LAT:
+		var point := _project(coordinate)
+		var ground := Vector2(point.x, point.z)
+		if footprint.is_empty():
+			_meena_lot.position = ground
+		else:
+			_meena_lot = _meena_lot.expand(ground)
+		footprint.append(point)
+	add_child(MeenaHillRoad.create(footprint, _materials["frontage_kit"]))
+
+
 func _build_frontages() -> void:
 	var palette: Array[String] = ["cream","ochre","mint","rose","blue"]
 	var building_count := 0
@@ -313,8 +331,9 @@ func _build_frontages() -> void:
 					if not _is_free_lot(point,8.0):
 						continue
 					_lots.append(point)
-					# Preserve subsequent frontage placement and variant order at this reserved lot.
-					if ST_PETERS_LOT.grow(10.0).has_point(Vector2(point.x, point.z)):
+					# Preserve subsequent frontage placement and variant order at reserved landmark lots.
+					var lot_center := Vector2(point.x, point.z)
+					if ST_PETERS_LOT.grow(10.0).has_point(lot_center) or _meena_lot.grow(7.0).has_point(lot_center):
 						building_count += 1
 						continue
 					var tall: bool = road_index == 0 and building_count % 3 == 0
@@ -368,8 +387,27 @@ func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: flo
 		_add_shop_label(body, SHOP_LABELS[variant], body.to_local(point + normal * 6.23 + Vector3.UP * 3.13), side * PI * 0.5)
 		if variant < 3:
 			_add_shop_label(body, "DIGITAL PAYMENTS", body.to_local(point + normal * 6.30 + Vector3.UP * 1.78), side * PI * 0.5, 0.009)
+		if variant == GROCERY_FRONTAGE:
+			var along_storefront := Vector3(cos(face_yaw), 0, -sin(face_yaw))
+			_add_paan_shop(point + normal * 5.1 + along_storefront * 8.6, face_yaw)
 	else:
 		RanwarFrontage.add_verandah_collisions(body, visible_frontage.transform, variant, photo_gallery)
+
+
+func _add_paan_shop(at: Vector3, yaw: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = "SketchfabPaanKiosk"
+	body.position = at + Vector3.UP * 0.9
+	body.rotation.y = yaw
+	var model := PAAN_SHOP.instantiate() as Node3D
+	var scale_factor := 0.0028
+	var shutter_yaw := Basis(Vector3.UP, -PI * 0.5)
+	var author_floor_center := Vector3(44.658, -209.430, 0.0)
+	model.transform = Transform3D(shutter_yaw.scaled(Vector3.ONE * scale_factor),
+		-(shutter_yaw * author_floor_center) * scale_factor - Vector3.UP * 0.9)
+	body.add_child(model)
+	add_child(body)
+	_add_box_collision(body, Vector3(1.7, 1.8, 2.75))
 
 
 func _add_shop_label(body: Node3D, caption: String, at: Vector3, yaw: float, pixel_size: float = 0.020) -> void:

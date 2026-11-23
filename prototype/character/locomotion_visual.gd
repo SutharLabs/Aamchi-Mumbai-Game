@@ -1,6 +1,7 @@
 extends "res://character/player_character.gd"
 
 const MOTIONS := preload("res://character/motion/phase1_motions.tres")
+const FALLS := preload("res://character/motion/cmu_falls.tres")
 const WALK_REFERENCE_SPEED := 0.893
 const RUN_REFERENCE_SPEED := 1.743
 const RUN_THRESHOLD := 1.44
@@ -14,6 +15,7 @@ func _ready() -> void:
 	animation_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	add_child(animation_player)
 	animation_player.add_animation_library(&"", MOTIONS)
+	animation_player.add_animation_library(&"impacts", FALLS)
 	animation_player.play(&"idle")
 
 
@@ -29,6 +31,29 @@ func set_ground_speed(speed: float) -> void:
 	animation_player.speed_scale = playback_rate
 	if animation_player.current_animation != clip:
 		animation_player.play(clip, 0.16)
+
+
+func play_action(clip: StringName, duration: float, blend: float) -> void:
+	animation_player.speed_scale = animation_player.get_animation(clip).length / duration
+	animation_player.play(clip, blend)
+
+
+func pose_captured_fall(clip: StringName, progress: float, settle: float) -> void:
+	animation_player.active = true
+	if animation_player.assigned_animation != clip:
+		animation_player.speed_scale = 1.0
+		animation_player.play(clip)
+		animation_player.pause()
+	animation_player.seek(animation_player.get_animation(clip).length * progress, true)
+	if settle > 0.0:
+		# Ease the captured landing's residual leg lift as the body comes to rest.
+		for side: String in ["Left", "Right"]:
+			var thigh := skeleton.find_bone(side + "UpperLeg")
+			var relief := -0.10 if side == "Left" else 0.06
+			var rested := Quaternion(Vector3.RIGHT, relief)
+			var weight := 0.85 if clip == &"impacts/fall_backward" else 0.25
+			skeleton.set_bone_pose_rotation(thigh,
+				skeleton.get_bone_pose_rotation(thigh).slerp(rested, settle * weight))
 
 
 func set_impact_brace(amount: float) -> void:

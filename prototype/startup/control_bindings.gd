@@ -13,7 +13,7 @@ const ACTION_LABELS := {
 	"look_right": "Look right",
 	"run": "Jog",
 	"interact": "Interact",
-	"brake": "Brake",
+	"brake": "Jump / brake",
 	"recover": "Reset",
 	"pause_game": "Pause",
 }

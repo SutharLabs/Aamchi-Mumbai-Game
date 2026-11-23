@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 signal interact_pressed
+signal jump_pressed
 signal reset_pressed
 signal pause_pressed
 signal look_dragged(relative: Vector2)
@@ -27,6 +28,7 @@ var _move_finger := -1
 var _look_finger := -1
 var _brake_finger := -1
 var _stick_radius := 67.0
+var _touch_driving := false
 
 
 func _ready() -> void:
@@ -122,6 +124,11 @@ func _card() -> PanelContainer:
 
 func update_display(driving: bool, speed: float, prompt: String, vehicle_label: String, can_interact: bool,
 		objective: String = "", condition: String = "") -> void:
+	if touch_enabled and driving != _touch_driving:
+		_touch_driving = driving
+		_brake_finger = -1
+		brake_held = false
+		_touch_surface.queue_redraw()
 	var speed_text := "%s  ·  %d km/h" % [vehicle_label, roundi(speed * 3.6)] if driving else ""
 	var show_key := can_interact and not touch_enabled
 	var changed := (_speed.text != speed_text or _prompt.text != prompt or _interact_key.visible != show_key
@@ -185,9 +192,12 @@ func _start_touch(index: int, point: Vector2) -> void:
 	elif _button_rect(0).has_point(point):
 		interact_pressed.emit()
 	elif _button_rect(1).has_point(point) and _brake_finger < 0:
-		_brake_finger = index
-		brake_held = true
-		_touch_surface.queue_redraw()
+		if _touch_driving:
+			_brake_finger = index
+			brake_held = true
+			_touch_surface.queue_redraw()
+		else:
+			jump_pressed.emit()
 	elif _button_rect(2).has_point(point):
 		reset_pressed.emit()
 	elif point.x > _touch_surface.size.x * 0.45 and _look_finger < 0:
@@ -229,7 +239,7 @@ func _draw_touch() -> void:
 	_touch_surface.draw_circle(center, _stick_radius, Color("12232fc4"))
 	_touch_surface.draw_arc(center, _stick_radius, 0.0, TAU, 36, Color("a3c4cab0"), 2.0, true)
 	_touch_surface.draw_circle(center + move_axis * (_stick_radius - 16.0), 22.0, Color("6dc1cdeb"))
-	var button_text := ["Interact", "Brake", "Reset"]
+	var button_text := ["Interact", "Brake" if _touch_driving else "Jump", "Reset"]
 	for index in range(button_text.size()):
 		var color := Color("466c70db") if index == 1 and brake_held else Color("14283ae0")
 		_draw_touch_button(_button_rect(index), button_text[index], color)

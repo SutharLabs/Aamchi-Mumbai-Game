@@ -7,6 +7,12 @@ const RUN_SPEED := 2.18
 const BODY_HEIGHT := 1.68
 const BODY_RADIUS := 0.31
 const STREET_SOLIDS := 1 | 2 | 4
+const GRAVITY := 18.0
+const JUMP_VELOCITY := 4.45
+const TAKEOFF_TIME := 0.08
+const LANDING_TIME := 0.15
+
+enum { GROUNDED, TAKEOFF, AIRBORNE, LANDING }
 
 var body_shape := CapsuleShape3D.new()
 var visual := Visual.new()
@@ -16,6 +22,9 @@ var running := false
 var direction := Vector3.ZERO
 var _collider := CollisionShape3D.new()
 var _impact := ImpactReaction.new()
+var _jump_stage := GROUNDED
+var _jump_seconds := 0.0
+var _jump_requested := false
 
 
 func _ready() -> void:
@@ -40,6 +49,8 @@ func set_on_foot(enabled: bool) -> void:
 	velocity = Vector3.ZERO
 	direction = Vector3.ZERO
 	running = false
+	_jump_stage = GROUNDED
+	_jump_requested = false
 	if is_reacting():
 		_impact.reset(_collider, visual)
 	visual.animation_player.active = enabled
@@ -56,19 +67,58 @@ func is_reacting() -> bool:
 	return _impact.state != ImpactReaction.UPRIGHT
 
 
+func request_jump() -> void:
+	_jump_requested = active
+
+
+func can_interact() -> bool:
+	return not is_reacting() and _jump_stage != TAKEOFF and _jump_stage != AIRBORNE
+
+
 func _physics_process(delta: float) -> void:
-	if not active or _impact.step(self, _collider, visual, delta):
+	if not active:
 		return
-	var weight := minf(delta * 18.0, 1.0)
+	var jump := _jump_requested or Input.is_action_just_pressed(&"brake")
+	_jump_requested = false
+	if _impact.step(self, _collider, visual, delta):
+		_jump_stage = GROUNDED
+		return
+	if jump and _jump_stage == GROUNDED and is_on_floor():
+		_jump_stage = TAKEOFF
+		_jump_seconds = TAKEOFF_TIME
+		visual.play_action(&"jump_takeoff", TAKEOFF_TIME, 0.05)
+	var weight := minf(delta * (7.0 if _jump_stage == AIRBORNE else 18.0), 1.0)
 	var target_speed := RUN_SPEED if running else WALK_SPEED
 	velocity.x = lerpf(velocity.x, direction.x * target_speed, weight)
 	velocity.z = lerpf(velocity.z, direction.z * target_speed, weight)
 	if is_on_floor():
 		velocity.y = 0.0
 	else:
-		velocity.y -= 18.0 * delta
+		velocity.y -= GRAVITY * delta
+	_advance_jump(delta)
 	if direction.length_squared() > 0.01:
 		rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), minf(delta * 14.0, 1.0))
 	move_and_slide()
-	var travel := get_real_velocity()
-	visual.set_ground_speed(Vector2(travel.x, travel.z).length())
+	if _jump_stage == AIRBORNE and is_on_floor():
+		_jump_stage = LANDING
+		_jump_seconds = LANDING_TIME
+		visual.play_action(&"jump_land", LANDING_TIME, 0.06)
+	if _jump_stage == GROUNDED:
+		var travel := get_real_velocity()
+		visual.set_ground_speed(Vector2(travel.x, travel.z).length())
+
+
+func _advance_jump(delta: float) -> void:
+	if _jump_stage == TAKEOFF:
+		if not is_on_floor():
+			_jump_stage = GROUNDED
+		else:
+			_jump_seconds -= delta
+			if _jump_seconds <= 0.0:
+				_jump_stage = AIRBORNE
+				velocity.y = JUMP_VELOCITY
+				visual.play_action(&"jump_air", 2.0 * JUMP_VELOCITY / GRAVITY, 0.03)
+	elif _jump_stage == LANDING:
+		_jump_seconds -= delta
+		if _jump_seconds <= 0.0:
+			_jump_stage = GROUNDED

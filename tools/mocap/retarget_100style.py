@@ -1,4 +1,4 @@
-"""Retarget the approved 100STYLE Neutral clips to Phase 1's T-pose skeleton.
+"""Retarget the approved 100STYLE locomotion and jump clips to the game rig.
 
 The BVH files are obtained separately from the publisher. This offline tool
 expects the publisher's 60 Hz Y-X-Z Euler layout, centimetres, and +Z forward.
@@ -61,6 +61,13 @@ CLIPS = (
     Clip("walk", "Neutral_FW.bvh", "2f28800baa299547c42c257d1c926172542a1e69b46a3d3e6aa0aded0e9b40f6", 524, 604),
     Clip("run", "Neutral_FR.bvh", "f46ca526027a3654c8939a0123413f6008906fb32125d5e885eafcaa830831cb", 501, 547),
 )
+JUMP_SOURCE = "TwoFootJump_FW.bvh"
+JUMP_SHA256 = "8cef86186f6536efdcbe23b2e5ac411ea9f132e05633fc05bea23a8854f871a8"
+JUMP_CLIPS = (
+    Clip("jump_takeoff", JUMP_SOURCE, JUMP_SHA256, 710, 720),
+    Clip("jump_air", JUMP_SOURCE, JUMP_SHA256, 720, 736),
+    Clip("jump_land", JUMP_SOURCE, JUMP_SHA256, 736, 748),
+)
 
 
 def read_capture(path: Path, expected_sha: str):
@@ -90,7 +97,7 @@ def read_capture(path: Path, expected_sha: str):
         frame_width += int(count)
     required = {joint for chain in BONE_MAP.values() for joint in chain}
     if not required.issubset(columns) or columns.get("Hips") != 3:
-        raise ValueError(f"{path.name}: skeleton does not match 100STYLE Neutral")
+        raise ValueError(f"{path.name}: skeleton does not match the approved 100STYLE bones")
     count_line, time_line, *records = motion.splitlines()
     count = int(count_line.removeprefix("Frames:").strip())
     frame_time = float(time_line.removeprefix("Frame Time:").strip())
@@ -167,7 +174,7 @@ def sole_height(rotations, index, side):
     return height + q_rotate(orientation, (0.0, -0.038, 0.0))[1]
 
 
-def retarget(clip, frames, columns, offsets):
+def retarget(clip, frames, columns, offsets, loop=True):
     if not 0 <= clip.first < clip.last < len(frames) or (clip.last - clip.first) % 2:
         raise ValueError(f"{clip.name}: choose a valid inclusive 30 Hz frame span")
     motion = frames[clip.first:clip.last + 1:2]
@@ -178,7 +185,11 @@ def retarget(clip, frames, columns, offsets):
     rig_leg = math.hypot(*LEG_OFFSETS[1]) + math.hypot(*LEG_OFFSETS[2])
     scale = rig_leg / source_leg
     speed = math.hypot(movement_x, movement_z) * scale / duration
-    if clip.name == "idle":
+    if not loop:
+        # Each phase must keep one common facing to join without a yaw pop.
+        first, last = frames[JUMP_CLIPS[0].first], frames[JUMP_CLIPS[-1].last]
+        heading = math.atan2(last[0] - first[0], last[2] - first[2])
+    elif clip.name == "idle":
         heading = math.atan2(
             sum(math.sin(math.radians(frame[3])) for frame in motion),
             sum(math.cos(math.radians(frame[3])) for frame in motion),
@@ -195,7 +206,18 @@ def retarget(clip, frames, columns, offsets):
             for name in chain:
                 result = q_multiply(result, q_bvh(frame, columns[name]))
             rotations[target].append(q_multiply(q_multiply(TURN_TO_GAME, result), q_inverse(TURN_TO_GAME)))
-        rotations[target] = list(loop_quaternions(rotations[target]))
+        if loop:
+            rotations[target] = list(loop_quaternions(rotations[target]))
+
+    if not loop:
+        # The swept controller provides jump height. Keep the lowest sole at
+        # virtual ground so the retargeted crouch, extension and tuck remain,
+        # without applying the captured vertical displacement a second time.
+        position = [
+            (0.0, 0.004 - min(sole_height(rotations, index, side) for side in ("Left", "Right")), 0.0)
+            for index in range(len(motion))
+        ]
+        return duration, speed, {"Hips": position}, rotations
 
     start_height = statistics.median(frame[1] for frame in motion)
     height_delta = (motion[0][1] - motion[-1][1]) * scale
@@ -217,7 +239,7 @@ def number(value):
     return format(value, ".8g") if abs(value) > 1e-9 else "0"
 
 
-def write_track(out, index, prop, bone, keys):
+def write_track(out, index, prop, bone, keys, loop):
     values = []
     for frame, key in enumerate(keys):
         values.extend((number(frame / SAMPLE_RATE), "1", *(number(value) for value in key)))
@@ -226,35 +248,38 @@ def write_track(out, index, prop, bone, keys):
         f'{prefix}type = "{prop}_3d"',
         f'{prefix}path = NodePath("Skeleton3D:{bone}")',
         f"{prefix}interp = 1",
-        f"{prefix}loop_wrap = true",
+        f"{prefix}loop_wrap = {'true' if loop else 'false'}",
         f"{prefix}keys = PackedFloat32Array({', '.join(values)})",
     ))
 
 
 def build_library(source_dir: Path):
     text = ['[gd_resource type="AnimationLibrary" format=3]']
-    for clip in CLIPS:
-        frames, columns, offsets = read_capture(source_dir / clip.source, clip.sha256)
-        duration, speed, position, rotations = retarget(clip, frames, columns, offsets)
+    recordings = {}
+    for clip in CLIPS + JUMP_CLIPS:
+        if clip.source not in recordings:
+            recordings[clip.source] = read_capture(source_dir / clip.source, clip.sha256)
+        loop = clip in CLIPS
+        duration, speed, position, rotations = retarget(clip, *recordings[clip.source], loop=loop)
         text.extend((
             "", f'[sub_resource type="Animation" id="Animation_{clip.name}"]',
             f'resource_name = "{clip.name}"', f"length = {number(duration)}",
-            "loop_mode = 1", f"step = {number(1 / SAMPLE_RATE)}",
+            f"loop_mode = {int(loop)}", f"step = {number(1 / SAMPLE_RATE)}",
         ))
         tracks = [("position", *item) for item in position.items()]
         tracks.extend(("rotation", *item) for item in rotations.items())
         for index, (prop, bone, keys) in enumerate(tracks):
-            write_track(text, index, prop, bone, keys)
+            write_track(text, index, prop, bone, keys, loop)
         print(f"{clip.name}: frames {clip.first}..{clip.last}, {duration:.3f} s, {speed:.3f} m/s")
     text.extend(("", "[resource]", "_data = {"))
-    text.append(",\n".join(f'&"{clip.name}": SubResource("Animation_{clip.name}")' for clip in CLIPS))
+    text.append(",\n".join(f'&"{clip.name}": SubResource("Animation_{clip.name}")' for clip in CLIPS + JUMP_CLIPS))
     text.extend(("}", ""))
     return "\n".join(text)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source_dir", type=Path, help="directory containing the reviewed Neutral BVH files")
+    parser.add_argument("source_dir", type=Path, help="directory containing the reviewed 100STYLE BVH files")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="animation library output file")
     args = parser.parse_args()
     library = build_library(args.source_dir)

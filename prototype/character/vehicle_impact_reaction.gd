@@ -14,6 +14,8 @@ var _elapsed := 0.0
 var _angle := 0.0
 var _speed := 0.0
 var _direction := Vector3.ZERO
+var _fall_clip: StringName
+var _fall_yaw := 0.0
 
 
 func apply(body: CharacterBody3D, impulse_direction: Vector3, closing_speed: float) -> void:
@@ -26,6 +28,11 @@ func apply(body: CharacterBody3D, impulse_direction: Vector3, closing_speed: flo
 	_speed = closing_speed
 	_elapsed = 0.0
 	state = FALLING if closing_speed >= FALL_SPEED else STAGGER
+	if state == FALLING:
+		var forward := (-body.global_basis.z).dot(_direction) >= 0.0
+		_fall_clip = &"impacts/fall_forward" if forward else &"impacts/fall_backward"
+		var facing := body.global_basis.inverse() * (_direction if forward else -_direction)
+		_fall_yaw = atan2(-facing.x, -facing.z)
 	var push := clampf(closing_speed * (0.5 if state == FALLING else 0.40), 1.5, 7.5)
 	var lift := clampf((closing_speed - 5.0) * 0.23, 0.75, 2.1) if state == FALLING else 0.0
 	body.velocity = _direction * push + Vector3.UP * lift
@@ -88,9 +95,19 @@ func _try_posture(body: CharacterBody3D, collider: CollisionShape3D, visual: Vis
 	# The capsule leaves clearance around the arms. Settle the thinner torso
 	# down into that clearance as the visual approaches the ground.
 	var settle := Vector3.UP * (0.14 * pow(sin(angle), 4.0))
-	visual.transform = Transform3D(tilt, center - tilt * pivot - settle)
-	var brace := sin(_angle) if state != STAGGER else clampf(_angle * 2.5, 0.0, 1.0)
-	visual.set_impact_brace(brace)
+	var visual_pose := tilt
+	if state == STAGGER:
+		visual.set_impact_brace(clampf(_angle * 2.5, 0.0, 1.0))
+	else:
+		var progress := clampf(angle / (PI * 0.48), 0.0, 1.0)
+		visual_pose *= Basis(Vector3.UP, lerp_angle(0.0, _fall_yaw, smoothstep(0.0, 0.65, progress)))
+		var relax := 0.0
+		if state == DOWN:
+			relax = smoothstep(0.0, 0.25, _elapsed)
+		elif state == RISING:
+			relax = smoothstep(0.63, 1.0, progress)
+		visual.pose_captured_fall(_fall_clip, progress, relax)
+	visual.transform = Transform3D(visual_pose, center - visual_pose * pivot - settle)
 	return true
 
 

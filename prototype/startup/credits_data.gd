@@ -28,10 +28,26 @@ const SECTIONS: Array[Dictionary] = [
 	},
 	{
 		"title": "Motion capture",
-		"body": "The 100STYLE Dataset by Ian Mason, Sebastian Starke and Taku Komura (2022), licensed under CC BY 4.0. Aamchi Mumbai Game trimmed, looped, normalized, resampled and retargeted clips for idle, walking and jogging.",
+		"body": "The 100STYLE Dataset by Ian Mason, Sebastian Starke and Taku Komura (2022), licensed under CC BY 4.0. Aamchi Mumbai Game trimmed, normalized, resampled and retargeted clips for idle, walking, jogging and jumping.",
 		"links": [
 			{"label": "100STYLE dataset", "url": "https://www.ianxmason.com/100style/"},
 			{"label": "Dataset archive", "url": "https://doi.org/10.5281/zenodo.8127870"},
+			{"label": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/"},
+		],
+	},
+	{
+		"title": "Motion capture · impact falls",
+		"body": "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217. Aamchi Mumbai Game cropped and retargeted Subject 90 trials 16 and 17. The publisher permits commercial product use and restricts direct data resale.",
+		"links": [
+			{"label": "CMU Motion Capture Database and terms", "url": "https://mocap.cs.cmu.edu/"},
+			{"label": "Subject 90 recordings", "url": "https://mocap.cs.cmu.edu/search.php?subjectnumber=90"},
+		],
+	},
+	{
+		"title": "Street kiosk",
+		"body": "Indian street shop by nayan pachori, CC BY 4.0. Aamchi Mumbai Game adapted its scale, placement and collision for a fictional Ranwar kiosk.",
+		"links": [
+			{"label": "Original Sketchfab model", "url": "https://sketchfab.com/3d-models/indian-street-shop-a7476a895cb841709ccbd5d9d8b96f36"},
 			{"label": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/"},
 		],
 	},

@@ -111,8 +111,44 @@
                                  ]
                              ],
     "license":  "Map data from OpenStreetMap contributors; ODbL-1.0. See source package ATTRIBUTION.md and ODbL-1.0.txt. Original script/art additions are tracked separately by project owner.",
-    "updated":  "2026-11-22",
+    "updated":  "2026-11-23",
     "game_setting":  "Present-day Mumbai; Ranwar / Bandra West reference pocket",
+    "site_controls": {
+        "source_date": "2026-11-20",
+        "source_file": "../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/bandra-ranwar-modern.osm",
+        "attribution": "OpenStreetMap contributors, ODbL 1.0. Retain the source extract and its attribution and database offer.",
+        "axis_and_precision": "XZ metres in the existing world frame, rounded from a double-precision desktop calculation. In-engine single precision introduces sub-metre differences.",
+        "meena_hill_road": {
+            "osm_way": 255362104,
+            "address": "82 Hill Road",
+            "building_levels_osm": 15,
+            "footprint_osm_nodes": [2610551438, 2610551436, 13518537503, 13518537502, 13518537505, 13518537507, 13518537506, 13518537504, 2610551397, 2610551398],
+            "mapped_bounds_x_m": [-28.40, -5.81],
+            "mapped_bounds_z_m": [-206.79, -192.31],
+            "modeled_storey_height_m": 3.05,
+            "modeled_total_height_m": 45.75,
+            "model_scope": "Ordered mapped ground footprint and tagged storey count. Height and exterior treatment are author estimates."
+        },
+        "st_peters": {
+            "osm_way": 511064344,
+            "road_facing_edge_osm_nodes": [4999944870, 4999944873],
+            "road_facing_edge_midpoint_xz_m": [21.90, -363.21],
+            "map_polygon_extents_xz_m": [32.53, 44.18],
+            "authored_facade_anchor_xz_m": [27.5, -362.6],
+            "note": "Measurements describe the mapped complex. The authored church is set back approximately 5.6 m in X. Nave and facade dimensions need field confirmation."
+        },
+        "nagrana": {
+            "osm_way": 31217220,
+            "capture_endpoints_osm_nodes": [347181270, 10242737039],
+            "full_source_polyline_length_m": 70.53,
+            "note": "Mapped centerline length. Measure the current clear paved width and bollard gaps separately."
+        },
+        "ranwar_village_square_context": {
+            "osm_node": 9404702300,
+            "point_xz_m": [125.37, -147.25],
+            "note": "Off-loop context point. Square boundaries and pedestrian access need field confirmation."
+        }
+    },
     "rickshaw_spawn":  [
                            -3.4,
                            0.55,

@@ -8,6 +8,21 @@ Research date: 19 November 2026. Purpose: find existing 3D assets with licenses 
 
 ## What was verified
 
+### Authenticated intake on 23 November 2026
+
+Sketchfab’s authenticated Download API returned six GLBs. All six live listings declared CC BY 4.0 and downloads enabled. The receipt records creators, model URLs, signed-download results, ordinary archive sizes and hashes. The files were opened and reviewed locally. Only the 266-triangle paan kiosk entered the game at this checkpoint. Local originals and intake previews live under `.toolchain/sketchfab-intake/`. [Acquisition receipt](evidence/sketchfab-acquisitions-2026-11-23.json) · [Sketchfab Download API](https://sketchfab.com/developers/download-api) · [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+
+| Downloaded model | GLB review and disposition |
+| --- | --- |
+| [Indian street shop](https://sketchfab.com/3d-models/indian-street-shop-a7476a895cb841709ccbd5d9d8b96f36) by nayan pachori | **Adopted.** 266 triangles, one material and three 1024² maps. A generic paan kiosk at a fictional shop lot, with authored scale, placement and collision. |
+| [Indian Shop](https://sketchfab.com/3d-models/indian-shop-dad04bbb505443129a86cebd89d77610) by anandmohan662 | **Held.** A lightweight grocery façade with a baked Kirana King storefront photograph and recognizable third-party product labels. The photo and branding rights need separate resolution. |
+| [Low Poly Autorickshaw aka TukTuk](https://sketchfab.com/3d-models/low-poly-autorickshaw-aka-tuktuk-c7c87455ad014b3f9fc8c9fb2d164a61) by Nirmal.Justin | **Held for conversion.** 4,798 indexed triangles, 21 surfaces and one 1024² atlas. All three tire and rim assemblies share geometry that needs separation and usable pivots. The atlas includes registration plates and a blue badge. |
+| [Activa scooty 3d model fts](https://sketchfab.com/3d-models/activa-scooty-3d-model-fts-de84863d474d4276ae52ff9ab72337bb) by Sunny khude 3d model | **Held for conversion.** 15,000 triangles, one fused surface and a 512² atlas. Driving needs separate steering and wheel parts, corrected origin/orientation, and product-design review. |
+| [Thela street food stall](https://sketchfab.com/3d-models/thela-street-food-stall-9407e18db7404bd5855707dd12ecd149) by anandmohan662 | **Held.** 72,900 triangles, 41 surfaces and 17 maps. Repeated bicycle groups account for 45,408 triangles. The baked Masala Darbar sign and food photographs need clearance or replacement. |
+| [Indian street food cart and vendor](https://sketchfab.com/3d-models/indian-street-food-cart-and-vendor-c2106d6c043f486c8f17275c315326d8) by Mrinal Kukreti | **Held.** 62,386 triangles, 192 surfaces and fourteen 1024² maps. The static vendor needs rigging, and the scene needs scale normalization, texture batching and review of the menu photography. |
+
+### Original metadata review on 19 November 2026
+
 Creator/catalogue pages were checked for license terms, files and downloads. For twelve specific Sketchfab models, the public model API was queried live and confirmed **CC BY 4.0**, **download enabled**, creator and geometry counts. The captured fields are saved in [catalogue metadata evidence](evidence/sketchfab-models-2026-11-19.json), with each API/source URL.
 
 No model archive was downloaded, no login/download transaction was exercised, and no mesh, material, rig, moving part, source-file format, or engine performance was inspected. Several viewer pages returned 403 while their public metadata remained accessible. The API confirms the publisher's current catalogue declaration, not ownership of every component or final production suitability.

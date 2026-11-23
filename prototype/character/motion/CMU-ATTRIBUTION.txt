@@ -1,0 +1,14 @@
+Carnegie Mellon University Graphics Lab Motion Capture Database
+https://mocap.cs.cmu.edu/
+
+The data used in this project was obtained from mocap.cs.cmu.edu.
+The database was created with funding from NSF EIA-0196217.
+
+The publisher permits use in commercially sold products and prohibits
+direct resale of the motion data, including in converted form.
+https://mocap.cs.cmu.edu/
+
+Aamchi Mumbai Game cropped two falls from Subject 90 trials 16 and 17,
+converted the Acclaim joint axes, retargeted the spine and limbs, removed
+root travel and resampled the result to 30 Hz. The game controls the
+fall direction, landing and character collision capsule.

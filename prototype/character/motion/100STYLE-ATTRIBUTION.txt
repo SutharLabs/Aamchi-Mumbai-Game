@@ -10,7 +10,10 @@ https://doi.org/10.5281/zenodo.8127870
 Creative Commons Attribution 4.0 International (CC BY 4.0)
 https://creativecommons.org/licenses/by/4.0/
 
-Aamchi Mumbai Game adapted Neutral_ID.bvh, Neutral_FW.bvh and Neutral_FR.bvh.
+Aamchi Mumbai Game adapted Neutral_ID.bvh, Neutral_FW.bvh, Neutral_FR.bvh
+and TwoFootJump_FW.bvh.
 The adaptations extract and trim loops, smooth the loop seams, normalize the
 heading, remove horizontal root translation, retarget to the game skeleton and
-resample the tracks for the in-game idle, walk and jog.
+resample the tracks for idle, walk, jog, and jump takeoff, air and landing.
+The jump adaptation removes its recorded travel and aligns the sole height so
+the gameplay controller supplies the actual movement.

@@ -386,6 +386,7 @@ func _show_help() -> void:
 		_control_group("On foot", {
 			"Left stick": "Walk",
 			"Drag the right side": "Look around",
+			"Jump": "Jump",
 			"Interact": "Talk, enter or mount",
 		})
 		_control_group("Driving", {
@@ -401,6 +402,7 @@ func _show_help() -> void:
 		_control_group("On foot", {
 			movement: "Walk",
 			Controls.label("run", keys): "Jog while moving",
+			Controls.label("brake", keys): "Jump",
 			"Mouse": "Look around",
 			Controls.label("interact", keys): "Talk, enter or mount",
 		})
@@ -418,7 +420,7 @@ func _show_help() -> void:
 			Controls.direction_label(Controls.LOOK_ACTIONS, pad): "Look around",
 			Controls.label("run", pad): "Jog while moving",
 			Controls.label("interact", pad): "Talk, enter, mount or exit",
-			Controls.label("brake", pad): "Brake",
+			Controls.label("brake", pad): "Jump on foot / brake while driving",
 			Controls.label("recover", pad): "Return to the start",
 			Controls.label("pause_game", pad): "Pause",
 			"D-pad / left stick": "Navigate menus",

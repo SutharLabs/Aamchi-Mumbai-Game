@@ -52,9 +52,9 @@ The ambient smoke covers startup, driver fit, bounded population, lane and view 
 
 ## Visual streaming experiment
 
-The default Ranwar scene builds all 183 generic backdrop meshes. To try distance-based streaming, start the game with the user argument `-- --stream-visual-chunks`. The opt-in mode groups the same backdrop in 96 m cells, loads around the camera within 160 m and retains cells out to 224 m to avoid repeated loading near an edge. During ordinary movement it activates at most one cell per 0.2-second update. Camera cuts can activate multiple cells immediately, and distant scenery can visibly appear or disappear. The roads, shared lane graph, ground and backdrop collision, twelve authored frontages and church stay loaded.
+The default Ranwar scene builds all generic backdrop meshes. To try distance-based streaming, start the game with the user argument `-- --stream-visual-chunks`. The opt-in mode groups the same backdrop in 96 m cells, loads around the camera within 160 m and retains cells out to 224 m to avoid repeated loading near an edge. During ordinary movement it activates at most one cell per 0.2-second update. Camera cuts can activate multiple cells immediately, and distant scenery can visibly appear or disappear. The roads, shared lane graph, ground and backdrop collision, twelve authored frontages, the church and Meena stay loaded.
 
-The smoke test verified that Godot releases mesh references on unload, building collision survives, and visuals return on re-entry. The rendered comparison used Godot 4.7.2 Compatibility on Windows 11 with an Intel i5-1145G7, Iris Xe and 15.7 GiB RAM. Each run completed the same 21 waypoints at 1280×720, capped at 60 FPS, with 2× simulation speed and ambient traffic disabled.
+The smoke test verified that Godot releases mesh references on unload, building collision survives, and visuals return on re-entry. The earlier rendered comparison used 183 generic meshes and Godot 4.7.2 Compatibility on Windows 11 with an Intel i5-1145G7, Iris Xe and 15.7 GiB RAM. Each run completed the same 21 waypoints at 1280×720, capped at 60 FPS, with 2× simulation speed and ambient traffic disabled.
 
 | Measurement | Resident | Streamed |
 | --- | ---: | ---: |
@@ -87,6 +87,8 @@ Each rendered frontage batches its opaque geometry into one surface with a share
 
 The Waroda timber gallery study includes a projecting upper gallery, diamond-pattern grilles and an exterior return stair. The model adapts a licensed 2006 Chapel Road photo to an existing gameplay lot about 57 m from Nagrana Lane's Waroda entrance. The original lot dimensions remain authored. The stair and gallery are exterior details behind railings. Two rail colliders were added within the porch. Nagrana's existing corridor now has concrete joints, drain covers and plaster skirting batched into one 560-triangle surface. A Windows Compatibility probe confirmed unchanged road and footway paths, preserved original collision shapes and reviewed matched before-and-after captures. [Photo provenance and current capture requirements](../../docs/RANWAR_REFERENCE_CHECKLIST.md#image-guided-streetscape-pilot)
 
+The small red paan kiosk beside the fictional Hill Road grocery uses nayan pachori’s **Indian street shop** asset. The 266-triangle shop has one surface, faces Hill Road and has a solid collision box within the setback. Its authored position lies 14.9 m from the road centreline. [Model source, CC BY 4.0 license and adaptation](props/SOURCES.md)
+
 Neutral wayfinding identifies Ranwar / Bandra West and the existing route approaches. St Peter's parish history documents the nearby landmark's background. [St Peter's parish history](https://stpetersbandra.com/about-us/history/)
 
 All four vehicles have dedicated bays with painted outlines and forward arrows. Vehicle names appear in the nearby interaction prompts. Car/auto outlines use amber, the motorcycle uses cyan, and the scooter uses warm white. The auto-rickshaw bay remains centered at `(-3.4, 0, 0)`, width **2.4 m**, length **4.4 m**. Its footprint is x=-4.6..-2.2, z=-2.2..2.2, inside the authored 14 m road. The car bay is 2.8 x 5.4 m at `(0, 0, 0)`.
@@ -108,6 +110,10 @@ The Hill Road approach now has an exterior landmark based on the Romanesque chur
 OSM way 511064344 in the [20 November 2026 extract](../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md) anchors the church on the south side of Hill Road. The game façade faces world negative X at `(27.5, 0.0, -362.6)`. The body is about 23.4 m wide and 25.6 m deep. The parish records the whole building at about 24.4 m wide and 39.6 m long. The model moves the façade back and compresses the nave to fit the authored road and sidewalk while leaving a 4.8 m forecourt. Overlapping generic frontages are omitted inside this lot. The exterior provides a visible landmark and walkable front steps with solid building walls.
 
 The Godot 4.7.2 Windows Compatibility check rendered the front and angled Hill Road views and verified support at the upper step, the solid entrance and clearance at 693 sampled vehicle positions across the road loop. The static model has 2,494 triangles in one opaque mesh surface with the existing shared vertex-color material and seven box colliders. A local recognition review and minimum-device performance measurements remain open.
+
+## Meena on Hill Road
+
+The skyline across Hill Road from Nagrana Lane includes a Meena building study registered to the ten vertices of OSM way 255362104. The study uses the mapped 15 levels and an estimated 3.05 m per level. The textured shell and collider use the same projected footprint, and the generated background buildings give the site space. Current elevation, facade openings and materials remain for field comparison. [Engine site controls](layout.json) · [Capture targets](../../docs/RANWAR_REFERENCE_CHECKLIST.md#current-photo-searches-and-registered-building-pilot) · [OSM data offer and attribution](../../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/ATTRIBUTION.md)
 
 ## Focused world check
 
