@@ -9,6 +9,7 @@ const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
 const MeenaHillRoad := preload("res://world/meena_hill_road.gd")
 const BandraFacilities := preload("res://world/bandra_facilities.gd")
+const BandraLandmarks := preload("res://world/bandra_landmarks.gd")
 const PAAN_SHOP := preload("res://world/props/indian_street_shop.glb")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
 const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
@@ -55,6 +56,7 @@ var _visual_chunks := RanwarVisualChunks.new()
 var _meena_lot := Rect2()
 var _arrival_position := PLAYER_START
 var _arrival_yaw := 0.0
+var _waroda_cross_position := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -80,6 +82,7 @@ func _ready() -> void:
 	_build_st_peters()
 	_build_meena_hill_road()
 	_build_arrival_stop()
+	_build_waroda_cross()
 	_visual_chunks.name = "BackgroundFrontageVisuals"
 	add_child(_visual_chunks)
 	_build_frontages()
@@ -110,6 +113,26 @@ func facility_markers() -> Array[Dictionary]:
 			"position": _project(site["coordinate"]), "playable": site["playable"],
 		})
 	return markers
+
+
+func landmark_markers() -> Array[Dictionary]:
+	var markers: Array[Dictionary] = []
+	for site: Dictionary in BandraLandmarks.SITES:
+		var position := _project(site["coordinate"])
+		if site["id"] == &"waroda_cross":
+			position = _waroda_cross_position
+		markers.append({
+			"id": site["id"], "label": site["label"], "kind": site["kind"],
+			"position": position, "playable": site["playable"],
+		})
+	return markers
+
+
+func sea_link_route() -> PackedVector3Array:
+	var route := PackedVector3Array()
+	for coordinate: Vector2 in BandraLandmarks.SEA_LINK_ROUTE:
+		route.append(_project(coordinate))
+	return route
 
 
 static func map_north_up(point: Vector3) -> Vector2:
@@ -326,6 +349,34 @@ func _build_st_peters() -> void:
 	church.position = ST_PETERS_FRONT
 	church.rotation.y = PI * 0.5
 	add_child(church)
+
+
+func _build_waroda_cross() -> void:
+	var reference := _project(BandraLandmarks.WARODA_CROSS)
+	var road := _roads[3]
+	var curb := road[0]
+	for index in range(road.size() - 1):
+		var candidate := Geometry3D.get_closest_point_to_segment(reference, road[index], road[index + 1])
+		if reference.distance_squared_to(candidate) < reference.distance_squared_to(curb):
+			curb = candidate
+	var outward := (reference - curb).normalized()
+	# Keep the mapped side of Waroda Road and clear the authored wider carriageway and footpath.
+	_waroda_cross_position = curb + outward * (ROAD_WIDTHS[3] * 0.5 + SIDEWALK_WIDTH + 0.92)
+	var cross := Node3D.new()
+	cross.name = "WarodaWaysideCross"
+	cross.position = _waroda_cross_position
+	cross.rotation.y = atan2(outward.x, outward.z)
+	add_child(cross)
+	var parts := [
+		["Platform", Vector3(0, 0.10, 0), Vector3(1.45, 0.20, 1.18), "paving", true],
+		["Foot", Vector3(0, 0.31, 0), Vector3(1.13, 0.22, 0.94), "curb", false],
+		["Pedestal", Vector3(0, 0.78, 0), Vector3(0.75, 0.72, 0.65), "cream", true],
+		["PedestalCap", Vector3(0, 1.15, 0), Vector3(0.91, 0.12, 0.78), "curb", false],
+		["Shaft", Vector3(0, 1.93, 0), Vector3(0.21, 1.44, 0.20), "cream", false],
+		["Arms", Vector3(0, 2.29, 0), Vector3(1.08, 0.20, 0.20), "cream", false],
+	]
+	for part: Array in parts:
+		_box(part[0], cross.transform * part[1], part[2], part[3], part[4], cross.rotation.y).reparent(cross)
 
 
 func _build_arrival_stop() -> void:

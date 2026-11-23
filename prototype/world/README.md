@@ -22,6 +22,8 @@ The current playable area covers the Ranwar pocket of Bandra West. The road and 
 
 The District services page places eight real sites on a north-up map. The Ranwar circuit and the modeled arrival stop are playable. Nearby hospitals, police, fire and transport stations are geographic references for extending the playable streets. [Facility source details](../../docs/BANDRA_FACILITIES.md)
 
+**Pause → Map → Bandra landmarks** locates the Waroda Road wayside cross, St Peter’s Church and Meena along the playable streets. The map also shows Mount Mary Basilica, Bandra Fort and the actual Bandra–Worli Sea Link alignment. Open the Sea Link preview there to inspect an original 3D study of its north channel span. [Landmark geography and modeling references](../../docs/BANDRA_LANDMARKS.md)
+
 ## Left-hand lane graph
 
 The traffic graph derives directed lane centers from the same projected centerlines and authored widths as the street mesh. It places lanes one quarter of the road width to the left of travel and joins legal successive roads through their shared endpoints. Junction turns use short cubic curves. The traffic graph leaves Nagrana as a walking connection. The road mesh uses white broken longitudinal markings on its authored asphalt. The lane convention and paint reference come from Indian guidance, with the exact markings on the modeled Mumbai streets still to be field-checked. [Motor Vehicles (Driving) Regulations, regulation 4](https://morth.gov.in/sites/default/files/Motor-Vehicle-Driving-Regulation-2017.pdf) · [MoRTH pavement marking circular](https://morth.nic.in/sites/default/files/circulars_document/Guidelines_for_Road_Pavement_Marking_circular_dated_07.01.2019.pdf)

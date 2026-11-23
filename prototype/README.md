@@ -30,9 +30,11 @@ To try the curb crossing, drive slowly across the raised west-side curb on Hill 
 
 Approach a vehicle and use **Interact**. The prompt shows **Unlock** for loan vehicles with keys and **Steal** for other vehicles. A stopped traffic vehicle can transfer to your control. Its driver or a nearby witness can raise the police alert. **Recover** takes you back to the practice yard. Later visits from the title also start there once this profile’s arrival has been recorded.
 
-The hood, roof, lamp and tail shapes vary across four car silhouettes, an auto-rickshaw, four motorcycles and two scooters. The parked roster and traffic mix use the same collision, damage and rider systems as the original playtest. [Vehicle catalogue and manufacturer references](../research/OPEN_MODEL_CATALOGUE.md) · [Vehicle notes](vehicle/README.md)
+The hood, roof, lamp and tail shapes vary across four car silhouettes, an auto-rickshaw, four motorcycles and two scooters. Omkar is visible in the right-hand driver's seat of all four car types, including stopped traffic cars you take over. Rotate the camera to see him through the driver's window or windshield. [Vehicle catalogue and manufacturer references](../research/OPEN_MODEL_CATALOGUE.md) · [Vehicle notes](vehicle/README.md)
 
 The lower-right **live map** follows Omkar or the vehicle he is driving and shows nearby routes and objectives. Health, cash, police alert and vehicle condition have their own HUD readouts. Use **Settings → Live map → Apply** to turn the map off. **Pause → Map → District services** shows the real positions of mapped transport and public services beyond the playable stop. [Bandra map scope and sources](../docs/BANDRA_FACILITIES.md)
+
+Look for the wayside cross beside Waroda Road. Open **Pause → Map → Bandra landmarks** for St Peter's Church, Meena, Mount Mary Basilica, Bandra Fort and the real Sea Link route. Select **View 3D Sea Link** to inspect three views of the 600 m Bandra channel span. [Landmark placement and sources](../docs/BANDRA_LANDMARKS.md)
 
 ## Surface and collision playtest
 

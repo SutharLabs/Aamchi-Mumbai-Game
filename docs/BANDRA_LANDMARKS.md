@@ -1,0 +1,20 @@
+# Bandra landmarks
+
+Open **Pause → Map → Bandra landmarks** for the local Ranwar landmarks and the surrounding coast. Select **View 3D Sea Link** and **Change view** to inspect three perspectives of the Bandra channel span. The bridge map uses the same north-up projection as the Ranwar roads and draws the real alignment in teal.
+
+| Landmark | Where it appears | Location source |
+| --- | --- | --- |
+| Waroda Road wayside cross | Authored stone cross and plinth beside playable Waroda Road | [OSM node 12270847948](https://www.openstreetmap.org/node/12270847948) · [MMR-HCS Bandra precinct study](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf) |
+| St Peter’s Church | Existing playable Hill Road exterior and forecourt | [OSM footprint 511064344](https://www.openstreetmap.org/way/511064344) · [St Peter’s parish history](https://stpetersbandra.com/about-us/history/) |
+| Meena on Hill Road | Existing skyline/building study on Hill Road | [OSM footprint 255362104](https://www.openstreetmap.org/way/255362104) |
+| Mount Mary Basilica | District landmark pin southwest of Ranwar | [OSM site 281241933](https://www.openstreetmap.org/way/281241933) · [Incredible India basilica reference](https://www.prod.incredibleindia.gov.in/content/incredible-india-v2/en/destinations/mumbai/basilica-of-our-lady-of-the-mount-church.html) |
+| Bandra Fort | District landmark pin near Land’s End | [OSM node 346612688](https://www.openstreetmap.org/node/346612688) · [Incredible India Bandra Fort reference](https://www.incredibleindia.gov.in/en/maharashtra/mumbai/bandra-fort) |
+| Bandra–Worli Sea Link | District route along Mahim Bay and a separate 3D north-span preview | [OSM motorway 56683663](https://www.openstreetmap.org/way/56683663) · [OSM 289540744](https://www.openstreetmap.org/way/289540744) · [OSM 289540743](https://www.openstreetmap.org/way/289540743) · [BMC regional connections map](https://portal.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/Chief%20Engineer%20%28Bridges%29/Docs/Dy.Ch.%28Bridges%29%20Coastal%20Road%20North/Map%202%20%E2%80%93%20Showing%20connection%20between%20southern%20and%20northern%20Mumbai.pdf) |
+
+The Waroda cross uses the mapped side of the road with a small setback for the wider gameplay carriageway and sidewalk. The cross and plinth are an original model using authored dimensions. The site's detailed stonework and condition still need a current local visual reference.
+
+The bridge map uses 22 selected vertices in north-to-south order from one OSM carriageway via the Worli approach. The pin is an approximate north-span reference. The 3D preview models the Bandra channel section with twin four-lane decks, an approximately 126 m central pylon and four planes of stay cables between the 600 m span’s end supports. Simplified piers extend the preview on either side. The bridge, Mount Mary and Bandra Fort sit beyond the current playable street boundary. [Wikidata north-span coordinate](https://www.wikidata.org/wiki/Q314572) · [HCC engineering paper](https://structurae.net/en/literature/conference-paper/iconic-bandra-worli-sealink-in-the-city-of-mumbai-india-construction-of-the-bandra-cable-stayed-bridges/preview-download) · [Bandra–Worli Sea Link tourist reference](https://www.incredibleindia.gov.in/en/maharashtra/mumbai/bandra-worli-sea-link)
+
+The game generates the preview only when opened. Changing view redraws the isolated viewport, and closing it releases its geometry. The cross uses the existing local materials and two small collision boxes.
+
+Map data © OpenStreetMap contributors. The OSM-derived landmark coordinates and bridge line are available under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/) in [bandra_landmarks.gd](../prototype/world/bandra_landmarks.gd). The Waroda, St Peter’s and Meena sites come from the [saved Ranwar map extract](../assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20/README.md). The outlying site coordinates and bridge ways were checked on 23 November 2026. [OSM attribution](https://www.openstreetmap.org/copyright)

@@ -69,7 +69,8 @@ The user selected a weaker PC class with **integrated graphics and 8 GB RAM**, a
 - [Overnight handoff](docs/OVERNIGHT_HANDOFF.md) — deployment/status receipt and instructions for the next session.
 - `research/evidence/sketchfab-models-2026-11-19.json` — captured creator/license/download/geometry fields for those candidates.
 - `assets/references/REFERENCE_REGISTER.md` — dated photo/OEM/heritage references and per-asset provenance fields.
-- `prototype/` — runnable Godot Phase 1 practice route, walking/controller code and Windows export preset.
+- `prototype/` — runnable Godot Ranwar route, walking and driving controllers, and Windows export preset.
+- `unreal/` — separate [Unreal Sea Link visual pilot](unreal/README.md), with original geometry, an editor importer and a Windows walking controller.
 - `assets/` — original or properly licensed assets.
 
 ## Status

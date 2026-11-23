@@ -3,3 +3,10 @@
 **/.godot/
 **/__pycache__/
 *.pyc
+/unreal/.vs/
+/unreal/Binaries/
+/unreal/Content/Pilot/
+/unreal/DerivedDataCache/
+/unreal/Intermediate/
+/unreal/Saved/
+/unreal/*.sln

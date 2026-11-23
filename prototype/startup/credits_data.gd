@@ -10,13 +10,14 @@ const SECTIONS: Array[Dictionary] = [
 	},
 	{
 		"title": "Map data",
-		"body": "© OpenStreetMap contributors. OpenStreetMap data and the adapted Ranwar route data are available under the Open Database License 1.0. Download the source map extract and derived route data below.",
+		"body": "© OpenStreetMap contributors. The Ranwar routes, Bandra landmark locations and Sea Link alignment are available under the Open Database License 1.0.",
 		"links": [
 			{"label": "OpenStreetMap copyright", "url": "https://www.openstreetmap.org/copyright"},
 			{"label": "ODbL 1.0", "url": "https://opendatacommons.org/licenses/odbl/1-0/"},
 			{"label": "Source extract and preprocessing", "url": "https://github.com/SutharLabs/Aamchi-Mumbai-Game/tree/main/assets/maps/reference/bandra-ranwar-modern-osm-2026-11-20"},
 			{"label": "Derived route layout", "url": "https://github.com/SutharLabs/Aamchi-Mumbai-Game/blob/main/prototype/world/layout.json"},
 			{"label": "Bandra district facility sources", "url": "https://github.com/SutharLabs/Aamchi-Mumbai-Game/blob/main/docs/BANDRA_FACILITIES.md"},
+			{"label": "Bandra landmark and Sea Link map sources", "url": "https://github.com/SutharLabs/Aamchi-Mumbai-Game/blob/main/docs/BANDRA_LANDMARKS.md"},
 		],
 	},
 	{

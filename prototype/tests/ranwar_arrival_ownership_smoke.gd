@@ -3,6 +3,8 @@ extends SceneTree
 const Startup := preload("res://startup/startup.tscn")
 const Store := preload("res://mission/mission_progress.gd")
 const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
+const Car := preload("res://vehicle/phase1_car.gd")
+const CarDriver := preload("res://vehicle/phase1_car_driver.gd")
 
 var _app: Node
 var _directory := ""
@@ -51,9 +53,25 @@ func _run() -> void:
 	await _interact()
 	_expect(game.active_vehicle == sedan and game.career.wanted == 1, "a nearby pedestrian reports the theft")
 	_expect("Theft reported" in game._message, "the police warning is delivered as feedback")
+	var occupant := sedan.get_node_or_null("OmkarInDriverSeat") as CarDriver
+	_expect(_driver_fits(sedan, occupant) and not game.player.visible,
+		"sedan shows Omkar in the right-hand seat while the walking body is hidden")
 	game.career.clear_alert()
 	game._reset_run()
 	await _frames(6)
+	_expect(is_instance_valid(occupant) and not occupant.is_visible_in_tree() and game.player.visible,
+		"recovery hides the sedan occupant and restores the walking character")
+	for name: String in ["PracticeCar", "YardVehicle3", "YardVehicle4"]:
+		var parked := game.get_node(name) as Car
+		await _place_alongside(parked)
+		await _interact()
+		_expect(game.active_vehicle == parked and _driver_fits(parked, occupant),
+			"%s reuses the same skinned right-hand driver" % parked.vehicle_label)
+		if name == "PracticeCar" and DisplayServer.get_name() != "headless" and "--capture" in OS.get_cmdline_user_args():
+			await _capture_driver(parked)
+		await _interact()
+		_expect(not game.driving and not occupant.is_visible_in_tree() and game.player.visible,
+			"%s exit restores only the walking character" % parked.vehicle_label)
 
 	var street: Vehicle = game.traffic.interaction_vehicles()[0]
 	street.set_physics_process(false)
@@ -64,10 +82,12 @@ func _run() -> void:
 		"a stopped civilian car transfers from traffic control to the player")
 	_expect(not (street.get_node("SeatedDriver") as Node3D).visible and game.career.wanted == 1,
 		"taking a civilian car frees its seat and the driver reports the theft")
+	_expect(_driver_fits(street, occupant), "Omkar replaces the seated NPC without overlapping models")
 	game.career.clear_alert()
 	game._reset_run()
 	await _frames(8)
 	_expect(not is_instance_valid(street) and not game.driving, "recovery releases the temporary claimed car")
+	_expect(is_instance_valid(occupant) and not occupant.is_visible_in_tree(), "recovering a claimed car preserves the reusable seat")
 
 	_app.menu.main_menu_requested.emit()
 	await process_frame
@@ -79,6 +99,27 @@ func _run() -> void:
 	_expect(game.traffic.civilian_limit == 4 and game.traffic.interaction_vehicles().size() <= 4,
 		"the expanded desktop traffic has a four-car civilian budget")
 	_finish()
+
+
+func _driver_fits(car: Vehicle, occupant: CarDriver) -> bool:
+	if occupant == null or occupant.get_parent() != car or not occupant.is_visible_in_tree() \
+			or not occupant.wears_dhotar or not is_equal_approx(occupant.position.x, Car.FRONT_SEAT_OFFSET):
+		return false
+	var head := occupant.transform * occupant.skeleton.get_bone_global_pose(occupant.skeleton.find_bone("Head")).origin
+	return head.y > 0.89 and head.y < 0.99 and head.z > -0.42 and head.z < 0.22
+
+
+func _capture_driver(car: Car) -> void:
+	var game: Node3D = _app.gameplay
+	game.set_physics_process(false)
+	var basis := car.global_basis
+	game.camera.global_position = car.global_position + basis * Vector3(3.1, 1.29, -1.90)
+	game.camera.look_at(car.global_position + basis * Vector3(0.33, 0.80, -0.16))
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var result := root.get_texture().get_image().save_png("user://ranwar-seated-omkar.png")
+	game.set_physics_process(true)
+	_expect(result == OK, "captured Omkar through the driver-side window")
 
 
 func _place_alongside(vehicle: Vehicle, side := 1.0) -> void:

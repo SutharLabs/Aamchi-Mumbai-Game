@@ -88,9 +88,10 @@ func _pause_game() -> void:
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Input.emulate_mouse_from_touch = true
+	var landmarks := {"places": gameplay.world.landmark_markers(), "sea_link": gameplay.world.sea_link_route()}
 	menu.show_pause(gameplay.player.display_name, gameplay.world._roads, gameplay.world._gully,
 		gameplay._actor_position(), gameplay.story_target(), gameplay.delivery.can_abandon(), gameplay.session_status(),
-		gameplay.world.facility_markers())
+		gameplay.world.facility_markers(), landmarks)
 
 
 func _abandon_job() -> void:

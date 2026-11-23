@@ -13,6 +13,7 @@ const CREDITS := "res://startup/credits_data.gd"
 const Controls := preload("res://startup/control_bindings.gd")
 const RanwarMap := preload("res://startup/ranwar_map.gd")
 const DistrictServicesView := preload("res://startup/district_services_map.gd")
+const SeaLinkPreview := preload("res://startup/sea_link_preview.gd")
 const NAVY := Color("0c1725")
 const PANEL := Color("182638")
 const BORDER := Color("405268")
@@ -28,6 +29,7 @@ var _map_footway := PackedVector3Array()
 var _map_position := Vector3.ZERO
 var _map_destination := Vector3.INF
 var _map_facilities: Array[Dictionary] = []
+var _map_landmarks: Dictionary = {}
 var _can_abandon_job := false
 var _session_status := ""
 var _page: StringName = &"top"
@@ -79,6 +81,7 @@ func show_home() -> void:
 	_map_footway = PackedVector3Array()
 	_map_destination = Vector3.INF
 	_map_facilities = []
+	_map_landmarks = {}
 	_can_abandon_job = false
 	_session_status = ""
 	show()
@@ -87,7 +90,7 @@ func show_home() -> void:
 
 func show_pause(character_name: String, roads: Array[PackedVector3Array], footway: PackedVector3Array,
 		position: Vector3, destination: Vector3 = Vector3.INF, can_abandon_job: bool = false,
-		session_status: String = "", facilities: Array[Dictionary] = []) -> void:
+		session_status: String = "", facilities: Array[Dictionary] = [], landmarks: Dictionary = {}) -> void:
 	_paused_menu = true
 	_character_name = character_name
 	_map_roads = roads
@@ -95,6 +98,7 @@ func show_pause(character_name: String, roads: Array[PackedVector3Array], footwa
 	_map_position = position
 	_map_destination = destination
 	_map_facilities = facilities
+	_map_landmarks = landmarks
 	_can_abandon_job = can_abandon_job
 	_session_status = session_status
 	show()
@@ -106,7 +110,8 @@ func back_requested() -> bool:
 		return false
 	match _page:
 		&"bindings": _show_page(&"settings")
-		&"district_services": _show_page(&"map")
+		&"district_services", &"landmarks": _show_page(&"map")
+		&"sea_link": _show_page(&"landmarks")
 		_: _show_page(&"top")
 	return true
 
@@ -136,6 +141,8 @@ func _show_page(page: StringName) -> void:
 		&"help": _show_help()
 		&"map": _show_map()
 		&"district_services": _show_district_services()
+		&"landmarks": _show_landmarks()
+		&"sea_link": _show_sea_link()
 		&"credits": _show_credits()
 		_: _show_top()
 
@@ -195,6 +202,8 @@ func _show_map() -> void:
 	_focus.call_deferred(_back_button())
 	if not _map_facilities.is_empty():
 		_route_button("DistrictServicesButton", "District services", &"district_services")
+	if not _map_landmarks.is_empty():
+		_route_button("BandraLandmarksButton", "Bandra landmarks", &"landmarks")
 	var map_view := RanwarMap.new()
 	map_view.name = "RanwarMap"
 	map_view.set_snapshot(_map_roads, _map_footway, _map_position, _map_destination)
@@ -212,8 +221,41 @@ func _show_district_services() -> void:
 	map_view.name = "DistrictServicesMap"
 	map_view.set_data(_map_roads, _map_facilities)
 	_content.add_child(map_view)
-	for index in _map_facilities.size():
-		var record := _map_facilities[index]
+	_show_place_list(_map_facilities)
+
+
+func _show_landmarks() -> void:
+	_page_header("Bandra landmarks")
+	_focus.call_deferred(_button(_content, "BackButton", "Back to Ranwar", _show_page.bind(&"map")))
+	_route_button("SeaLinkPreviewButton", "View 3D Sea Link", &"sea_link")
+	var map_view := DistrictServicesView.new()
+	map_view.name = "BandraLandmarksMap"
+	var places: Array[Dictionary] = _map_landmarks["places"]
+	map_view.set_data(_map_roads, places, _map_landmarks["sea_link"])
+	_content.add_child(map_view)
+	_label(_content, "Bandra–Worli Sea Link (teal route)", 16, DistrictServicesView.BRIDGE)
+	_show_place_list(places)
+
+
+func _show_sea_link() -> void:
+	_page_header("Bandra–Worli Sea Link")
+	var navigation := HBoxContainer.new()
+	navigation.add_theme_constant_override("separation", 10)
+	_content.add_child(navigation)
+	var back := _button(navigation, "BackButton", "Back to landmarks", _show_page.bind(&"landmarks"))
+	back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_focus.call_deferred(back)
+	var model := SeaLinkPreview.new()
+	model.name = "SeaLinkModel"
+	var change_view := _button(navigation, "RotateSeaLinkButton", "Change view", model.rotate_view)
+	change_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.add_child(model)
+	_label(_content, "Bandra channel · 600 m span over Mahim Bay", 16, MUTED).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
+func _show_place_list(places: Array[Dictionary]) -> void:
+	for index in places.size():
+		var record := places[index]
 		var playable: bool = record["playable"]
 		var district_label := "  ·  Beyond playable streets" if not playable else ""
 		var caption := "%d. %s  ·  %s%s" % [index + 1, record["label"], record["kind"], district_label]
@@ -562,8 +604,10 @@ func _position_content() -> void:
 	var left := clampf(size.x * 0.052, 22.0, 80.0)
 	var top := clampf(size.y * 0.063, 16.0, 48.0)
 	var preferred_width := 460.0 if _page == &"top" else 510.0
-	if _page == &"map" or _page == &"district_services":
+	if _page in [&"map", &"district_services", &"landmarks"]:
 		preferred_width = 620.0
+	elif _page == &"sea_link":
+		preferred_width = 860.0
 	_scroll.position = Vector2(left, top)
 	_scroll.size = Vector2(minf(preferred_width, size.x - left * 2.0), size.y - top * 2.0)
 

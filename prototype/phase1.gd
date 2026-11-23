@@ -6,6 +6,7 @@ const World := preload("res://world/phase1_world.gd")
 const Traffic := preload("res://world/ambient_traffic.gd")
 const Vehicle := preload("res://vehicle/phase1_vehicle.gd")
 const Car := preload("res://vehicle/phase1_car.gd")
+const CarDriver := preload("res://vehicle/phase1_car_driver.gd")
 const Rickshaw := preload("res://vehicle/phase1_rickshaw.gd")
 const Motorcycle := preload("res://vehicle/phase1_motorcycle.gd")
 const Scooter := preload("res://vehicle/phase1_scooter.gd")
@@ -50,6 +51,7 @@ var delivery_progress: MissionProgress
 var delivery: DeliveryRoute
 var career: Career
 var _mira: Pedestrian
+var _player_car_driver: CarDriver
 var _parking_poses: Dictionary[Vehicle, Transform3D] = {}
 var _vehicle_keys: Dictionary[Vehicle, bool] = {}
 var _entered_vehicles: Dictionary[Vehicle, bool] = {}
@@ -503,6 +505,7 @@ func _try_interact() -> void:
 			return
 		player.global_position = exit_pose
 		player.rotation.y = active_vehicle.rotation.y
+		_release_player_car_driver()
 		player.set_on_foot(true)
 		active_vehicle.set_driver_active(false)
 		active_vehicle = null
@@ -546,6 +549,8 @@ func _try_interact() -> void:
 	player.set_on_foot(false)
 	active_vehicle = vehicle
 	active_vehicle.set_driver_active(true)
+	if vehicle is Car:
+		_seat_player_in_car(vehicle)
 	_message_time = 0.0
 	if first_entry:
 		if with_key:
@@ -555,6 +560,24 @@ func _try_interact() -> void:
 			_show_message("Theft reported · Police alert %d" % career.wanted, 3.0)
 		else:
 			_show_message("Vehicle taken.")
+
+
+func _seat_player_in_car(vehicle: Car) -> void:
+	if _player_car_driver == null:
+		_player_car_driver = CarDriver.new()
+		_player_car_driver.name = "OmkarInDriverSeat"
+		_player_car_driver.wears_dhotar = player.visual.wears_dhotar
+		vehicle.add_child(_player_car_driver)
+	else:
+		_player_car_driver.reparent(vehicle, false)
+	_player_car_driver.show()
+
+
+func _release_player_car_driver() -> void:
+	if _player_car_driver == null or _player_car_driver.get_parent() == player:
+		return
+	_player_car_driver.hide()
+	_player_car_driver.reparent(player, false)
 
 
 func _find_exit(vehicle: Vehicle) -> Vector3:
@@ -590,6 +613,7 @@ func abandon_delivery() -> void:
 
 
 func _reset_run(reason: StringName = &"") -> void:
+	_release_player_car_driver()
 	active_vehicle = null
 	for claimed in _claimed_traffic:
 		claimed.queue_free()

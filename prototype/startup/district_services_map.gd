@@ -9,11 +9,13 @@ const ROAD := Color("c9e3e2")
 const LABEL := Color("f4f3e9")
 const ON_MAP := Color("f6c882")
 const NEARBY := Color("8ec6e9")
+const BRIDGE := Color("84d6c7")
 const GRID_STEP := 500.0
 
 var _roads: Array[PackedVector2Array] = []
 var _pins := PackedVector2Array()
 var _playable: Array[bool] = []
+var _bridge := PackedVector2Array()
 
 
 func _ready() -> void:
@@ -23,7 +25,8 @@ func _ready() -> void:
 	resized.connect(queue_redraw)
 
 
-func set_data(roads: Array[PackedVector3Array], facilities: Array[Dictionary]) -> void:
+func set_data(roads: Array[PackedVector3Array], facilities: Array[Dictionary],
+		bridge: PackedVector3Array = PackedVector3Array()) -> void:
 	_roads.clear()
 	for road: PackedVector3Array in roads:
 		var path := PackedVector2Array()
@@ -35,6 +38,9 @@ func set_data(roads: Array[PackedVector3Array], facilities: Array[Dictionary]) -
 	for facility: Dictionary in facilities:
 		_pins.append(World.map_north_up(facility["position"]))
 		_playable.append(facility["playable"])
+	_bridge.clear()
+	for point: Vector3 in bridge:
+		_bridge.append(World.map_north_up(point))
 	queue_redraw()
 
 
@@ -50,11 +56,15 @@ func _draw() -> void:
 	for path: PackedVector2Array in _roads:
 		for point: Vector2 in path:
 			bounds = bounds.expand(point)
+	for point: Vector2 in _bridge:
+		bounds = bounds.expand(point)
 	var inner := frame.grow(-34.0)
 	var scale_to_fit := minf(inner.size.x / maxf(bounds.size.x, 1.0), inner.size.y / maxf(bounds.size.y, 1.0))
 	var map_transform := Transform2D(Vector2.RIGHT * scale_to_fit, Vector2.DOWN * scale_to_fit,
 		inner.get_center() - bounds.get_center() * scale_to_fit)
 	_draw_grid(inner, bounds, map_transform)
+	if _bridge.size() >= 2:
+		draw_polyline(map_transform * _bridge, BRIDGE, 3.0, true)
 	for path: PackedVector2Array in _roads:
 		if path.size() >= 2:
 			draw_polyline(map_transform * path, ROAD, 2.6, true)
