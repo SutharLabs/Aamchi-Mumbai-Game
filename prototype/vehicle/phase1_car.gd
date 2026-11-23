@@ -6,6 +6,22 @@ const AXLE := 1.215
 const WHEEL_WIDTH := 0.19
 const FRONT_SEAT_OFFSET := 0.35
 const STEERING_POSE := Transform3D(Basis(Vector3.RIGHT, 1.25), Vector3(FRONT_SEAT_OFFSET, 0.64, -0.48))
+const CHASSIS_SIZE := Vector3(1.64, 0.92, 3.8)
+const CHASSIS_CENTER := Vector3(0.0, -0.04, 0.0)
+enum DamageZone { FRONT, REAR, LEFT, RIGHT }
+
+var _panel_damage := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
+var _panel_centers := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
+var _broken_lamps := PackedByteArray([0, 0, 0, 0])
+var _shell: MeshInstance3D
+var _shell_rings: Array[PackedVector3Array] = []
+var _stock_meshes: Dictionary[MeshInstance3D, Mesh] = {}
+var _moving_trim: Dictionary[MeshInstance3D, Vector3] = {}
+var _face_panels: Dictionary[MeshInstance3D, Array] = {}
+var _front_lenses: MeshInstance3D
+var _rear_lenses: MeshInstance3D
+var _scrapes: MeshInstance3D
+var _chassis: CollisionShape3D
 
 
 func _init(patrol: bool = false) -> void:
@@ -15,7 +31,8 @@ func _init(patrol: bool = false) -> void:
 	exit_side_offset = 1.48
 	preferred_exit_side = 1.0
 	follow_distance = 6.9
-	_build_collision(Vector3(1.64, 0.92, 3.8), Vector3(0.0, -0.04, 0.0))
+	_build_collision(CHASSIS_SIZE, CHASSIS_CENTER)
+	_chassis = get_node("ChassisCollision")
 	_build_bodywork(patrol)
 
 
@@ -34,7 +51,6 @@ func _build_bodywork(patrol: bool) -> void:
 	satin.roughness = 0.42
 	var tire := _material(Color("171b1f"))
 	var black := _material(Color("161b1d"))
-	var section_rings: Array[PackedVector3Array] = []
 	for z: float in [-1.84, -1.79, -1.68, -1.55, -1.51, -1.44, -1.36, -1.215, -1.07,
 			-0.99, -0.92, -0.88, -0.68, 0.1, 0.68, 0.88, 0.92, 0.99, 1.07, 1.215,
 			1.36, 1.44, 1.51, 1.55, 1.68, 1.79, 1.84]:
@@ -48,24 +64,34 @@ func _build_bodywork(patrol: bool) -> void:
 			rocker = lerpf(rocker, 0.184, arch)
 		var shoulder := 0.36 + 0.073 * smoothstep(-1.53, -0.85, z)
 		shoulder -= end_taper * (0.19 if z < 0.0 else 0.10)
-		section_rings.append(_body_ring(z, width, rocker, shoulder))
-	BodyMesh.loft(self, "WheelArchedBody", section_rings, paint)
+		_shell_rings.append(_body_ring(z, width, rocker, shoulder))
+	_shell = BodyMesh.loft(self, "WheelArchedBody", _shell_rings, paint)
+	_stock_meshes[_shell] = _shell.mesh
 	_build_cabin(roof, glass, trim)
 	_build_cabin_interior()
 	_build_fascias(trim, satin)
 	if patrol:
 		_build_patrol_details(trim)
 	for side: float in [-1.0, 1.0]:
+		var first_trim := get_child_count()
 		_build_door_details(side, paint, trim, satin)
+		_track_trim(first_trim)
 		for axle: float in [-AXLE, AXLE]:
 			var wheel := _add_wheel_at(Vector3(side * 0.769, -0.18, axle), tire, satin, axle < 0.0, wheel_radius, WHEEL_WIDTH)
 			BodyMesh.dress_wheel(wheel, wheel_radius, WHEEL_WIDTH, tire, satin, black, 6)
+	var scrape_material := _material(Color("9da7ad"))
+	scrape_material.metallic = 0.30
+	scrape_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_scrapes = BodyMesh.part(self, "ImpactScuffs", null, scrape_material)
+	_scrapes.hide()
 
 
 func _build_patrol_details(trim: Material) -> void:
 	var stripe := _material(Color("283e67"))
 	for side: float in [-1.0, 1.0]:
+		var stripe_start := get_child_count()
 		_add_box("PatrolStripe", Vector3(0.026, 0.094, 1.17), Vector3(side * 0.816, 0.28, -0.03), stripe)
+		_track_trim(stripe_start)
 	_add_box("PatrolLightbase", Vector3(0.72, 0.050, 0.19), Vector3(0.0, 1.126, 0.13), trim)
 	for side: float in [-1.0, 1.0]:
 		var lens := _material(Color("e48842") if side < 0.0 else Color("4269b5"))
@@ -185,18 +211,20 @@ func _build_fascias(trim: StandardMaterial3D, satin: Material) -> void:
 			Vector3(0.617, 0.141, 1.851) * mirror, Vector3(0.605, 0.281, 1.851) * mirror,
 			Vector3(0.534, 0.286, 1.851) * mirror, Vector3(0.494, 0.229, 1.851) * mirror,
 		]))
-	BodyMesh.faces(self, "SweptHeadlightLenses", front_lamps, lamp)
-	BodyMesh.faces(self, "VerticalTailLenses", rear_lamps, _brake_material)
-	BodyMesh.faces(self, "BumperInserts", [
+	_front_lenses = _track_panel("SweptHeadlightLenses", front_lamps, lamp)
+	_rear_lenses = _track_panel("VerticalTailLenses", rear_lamps, _brake_material)
+	_track_panel("BumperInserts", [
 		PackedVector3Array([Vector3(-0.455, -0.165, -1.849), Vector3(-0.475, -0.092, -1.849), Vector3(0.475, -0.092, -1.849), Vector3(0.455, -0.165, -1.849)]),
 		PackedVector3Array([Vector3(-0.350, 0.013, -1.851), Vector3(-0.359, 0.120, -1.851), Vector3(0.359, 0.120, -1.851), Vector3(0.350, 0.013, -1.851)]),
 		PackedVector3Array([Vector3(0.505, -0.123, 1.849), Vector3(0.559, -0.065, 1.849), Vector3(-0.559, -0.065, 1.849), Vector3(-0.505, -0.123, 1.849)]),
 	], trim)
+	var first_trim := get_child_count()
 	for y: float in [0.036, 0.068, 0.10]:
 		BodyMesh.bar(self, "GrilleSlat", Vector3(-0.339, y, -1.857), Vector3(0.339, y, -1.857), 0.006, satin)
 	_add_box("FrontPlate", Vector3(0.36, 0.086, 0.016), Vector3(0.0, -0.104, -1.856), satin)
 	_add_box("RearPlate", Vector3(0.37, 0.090, 0.019), Vector3(0.0, 0.015, 1.850), satin)
 	BodyMesh.bar(self, "HatchPull", Vector3(-0.106, 0.215, 1.851), Vector3(0.106, 0.215, 1.851), 0.017, trim)
+	_track_trim(first_trim)
 
 
 func _build_door_details(side: float, paint: Material, trim: Material, satin: Material) -> void:
@@ -215,3 +243,147 @@ func _build_door_details(side: float, paint: Material, trim: Material, satin: Ma
 	var housing := BodyMesh.part(self, "OvalMirrorHousing", mirror, paint)
 	housing.position = Vector3(side * 0.863, 0.520, -0.766)
 	housing.scale = Vector3(0.17, 0.108, 0.13)
+
+
+func _track_trim(first: int) -> void:
+	for index in range(first, get_child_count()):
+		var node := get_child(index) as MeshInstance3D
+		_moving_trim[node] = node.position
+
+
+func _track_panel(label: String, polygons: Array, material: Material) -> MeshInstance3D:
+	var node := BodyMesh.faces(self, label, polygons, material)
+	_stock_meshes[node] = node.mesh
+	_face_panels[node] = polygons
+	return node
+
+
+func _damage_bodywork(severity: float, point: Vector3, normal: Vector3) -> void:
+	var zone: DamageZone
+	if absf(normal.z) >= absf(normal.x):
+		zone = DamageZone.FRONT if normal.z >= 0.0 else DamageZone.REAR
+	else:
+		zone = DamageZone.LEFT if normal.x >= 0.0 else DamageZone.RIGHT
+	var previous := _panel_damage[zone]
+	var updated := minf(1.0, previous + severity * 1.7)
+	if is_equal_approx(updated, previous):
+		return
+	var location := clampf(point.x, -0.56, 0.56) if zone < DamageZone.LEFT else clampf(point.z, -1.12, 1.12)
+	_panel_centers[zone] = lerpf(_panel_centers[zone], location, (updated - previous) / updated)
+	_panel_damage[zone] = updated
+	if zone < DamageZone.LEFT and updated >= 0.46:
+		_broken_lamps[zone * 2 + (1 if location > 0.0 else 0)] = 1
+	_rebuild_damaged_panels()
+	_update_crumpled_collision()
+
+
+func _damage_steering_pull() -> float:
+	return (_panel_damage[DamageZone.RIGHT] - _panel_damage[DamageZone.LEFT]) * 0.14
+
+
+func _restore_bodywork() -> void:
+	_panel_damage.fill(0.0)
+	_panel_centers.fill(0.0)
+	_broken_lamps.fill(0)
+	for panel: MeshInstance3D in _stock_meshes:
+		panel.mesh = _stock_meshes[panel]
+		panel.show()
+	for trim: MeshInstance3D in _moving_trim:
+		trim.position = _moving_trim[trim]
+	_scrapes.hide()
+	_scrapes.mesh = null
+	_update_crumpled_collision()
+
+
+func _update_crumpled_collision() -> void:
+	var front := _panel_damage[DamageZone.FRONT] * 0.24
+	var rear := _panel_damage[DamageZone.REAR] * 0.24
+	var shape := _chassis.shape as BoxShape3D
+	shape.size = CHASSIS_SIZE - Vector3(0.0, 0.0, front + rear)
+	_chassis.position = CHASSIS_CENTER + Vector3(0.0, 0.0, (front - rear) * 0.5)
+
+
+func _rebuild_damaged_panels() -> void:
+	var shaped_rings: Array[PackedVector3Array] = []
+	for index in _shell_rings.size():
+		var ring := _shell_rings[index]
+		shaped_rings.append(_crumple_polygon(ring))
+		if index + 1 == _shell_rings.size():
+			break
+		# Sample the curved dent between the wide straight-door sections.
+		var next := _shell_rings[index + 1]
+		var intervals := ceili((next[0].z - ring[0].z) / 0.16)
+		for step in range(1, intervals):
+			var middle := PackedVector3Array()
+			for vertex in ring.size():
+				middle.append(ring[vertex].lerp(next[vertex], float(step) / intervals))
+			shaped_rings.append(_crumple_polygon(middle))
+	_shell.mesh = BodyMesh.loft_mesh(shaped_rings)
+	for panel: MeshInstance3D in _face_panels:
+		var shaped_faces: Array[PackedVector3Array] = []
+		var faces: Array = _face_panels[panel]
+		for index in faces.size():
+			if (panel == _front_lenses and _broken_lamps[index] != 0) or (
+					panel == _rear_lenses and _broken_lamps[2 + index] != 0):
+				continue
+			shaped_faces.append(_crumple_polygon(faces[index]))
+		panel.visible = not shaped_faces.is_empty()
+		if panel.visible:
+			panel.mesh = BodyMesh.faces_mesh(shaped_faces)
+	for trim: MeshInstance3D in _moving_trim:
+		trim.position = _crumple(_moving_trim[trim])
+	_rebuild_scuffs()
+
+
+func _crumple_polygon(points: PackedVector3Array) -> PackedVector3Array:
+	var result := points.duplicate()
+	for index in result.size():
+		result[index] = _crumple(result[index])
+	return result
+
+
+func _crumple(point: Vector3) -> Vector3:
+	var result := point
+	for edge in [DamageZone.FRONT, DamageZone.REAR]:
+		if _panel_damage[edge] <= 0.0:
+			continue
+		var direction := -1.0 if edge == DamageZone.FRONT else 1.0
+		var depth := smoothstep(0.98, 1.86, point.z * direction)
+		var across := 1.0 - 0.56 * smoothstep(0.02, 1.25, absf(point.x - _panel_centers[edge]))
+		var strength := depth * across * _panel_damage[edge]
+		result.z -= direction * strength * 0.45
+		var buckle := 1.0 - smoothstep(0.0, 0.41, absf(point.z * direction - 1.56))
+		result.y += strength * lerpf(-0.035, 0.21 * buckle, smoothstep(-0.15, 0.24, point.y))
+	var side := DamageZone.LEFT if point.x < 0.0 else DamageZone.RIGHT
+	var taper := 1.0 - smoothstep(0.15, 1.32, absf(point.z - _panel_centers[side]))
+	var shoulder := smoothstep(0.30, 0.82, absf(point.x)) * (1.0 - smoothstep(0.26, 0.58, point.y))
+	result.x -= signf(point.x) * taper * shoulder * _panel_damage[side] * 0.28
+	return result
+
+
+func _rebuild_scuffs() -> void:
+	var scars: Array[PackedVector3Array] = []
+	for zone in _panel_damage.size():
+		var amount := _panel_damage[zone]
+		if amount < 0.12:
+			continue
+		for line in 3:
+			var shift := float(line)
+			var height := 0.193 + shift * 0.018
+			var width := (0.07 + amount * 0.39) * (1.0 - shift * 0.19)
+			var center := _panel_centers[zone]
+			var cut: PackedVector3Array
+			if zone < DamageZone.LEFT:
+				var z := -1.866 if zone == DamageZone.FRONT else 1.866
+				center = clampf(center, -0.53 + width, 0.53 - width)
+				cut = PackedVector3Array([Vector3(center - width, height - 0.025, z),
+					Vector3(center + width, height + 0.008, z), Vector3(center + width * 0.76, height + 0.016, z)])
+			else:
+				var x := -0.829 if zone == DamageZone.LEFT else 0.829
+				center = clampf(center, -1.33 + width, 1.33 - width)
+				cut = PackedVector3Array([Vector3(x, height - 0.008, center - width),
+					Vector3(x, height + 0.021, center + width), Vector3(x, height + 0.029, center + width * 0.80)])
+			scars.append(_crumple_polygon(cut))
+	_scrapes.visible = not scars.is_empty()
+	if _scrapes.visible:
+		_scrapes.mesh = BodyMesh.faces_mesh(scars)

@@ -13,6 +13,7 @@ func _init() -> void:
 	super()
 	name = "Phase1Rickshaw"
 	vehicle_label = "Auto-rickshaw"
+	chassis_mass = 440.0
 	exit_side_offset = 1.30
 	follow_distance = 6.2
 	max_forward_speed = 13.0

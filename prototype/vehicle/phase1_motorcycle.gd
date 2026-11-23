@@ -7,6 +7,7 @@ func _init() -> void:
 	super()
 	name = "Phase1Motorcycle"
 	vehicle_label = "Motorcycle"
+	chassis_mass = 205.0
 	exit_side_offset = 1.05
 	follow_distance = 5.9
 	max_forward_speed = 20.0

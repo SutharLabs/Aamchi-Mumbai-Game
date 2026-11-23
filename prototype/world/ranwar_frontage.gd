@@ -1,6 +1,8 @@
 extends RefCounted
 ## Original Ranwar-inspired frontage kit. Each lot batches its parts into one opaque surface.
 
+const Surfaces := preload("res://world/ranwar_surface_materials.gd")
+
 const PLINTH := Color("777068")
 const TIMBER := Color("5b4235")
 const WINDOW := Color("354b56")
@@ -22,8 +24,8 @@ static func create(height: float, wall_color: Color, storefront: bool, variant: 
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_smooth_group(-1)
-	_box(surface, Vector3(0, height * 0.5, 0), Vector3(13, height, 12), wall_color)
-	_box(surface, Vector3(0, 0.27, 0), Vector3(13.08, 0.54, 12.08), PLINTH)
+	_box(surface, Vector3(0, height * 0.5, 0), Vector3(13, height, 12), wall_color, Surfaces.PLASTER)
+	_box(surface, Vector3(0, 0.27, 0), Vector3(13.08, 0.54, 12.08), PLINTH, Surfaces.CONCRETE)
 	var frontage_name := "RanwarShopfront" if storefront else "RanwarVerandah"
 	if storefront:
 		_shop(surface, height, variant)
@@ -98,14 +100,14 @@ static func _shop(surface: SurfaceTool, height: float, variant: int) -> void:
 static func _verandah(surface: SurfaceTool, height: float, variant: int) -> void:
 	var porch_width := _porch_half_width(variant)
 	_tiled_roof(surface, height, 1.92, variant)
-	_box(surface, PORCH_CENTER, Vector3(porch_width * 2.0, 0.32, PORCH_DEPTH), PLINTH)
-	_box(surface, STEP_CENTER, STEP_SIZE, PLINTH.lightened(0.10))
+	_box(surface, PORCH_CENTER, Vector3(porch_width * 2.0, 0.32, PORCH_DEPTH), PLINTH, Surfaces.CONCRETE)
+	_box(surface, STEP_CENTER, STEP_SIZE, PLINTH.lightened(0.10), Surfaces.CONCRETE)
 	_box(surface, Vector3(0, 1.62, -6.06), Vector3(1.64, 2.34, 0.14), TRIM)
-	_box(surface, Vector3(0, 1.58, -6.17), Vector3(1.37, 2.12, 0.16), TIMBER)
+	_box(surface, Vector3(0, 1.58, -6.17), Vector3(1.37, 2.12, 0.16), TIMBER, Surfaces.TIMBER)
 	_box(surface, Vector3(0, 2.12, -6.28), Vector3(1.18, 0.74, 0.08), WINDOW)
 	_canopy(surface, porch_width + 0.25, 3.06, 1.40, TILE)
 	for x: float in [-porch_width, -POST_BASE_X, POST_BASE_X, porch_width]:
-		_box(surface, Vector3(x, 1.60, POST_Z), Vector3(0.15, 2.60, 0.16), TIMBER)
+		_box(surface, Vector3(x, 1.60, POST_Z), Vector3(0.15, 2.60, 0.16), TIMBER, Surfaces.TIMBER)
 		_box(surface, Vector3(x, 0.42, POST_Z), Vector3(0.25, 0.20, 0.27), PLINTH.lightened(0.13))
 	_verandah_rail(surface, porch_width, TIMBER)
 	for side: float in [-1.0, 1.0]:
@@ -127,22 +129,22 @@ static func _timber_gallery(surface: SurfaceTool, height: float, variant: int, w
 	var gallery_width := (half_width + 0.20) * 2.0
 	var wood := TIMBER.darkened(0.10)
 	_tiled_roof(surface, height, 1.90, variant)
-	_box(surface, PORCH_CENTER, Vector3(half_width * 2.0, 0.32, PORCH_DEPTH), PLINTH)
-	_box(surface, STEP_CENTER, STEP_SIZE, PLINTH.lightened(0.10))
+	_box(surface, PORCH_CENTER, Vector3(half_width * 2.0, 0.32, PORCH_DEPTH), PLINTH, Surfaces.CONCRETE)
+	_box(surface, STEP_CENTER, STEP_SIZE, PLINTH.lightened(0.10), Surfaces.CONCRETE)
 	_box(surface, Vector3(2.8, 1.55, -6.06), Vector3(1.56, 2.13, 0.14), TRIM)
 	_box(surface, Vector3(2.8, 1.51, -6.16), Vector3(1.31, 1.96, 0.08), Color("698274"))
 	_window(surface, 0.0, 1.88, true)
-	_box(surface, Vector3(0, gallery_floor - 0.13, -6.61), Vector3(gallery_width, 0.26, 1.37), wood)
-	_box(surface, Vector3(0, gallery_top, -6.61), Vector3(gallery_width, 0.21, 1.34), wood)
+	_box(surface, Vector3(0, gallery_floor - 0.13, -6.61), Vector3(gallery_width, 0.26, 1.37), wood, Surfaces.TIMBER)
+	_box(surface, Vector3(0, gallery_top, -6.61), Vector3(gallery_width, 0.21, 1.34), wood, Surfaces.TIMBER)
 	_box(surface, Vector3(0, (gallery_floor + gallery_top) * 0.5, -6.16),
-		Vector3(gallery_width, gallery_top - gallery_floor, 0.13), wall_color.darkened(0.42))
+		Vector3(gallery_width, gallery_top - gallery_floor, 0.13), wall_color.darkened(0.42), Surfaces.PLASTER)
 	_timber_gallery_panels(surface, half_width, gallery_floor, gallery_top, wood)
 	_canopy(surface, half_width + 0.32, gallery_top + 0.06, 1.53, TILE.darkened(0.13))
 	for x: float in [-half_width, -POST_BASE_X, POST_BASE_X, half_width]:
 		_box(surface, Vector3(x, (gallery_floor + 0.28) * 0.5, POST_Z),
-			Vector3(0.17, gallery_floor - 0.28, 0.19), wood)
+			Vector3(0.17, gallery_floor - 0.28, 0.19), wood, Surfaces.TIMBER)
 	_stair_flight(surface, Vector2(-half_width + 2.62, 0.33), Vector2(-half_width + 0.42, 1.33), wood, 5)
-	_box(surface, Vector3(-half_width + 0.32, 1.31, -6.61), Vector3(0.58, 0.13, 1.05), wood)
+	_box(surface, Vector3(-half_width + 0.32, 1.31, -6.61), Vector3(0.58, 0.13, 1.05), wood, Surfaces.TIMBER)
 	_stair_flight(surface, Vector2(-half_width + 0.42, 1.33), Vector2(-1.66, gallery_floor), wood, 9)
 	_verandah_rail(surface, half_width, wood)
 	for x: float in [-POST_BASE_X, -half_width]:
@@ -155,12 +157,12 @@ static func _timber_gallery_panels(surface: SurfaceTool, half_width: float, low:
 	var sill := low + 0.38
 	var head := high - 0.28
 	var metal := Color("b2b193")
-	_box(surface, Vector3(0, sill - 0.07, -7.21), Vector3(half_width * 2.0, 0.14, 0.14), wood)
-	_box(surface, Vector3(0, head + 0.07, -7.21), Vector3(half_width * 2.0, 0.14, 0.14), wood)
+	_box(surface, Vector3(0, sill - 0.07, -7.21), Vector3(half_width * 2.0, 0.14, 0.14), wood, Surfaces.TIMBER)
+	_box(surface, Vector3(0, head + 0.07, -7.21), Vector3(half_width * 2.0, 0.14, 0.14), wood, Surfaces.TIMBER)
 	var panel_width := half_width * 2.0 / 6.0
 	for bay in range(7):
 		var edge := -half_width + float(bay) * panel_width
-		_box(surface, Vector3(edge, (low + high) * 0.5, -7.21), Vector3(0.13, high - low, 0.15), wood)
+		_box(surface, Vector3(edge, (low + high) * 0.5, -7.21), Vector3(0.13, high - low, 0.15), wood, Surfaces.TIMBER)
 		if bay == 6:
 			continue
 		for bar in range(3):
@@ -182,7 +184,7 @@ static func _stair_flight(surface: SurfaceTool, first: Vector2, last: Vector2, w
 	for index in range(steps):
 		var position := first + step * float(index)
 		_box(surface, Vector3(position.x + step.x * 0.5, position.y + step.y - 0.04, -6.65),
-			Vector3(absf(step.x) + 0.045, 0.08, 0.76), wood.lightened(0.12))
+			Vector3(absf(step.x) + 0.045, 0.08, 0.76), wood.lightened(0.12), Surfaces.TIMBER)
 	_raked_strip(surface, first, last, -7.06, 0.20, wood)
 	_raked_strip(surface, first + Vector2(0, 0.77), last + Vector2(0, 0.77), -7.07, 0.085, wood)
 	for index in range(3):
@@ -204,10 +206,10 @@ static func _raked_strip(surface: SurfaceTool, first: Vector2, last: Vector2, z:
 static func _verandah_rail(surface: SurfaceTool, half_width: float, wood: Color) -> void:
 	for side: float in [-1.0, 1.0]:
 		var span := half_width - POST_BASE_X
-		_box(surface, Vector3(side * (POST_BASE_X + span * 0.5), 1.05, POST_Z), Vector3(span, 0.08, 0.1), wood)
+		_box(surface, Vector3(side * (POST_BASE_X + span * 0.5), 1.05, POST_Z), Vector3(span, 0.08, 0.1), wood, Surfaces.TIMBER)
 		for index in range(1, 6):
 			var post_x := side * (POST_BASE_X + span * float(index) / 6.0)
-			_box(surface, Vector3(post_x, 0.74, POST_Z), Vector3(0.07, 0.52, 0.08), wood)
+			_box(surface, Vector3(post_x, 0.74, POST_Z), Vector3(0.07, 0.52, 0.08), wood, Surfaces.TIMBER)
 
 
 static func _window(surface: SurfaceTool, x: float, y: float, shuttered: bool) -> void:
@@ -248,8 +250,8 @@ static func _tiled_roof(surface: SurfaceTool, y: float, height: float, variant: 
 	var rr := Vector3(HALF_WIDTH, y + height, 0.0)
 	var lb := Vector3(-HALF_WIDTH, y, EAVE)
 	var rb := Vector3(HALF_WIDTH, y, EAVE)
-	_quad(surface, lf, rf, rr, lr, color)
-	_quad(surface, lr, rr, rb, lb, color.darkened(0.08))
+	_quad(surface, lf, rf, rr, lr, color, Surfaces.CLAY)
+	_quad(surface, lr, rr, rb, lb, color.darkened(0.08), Surfaces.CLAY)
 	_triangle(surface, lb, lf, lr, FASCIA)
 	_triangle(surface, rf, rb, rr, FASCIA)
 	_quad(surface, rf, lf, lr, rr, FASCIA)
@@ -264,11 +266,12 @@ static func _tiled_roof(surface: SurfaceTool, y: float, height: float, variant: 
 			var from_y := y + height * (1.0 - absf(from_z) / EAVE) + 0.012
 			var to_y := y + height * (1.0 - absf(to_z) / EAVE) + 0.012
 			_quad(surface, Vector3(-HALF_WIDTH, from_y, from_z), Vector3(HALF_WIDTH, from_y, from_z),
-				Vector3(HALF_WIDTH, to_y, to_z), Vector3(-HALF_WIDTH, to_y, to_z), color.darkened(0.14))
+				Vector3(HALF_WIDTH, to_y, to_z), Vector3(-HALF_WIDTH, to_y, to_z), color.darkened(0.14), Surfaces.CLAY)
 	_box(surface, Vector3(0, y + height, 0), Vector3(HALF_WIDTH * 2.0, 0.12, 0.16), FASCIA)
 
 
-static func _box(surface: SurfaceTool, center: Vector3, size: Vector3, color: Color) -> void:
+static func _box(surface: SurfaceTool, center: Vector3, size: Vector3, color: Color,
+		finish: int = Surfaces.PLAIN) -> void:
 	var low := center - size * 0.5
 	var high := center + size * 0.5
 	var a := low
@@ -279,21 +282,20 @@ static func _box(surface: SurfaceTool, center: Vector3, size: Vector3, color: Co
 	var f := Vector3(high.x, low.y, high.z)
 	var g := high
 	var h := Vector3(low.x, high.y, high.z)
-	_quad(surface, a, b, c, d, color)
-	_quad(surface, f, e, h, g, color)
-	_quad(surface, b, f, g, c, color)
-	_quad(surface, e, a, d, h, color)
-	_quad(surface, e, f, b, a, color)
-	_quad(surface, d, c, g, h, color)
+	_quad(surface, a, b, c, d, color, finish)
+	_quad(surface, f, e, h, g, color, finish)
+	_quad(surface, b, f, g, c, color, finish)
+	_quad(surface, e, a, d, h, color, finish)
+	_quad(surface, e, f, b, a, color, finish)
+	_quad(surface, d, c, g, h, color, finish)
 
 
-static func _quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, color: Color) -> void:
-	_triangle(surface, a, b, c, color)
-	_triangle(surface, a, c, d, color)
+static func _quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, color: Color,
+		finish: int = Surfaces.PLAIN) -> void:
+	_triangle(surface, a, b, c, color, finish)
+	_triangle(surface, a, c, d, color, finish)
 
 
-static func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
-	surface.set_color(color)
-	surface.add_vertex(a)
-	surface.add_vertex(b)
-	surface.add_vertex(c)
+static func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color,
+		finish: int = Surfaces.PLAIN) -> void:
+	Surfaces.add_triangle(surface, a, b, c, color, finish)

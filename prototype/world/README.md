@@ -95,6 +95,12 @@ The motorcycle bay is **1.8 x 3.8 m** at `(-6.2, 0, 1)`; its footprint is x=-7.1
 
 A sparse cyan painted guide at x=-16, z=-8..-21.5 marks a flat practice approach. The nearby quiet test corridor x=-23..-14, z=-8..-28 avoids the ramp, curb-test object and impact wall. It adds no new obstacles or driving-route geometry.
 
+## Photo-based street materials
+
+Ranwar uses six shared, photo-based material tiles for asphalt, worn concrete, painted plaster, clay roof tiles, timber and gravel. Road surfaces join at a common world-space repeat. Normal maps give repeated asphalt, concrete and plaster surfaces low relief under the sun. The frontage, alley and church meshes use metre-scale coordinates and keep one opaque surface per mesh, with material selection stored per face.
+
+The runtime includes 512×512 diffuse tiles and three normal maps with mipmaps. Palette colours still distinguish the authored buildings. Roof and timber surfaces retain their photographed finish colours, with placement variation for plaster. The material pass leaves route dimensions, ground collision and streaming configuration as before. [Photo sources and authors](textures/SOURCES.md)
+
 ## St Peter's Church exterior
 
 The Hill Road approach now has an exterior landmark based on the Romanesque church. The original mesh uses the yellow stone massing, pediment, round-arched entrance, side turrets and paired palms visible in parish and Archdiocese references. The photographs informed the model and the game ships original geometry. [St Peter's parish history](https://stpetersbandra.com/about-us/history/) · [Archdiocese of Bombay parish photograph](https://www.archdioceseofbombay.org/parishes/stpeter) · [MMR-HCS heritage inventory, entry 609](https://mmrhcs.org.in/images/documents/projects/heritage-listning/01-Heritage-List.pdf#page=69)

@@ -1,6 +1,8 @@
 extends RefCounted
 ## Original Romanesque landmark study. The front faces local -Z.
 
+const Surfaces := preload("res://world/ranwar_surface_materials.gd")
+
 const STONE := Color("b49c77")
 const TRIM := Color("daceaa")
 const SHADOW := Color("887457")
@@ -244,7 +246,13 @@ static func _quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: V
 
 
 static func _triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
-	surface.set_color(color)
-	surface.add_vertex(a)
-	surface.add_vertex(b)
-	surface.add_vertex(c)
+	var finish := Surfaces.PLAIN
+	if color == STONE or color == SHADOW:
+		finish = Surfaces.PLASTER
+	elif color == PAVING:
+		finish = Surfaces.CONCRETE
+	elif color == TILE:
+		finish = Surfaces.CLAY
+	elif color == TIMBER:
+		finish = Surfaces.TIMBER
+	Surfaces.add_triangle(surface, a, b, c, color, finish)

@@ -19,6 +19,8 @@ const STEP_PROBE_MARGIN: float = 0.006
 const STEP_EDGE_CLEARANCE: float = 0.055
 const WORLD_LAYER: int = 1
 const PERSON_LAYER: int = 2
+const DAMAGE_SPEED := 4.0
+const REPORT_SPEED := 5.0
 var wheel_radius: float = 0.32
 var vehicle_label: String = "Vehicle"
 var is_two_wheeler: bool = false
@@ -28,8 +30,14 @@ var follow_distance: float = 6.9
 var steering_full_speed: float = 3.0
 var high_speed_steering_factor: float = 0.55
 var visual_steering_angle: float = 0.42
+var chassis_mass: float = 1100.0
 
 var driver_active: bool = false
+var impact_velocity := Vector3.ZERO
+var impact_normal := Vector3.ZERO
+var impact_position := Vector3.ZERO
+var _damage := 0.0
+var _impact_drift := Vector3.ZERO
 var _throttle: float = 0.0
 var _steering: float = 0.0
 var _braking: bool = true
@@ -47,6 +55,7 @@ func _init() -> void:
 	# Physics layer bit values: world=1, people=2, vehicle=4.
 	collision_layer = 4
 	collision_mask = WORLD_LAYER | PERSON_LAYER | 4
+	platform_floor_layers = WORLD_LAYER
 	floor_snap_length = 0.28
 	floor_max_angle = deg_to_rad(34.0)
 	floor_stop_on_slope = true
@@ -81,6 +90,10 @@ func get_speed_mps() -> float:
 	return Vector2(velocity.x, velocity.z).length()
 
 
+func condition_percent() -> int:
+	return roundi((1.0 - _damage) * 100.0)
+
+
 func reset_to(pose: Transform3D) -> void:
 	# The caller chooses a clear, grounded pose. Reject corrupt transforms and
 	# retain only heading so resets cannot leave this upright arcade car tilted.
@@ -107,6 +120,10 @@ func reset_to(pose: Transform3D) -> void:
 	_steering = 0.0
 	_braking = true
 	_wheel_angle = 0.0
+	_impact_drift = Vector3.ZERO
+	if _damage > 0.0:
+		_damage = 0.0
+		_restore_bodywork()
 	_update_wheels(0.0)
 
 
@@ -116,7 +133,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var throttle: float = _throttle if driver_active else 0.0
-	var steering: float = _steering if driver_active else 0.0
+	var steering := clampf(_steering + _damage_steering_pull(), -1.0, 1.0) if driver_active else 0.0
 	var braking: bool = _braking or not driver_active
 	_update_longitudinal_speed(throttle, braking, delta)
 
@@ -128,34 +145,107 @@ func _physics_process(delta: float) -> void:
 	var travel_sign: float = signf(_signed_speed)
 	var grounded := is_on_floor()
 	if grounded:
-		rotate_y(-steering * turn_rate * steering_gain * speed_softening * travel_sign * delta)
+		rotate_y(-steering * turn_rate * (1.0 - 0.24 * _damage) * steering_gain * speed_softening * travel_sign * delta)
 
 	var forward: Vector3 = -global_basis.z
 	forward.y = 0.0
 	forward = forward.normalized()
-	velocity.x = forward.x * _signed_speed
-	velocity.z = forward.z * _signed_speed
+	_impact_drift = _impact_drift.move_toward(Vector3.ZERO, 7.5 * delta)
+	var drift_at_start := _impact_drift
+	var approach := forward * _signed_speed + drift_at_start
+	velocity.x = approach.x
+	velocity.z = approach.z
 	if grounded:
 		velocity.y = 0.0
 	else:
 		velocity.y = maxf(velocity.y - GRAVITY * delta, -TERMINAL_FALL_SPEED)
 
-	var approach := Vector3(velocity.x, 0.0, velocity.z)
 	if not grounded or not _try_step(velocity * delta):
 		move_and_slide()
-		if approach.length_squared() >= 25.0 and impacted.has_connections():
-			for index in get_slide_collision_count():
-				var contact := get_slide_collision(index)
-				var closing_speed := -approach.dot(contact.get_normal())
-				if absf(contact.get_normal().y) < 0.65 and closing_speed >= 5.0:
-					impacted.emit(self, contact.get_collider(), closing_speed)
-					break
+		if approach.length_squared() >= 0.01:
+			_handle_slide_impacts(approach)
 	# Consume the collision-adjusted speed so a frontal impact does not retain
 	# an invisible high speed that instantly reappears after leaving the wall.
-	_signed_speed = clampf(velocity.dot(forward), -max_reverse_speed, max_forward_speed)
+	_signed_speed = clampf((velocity - drift_at_start).dot(forward), -max_reverse_speed, max_forward_speed)
 	_update_wheels(delta)
 	if _brake_material != null:
 		_brake_material.emission_energy_multiplier = 1.7 if braking else 0.3
+
+
+func _handle_slide_impacts(approach: Vector3) -> void:
+	var strongest: KinematicCollision3D
+	var contact_index := 0
+	var closing_speed := DAMAGE_SPEED
+	for slide in get_slide_collision_count():
+		var contact := get_slide_collision(slide)
+		for index in contact.get_collision_count():
+			var normal := contact.get_normal(index)
+			if absf(normal.y) >= 0.60:
+				continue
+			var relative := approach - contact.get_collider_velocity(index)
+			relative.y = 0.0
+			var speed := -relative.dot(normal)
+			if speed > closing_speed and approach.dot(normal) < -0.10:
+				strongest = contact
+				contact_index = index
+				closing_speed = speed
+	if strongest == null:
+		return
+	var collider := strongest.get_collider(contact_index) as CollisionObject3D
+	var surface_normal := strongest.get_normal(contact_index)
+	var point := strongest.get_position(contact_index)
+	_emit_impact(approach, collider, closing_speed, point, surface_normal)
+	if not is_instance_valid(collider) or (collider.collision_layer & PERSON_LAYER) != 0:
+		return
+	_record_chassis_damage(closing_speed, point, surface_normal)
+	var away := Vector3(surface_normal.x, 0.0, surface_normal.z).normalized()
+	if collider is CharacterBody3D and collider.has_method("_receive_vehicle_hit"):
+		var fraction: float = collider._receive_vehicle_hit(closing_speed, point, -away, chassis_mass)
+		_add_impact_drift(away * minf(closing_speed * fraction * 0.24, 2.2))
+	elif closing_speed > 8.0:
+		_add_impact_drift(away * minf((closing_speed - 8.0) * 0.15, 1.35))
+
+
+func _receive_vehicle_hit(speed: float, point: Vector3, away: Vector3, other_mass: float) -> float:
+	var other_share := other_mass / (other_mass + chassis_mass)
+	_record_chassis_damage(speed * lerpf(0.56, 1.0, other_share), point, away)
+	_add_impact_drift(away * minf(speed * other_share * 0.46, 3.2))
+	return 1.0 - other_share
+
+
+func _add_impact_drift(push: Vector3) -> void:
+	_impact_drift = (_impact_drift + push).limit_length(3.2)
+
+
+func _emit_impact(approach: Vector3, collider: Object, speed: float, point: Vector3, normal: Vector3) -> void:
+	if speed < REPORT_SPEED or not impacted.has_connections():
+		return
+	impact_velocity = approach
+	impact_normal = normal
+	impact_position = point
+	impacted.emit(self, collider, speed)
+
+
+func _record_chassis_damage(speed: float, point: Vector3, normal: Vector3) -> void:
+	if not is_finite(speed) or not point.is_finite() or not normal.is_finite() or speed <= DAMAGE_SPEED:
+		return
+	var severity := clampf((speed * speed - DAMAGE_SPEED * DAMAGE_SPEED) / 340.0, 0.0, 0.78)
+	if severity < 0.012:
+		return
+	_damage = minf(_damage + severity * 0.76, 0.92)
+	_damage_bodywork(severity, to_local(point), global_basis.inverse() * normal)
+
+
+func _damage_bodywork(_severity: float, _point: Vector3, _normal: Vector3) -> void:
+	pass
+
+
+func _restore_bodywork() -> void:
+	pass
+
+
+func _damage_steering_pull() -> float:
+	return 0.0
 
 
 func _try_step(motion: Vector3) -> bool:
@@ -174,9 +264,10 @@ func _try_step(motion: Vector3) -> bool:
 	var normal := _step_contact.get_normal()
 	if hit != null and (hit.collision_layer & PERSON_LAYER) != 0 and direction.dot(normal) < -0.1:
 		# Stop before a frontal contact. Sliding the chassis into a capsule can push it aside.
-		var closing_speed := -(Vector3(velocity.x, 0.0, velocity.z)).dot(normal)
-		if closing_speed >= 5.0:
-			impacted.emit(self, hit, closing_speed)
+		var approach := Vector3(velocity.x, 0.0, velocity.z)
+		var relative := approach - _step_contact.get_collider_velocity()
+		relative.y = 0.0
+		_emit_impact(approach, hit, -relative.dot(normal), _step_contact.get_position(), normal)
 		velocity.x = 0.0
 		velocity.z = 0.0
 		return false
@@ -220,7 +311,8 @@ func _update_longitudinal_speed(throttle: float, braking: bool, delta: float) ->
 		_signed_speed = move_toward(_signed_speed, 0.0, brake_deceleration * delta)
 	else:
 		var limit: float = max_forward_speed if throttle > 0.0 else max_reverse_speed
-		_signed_speed = move_toward(_signed_speed, throttle * limit, acceleration * delta)
+		var drive_scale := 1.0 - _damage * 0.56
+		_signed_speed = move_toward(_signed_speed, throttle * limit * drive_scale, acceleration * drive_scale * delta)
 
 
 func _update_wheels(delta: float) -> void:

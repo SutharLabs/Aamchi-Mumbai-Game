@@ -76,8 +76,7 @@ func _ready() -> void:
 	_add_practice_vehicle(scooter, "PracticeScooter", World.SCOOTER_START)
 	traffic.name = "AmbientTraffic"
 	add_child(traffic)
-	if delivery_progress != null:
-		traffic.child_entered_tree.connect(_watch_impact)
+	traffic.child_entered_tree.connect(_watch_impact)
 	if ambient_traffic_enabled:
 		traffic.start(world.lane_graph.loop_for_road(TRAFFIC_ENTRY_ROAD), 26.0, camera)
 	camera.fov = 68.0
@@ -111,8 +110,7 @@ func _add_practice_vehicle(vehicle: Vehicle, node_name: String, spawn: Vector3) 
 	add_child(vehicle)
 	vehicle.reset_to(pose)
 	_parking_poses[vehicle] = pose
-	if delivery_progress != null:
-		_watch_impact(vehicle)
+	_watch_impact(vehicle)
 
 
 func _add_pedestrian(speaker: String, greeting: String, side: float, offset: float, shirt: Color, wears_overshirt: bool = false) -> Pedestrian:
@@ -134,16 +132,32 @@ func _add_pedestrian(speaker: String, greeting: String, side: float, offset: flo
 func _add_lighting() -> void:
 	var lighting := WorldEnvironment.new()
 	lighting.environment = Environment.new()
-	lighting.environment.background_mode = Environment.BG_COLOR
-	lighting.environment.background_color = Color("a6bdc5")
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color("698ca8")
+	sky_material.sky_horizon_color = Color("c9d1c9")
+	sky_material.ground_horizon_color = sky_material.sky_horizon_color
+	sky_material.ground_bottom_color = Color("8a8578")
+	sky_material.sun_angle_max = 13.0
+	var sky := Sky.new()
+	sky.sky_material = sky_material
+	sky.radiance_size = Sky.RADIANCE_SIZE_64
+	lighting.environment.background_mode = Environment.BG_SKY
+	lighting.environment.sky = sky
 	lighting.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	lighting.environment.ambient_light_color = Color("dce9ed")
-	lighting.environment.ambient_light_energy = 0.76
+	lighting.environment.ambient_light_color = Color("c7d9e4")
+	lighting.environment.ambient_light_energy = 0.58
+	lighting.environment.ambient_light_sky_contribution = 0.0
 	add_child(lighting)
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-54.0, -27.0, 0.0)
+	sun.name = "Sun"
+	sun.rotation_degrees = Vector3(-46.0, -36.0, 0.0)
 	sun.light_color = Color("fff1d9")
-	sun.light_energy = 0.81
+	sun.light_energy = 1.08
+	sun.shadow_enabled = not OS.has_feature("mobile")
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_split_1 = 0.20
+	sun.directional_shadow_max_distance = 68.0
+	sun.directional_shadow_fade_start = 0.82
 	add_child(sun)
 
 
@@ -188,10 +202,13 @@ func _physics_process(delta: float) -> void:
 	if driving:
 		speed = active_vehicle.get_speed_mps()
 		vehicle_label = active_vehicle.vehicle_label
+		var condition := active_vehicle.condition_percent()
+		if condition < 100:
+			vehicle_label += " · Condition %d%%" % condition
 		if speed <= EXIT_SPEED:
 			prompt = "Dismount" if active_vehicle.is_two_wheeler else "Get out"
 			can_interact = true
-	else:
+	elif not player.is_reacting():
 		prompt = _special_interaction()
 		if prompt.is_empty():
 			var nearby := _nearby_interaction()
@@ -274,6 +291,14 @@ func _watch_impact(node: Node) -> void:
 
 
 func _on_vehicle_impact(vehicle: Vehicle, collider: Object, speed: float) -> void:
+	if collider is Pedestrian or collider == player:
+		var struck := collider as CharacterBody3D
+		var approach := vehicle.impact_velocity.slide(Vector3.UP).normalized()
+		var away := -vehicle.impact_normal.slide(Vector3.UP).normalized()
+		var push := approach * 0.35 + away * 0.65
+		if push.is_zero_approx():
+			push = struck.global_position - vehicle.global_position
+		collider.receive_vehicle_impact(push, speed)
 	if career == null:
 		return
 	if vehicle == active_vehicle:
@@ -355,6 +380,8 @@ func _nearby_interaction() -> PhysicsBody3D:
 	if best != null:
 		distance_limit = minf(distance_limit, player.global_position.distance_squared_to(best.global_position))
 	for pedestrian in pedestrians:
+		if pedestrian.is_reacting():
+			continue
 		var distance := player.global_position.distance_squared_to(pedestrian.global_position)
 		if distance < distance_limit and _can_reach(pedestrian, Vector3.UP):
 			best = pedestrian
@@ -384,6 +411,8 @@ func _try_interact() -> void:
 		active_vehicle.set_driver_active(false)
 		active_vehicle = null
 		_message_time = 0.0
+		return
+	if player.is_reacting():
 		return
 	if delivery != null and not delivery.prompt_for(player.global_position).is_empty():
 		var message := delivery.interact()

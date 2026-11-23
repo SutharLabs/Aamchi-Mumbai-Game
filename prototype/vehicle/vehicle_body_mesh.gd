@@ -3,6 +3,10 @@ extends RefCounted
 
 
 static func loft(parent: Node3D, label: String, sections: Array, material: Material, closed: bool = true) -> MeshInstance3D:
+	return part(parent, label, loft_mesh(sections, closed), material)
+
+
+static func loft_mesh(sections: Array, closed: bool = true) -> ArrayMesh:
 	# Rings advance along +Z and are clockwise in X/Y, starting at the lower left.
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -20,17 +24,21 @@ static func loft(parent: Node3D, label: String, sections: Array, material: Mater
 		_polygon(surface, sections.back())
 	surface.generate_normals()
 	surface.index()
-	return part(parent, label, surface.commit(), material)
+	return surface.commit()
 
 
 static func faces(parent: Node3D, label: String, polygons: Array, material: Material) -> MeshInstance3D:
+	return part(parent, label, faces_mesh(polygons), material)
+
+
+static func faces_mesh(polygons: Array) -> ArrayMesh:
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_smooth_group(-1)
 	for polygon: PackedVector3Array in polygons:
 		_polygon(surface, polygon)
 	surface.generate_normals()
-	return part(parent, label, surface.commit(), material)
+	return surface.commit()
 
 
 static func part(parent: Node3D, label: String, mesh: Mesh, material: Material) -> MeshInstance3D:

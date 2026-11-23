@@ -4,6 +4,7 @@
 
 const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
 const RanwarLaneFinish := preload("res://world/ranwar_lane_finish.gd")
+const RanwarSurfaceMaterials := preload("res://world/ranwar_surface_materials.gd")
 const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
@@ -116,12 +117,9 @@ func _build_materials() -> void:
 		var material := StandardMaterial3D.new()
 		material.albedo_color = colors[key]
 		material.roughness = 1.0
+		RanwarSurfaceMaterials.apply_box(material, key)
 		_materials[key] = material
-	var frontage_material := StandardMaterial3D.new()
-	frontage_material.vertex_color_use_as_albedo = true
-	frontage_material.vertex_color_is_srgb = true
-	frontage_material.roughness = 1.0
-	_materials["frontage_kit"] = frontage_material
+	_materials["frontage_kit"] = RanwarSurfaceMaterials.make_batch()
 
 
 func _box(label: String, at: Vector3, size: Vector3, material_name: String, solid: bool = false, rotation_y: float = 0.0) -> Node3D:

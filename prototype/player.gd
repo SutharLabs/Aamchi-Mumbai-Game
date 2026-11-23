@@ -1,6 +1,7 @@
 extends CharacterBody3D
 
 const Visual := preload("res://character/locomotion_visual.gd")
+const ImpactReaction := preload("res://character/vehicle_impact_reaction.gd")
 const WALK_SPEED := 1.12
 const RUN_SPEED := 2.18
 const BODY_HEIGHT := 1.68
@@ -13,6 +14,8 @@ var display_name := "Omkar Shirodkar"
 var active := true
 var running := false
 var direction := Vector3.ZERO
+var _collider := CollisionShape3D.new()
+var _impact := ImpactReaction.new()
 
 
 func _ready() -> void:
@@ -21,10 +24,9 @@ func _ready() -> void:
 	floor_snap_length = 0.22
 	body_shape.radius = BODY_RADIUS
 	body_shape.height = BODY_HEIGHT
-	var collider := CollisionShape3D.new()
-	collider.position.y = BODY_HEIGHT * 0.5
-	collider.shape = body_shape
-	add_child(collider)
+	_collider.position.y = BODY_HEIGHT * 0.5
+	_collider.shape = body_shape
+	add_child(_collider)
 	visual.name = "CharacterVisual"
 	visual.wears_dhotar = true
 	add_child(visual)
@@ -38,13 +40,24 @@ func set_on_foot(enabled: bool) -> void:
 	velocity = Vector3.ZERO
 	direction = Vector3.ZERO
 	running = false
+	if is_reacting():
+		_impact.reset(_collider, visual)
 	visual.animation_player.active = enabled
 	if enabled:
 		visual.set_ground_speed(0.0)
 
 
+func receive_vehicle_impact(direction: Vector3, closing_speed: float) -> void:
+	if active:
+		_impact.apply(self, direction, closing_speed)
+
+
+func is_reacting() -> bool:
+	return _impact.state != ImpactReaction.UPRIGHT
+
+
 func _physics_process(delta: float) -> void:
-	if not active:
+	if not active or _impact.step(self, _collider, visual, delta):
 		return
 	var weight := minf(delta * 18.0, 1.0)
 	var target_speed := RUN_SPEED if running else WALK_SPEED

@@ -26,6 +26,12 @@ Walk up to Mira or Rafiq on Hill Road and press **E** or **A** on a gamepad, or 
 
 To try the curb crossing, drive slowly across the raised west-side curb on Hill Road. All four can climb the curb and come down to street or yard level. The handling yard also has a 22 cm test curb and a solid impact wall. The driving camera softens changes in height as the vehicle crosses the curb. [Vehicle handling notes](vehicle/README.md)
 
+## Surface and collision playtest
+
+At walking speed, check the asphalt, concrete, façades, roofs and timber around the Ranwar loop and Nagrana Lane. The Windows scene uses a daylight sky and nearby sun shadows. Open the world notes for the material sources and placement. [Ranwar world and texture sources](world/README.md)
+
+Use the handling yard’s impact wall to compare a slow tap with a faster crash in the hatchback. A hard impact can dent the affected bodywork, break a lamp and lower the vehicle’s condition. Damage affects handling until **Recover**. Moderate vehicle contacts can stagger a pedestrian, while harder impacts can knock them down in the contact direction. Their collision capsule follows the posture and they get up when space is clear. [Vehicle damage details](vehicle/README.md)
+
 ## Ranwar Parcel Run
 
 Launch with **F5 → Play**. Walk to the orange job marker by the vehicle bays and interact. Pick up the parcel on foot at the Hill Road end of Nagrana Lane, then follow the lane to the Waroda Road end to drop it off. You can use any practice vehicle to reach the lane, then leave it to make the handoff. The HUD shows the current destination and distance. **Pause → Map** shows an orange diamond for the next stop.
@@ -46,6 +52,8 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 6500 --script res://tests/phase1_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 6200 --script res://tests/ranwar_parcel_playtest.gd -- --touch-preview
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 1800 --script res://tests/vehicle_damage_smoke.gd
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 1900 --script res://tests/pedestrian_impact_smoke.gd
 ```
 
 The startup smoke exercises menu navigation, profile reload, settings, Help, credits, pause and the Ranwar map. The gameplay smoke exercises locomotion, pedestrian conversations and collision, all four vehicles, steering and braking, exit clearance, reset, curbs, ramps and simulated concurrent touch. The parcel playtest uses isolated profiles and exercises the title-to-delivery loop, checkpoint reload and the shortcut in both directions. `--touch-preview` enables the overlay on a desktop build. When preparing an explicitly requested release, include the project license and the Godot, OpenStreetMap, 100STYLE and Noto notices. [Project license](../LICENSE)

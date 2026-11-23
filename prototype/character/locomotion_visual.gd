@@ -29,3 +29,26 @@ func set_ground_speed(speed: float) -> void:
 	animation_player.speed_scale = playback_rate
 	if animation_player.current_animation != clip:
 		animation_player.play(clip, 0.16)
+
+
+func set_impact_brace(amount: float) -> void:
+	if animation_player.active:
+		animation_player.active = false
+		skeleton.reset_bone_poses()
+	skeleton.set_bone_pose_rotation(skeleton.find_bone("Chest"), Quaternion(Vector3.RIGHT, -0.20 * amount))
+	skeleton.set_bone_pose_rotation(skeleton.find_bone("Head"), Quaternion(Vector3.RIGHT, 0.24 * amount))
+	for side: float in [-1.0, 1.0]:
+		var name_prefix := "Left" if side < 0.0 else "Right"
+		var arm := Basis(Vector3.FORWARD, side * lerpf(1.24, 0.83, amount)) * Basis(Vector3.UP, side * 0.35 * amount)
+		skeleton.set_bone_pose_rotation(skeleton.find_bone(name_prefix + "UpperArm"), arm.get_rotation_quaternion())
+		skeleton.set_bone_pose_rotation(skeleton.find_bone(name_prefix + "LowerArm"), Quaternion(Vector3.UP, side * 0.66 * amount))
+		var knee := (0.37 + side * 0.1) * amount
+		skeleton.set_bone_pose_rotation(skeleton.find_bone(name_prefix + "UpperLeg"), Quaternion(Vector3.RIGHT, -knee * 0.6))
+		skeleton.set_bone_pose_rotation(skeleton.find_bone(name_prefix + "LowerLeg"), Quaternion(Vector3.RIGHT, knee))
+
+
+func end_impact_brace() -> void:
+	animation_player.active = true
+	animation_player.stop()
+	animation_player.play(&"idle")
+	animation_player.advance(0.0)

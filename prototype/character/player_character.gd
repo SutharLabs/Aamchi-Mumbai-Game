@@ -1,11 +1,10 @@
 extends Node3D
-## Original low-poly civilian, skinned to a reproducible humanoid rest pose.
+## Textured civilian, skinned to a reproducible humanoid rest pose.
 ## The driving and walking controllers own gameplay collision separately.
 
 const OMKAR_SKIN := Color("a57556")
 const MIRA_SKIN := Color("b78063")
 const RAFIQ_SKIN := Color("966a51")
-const HAIR_COLOR := Color("29252a")
 const TROUSER_COLOR := Color("42474e")
 const SHOE_COLOR := Color("3b3c3a")
 const SOLE_COLOR := Color("8b8375")
@@ -19,6 +18,14 @@ const DHOTAR_PLEAT_COLOR := Color("cdbb94")
 const DHOTAR_BORDER_COLOR := Color("98634c")
 const DHOTAR_FOLDS := 0.10
 const CHAPPAL_COLOR := Color("825836")
+const HEAD_GEOMETRY: ArrayMesh = preload("res://character/art/head_mesh.obj")
+const BODY_ALBEDO := preload("res://character/art/civilian_surface.png")
+const BODY_NORMAL := preload("res://character/art/civilian_normal.png")
+const ATLAS_SIZE := 1024.0
+const HEAD_ATLAS_EDGE := Vector2(8.5, 512.5)
+const HEAD_ATLAS_SPAN := 503.0
+const EYE_WHITE := Color("ab9f93")
+const IRIS := Color("3a2c23")
 
 @export var shirt_color: Color = Color("447a75")
 @export var wears_dhotar := false
@@ -29,6 +36,7 @@ var _bone_ids: Dictionary[String, int] = {}
 var _joints: Dictionary[String, Vector3] = {}
 var _surface := SurfaceTool.new()
 var _skin := OMKAR_SKIN
+static var _body_material: StandardMaterial3D
 
 
 class Ring:
@@ -37,9 +45,6 @@ class Ring:
 	var bones: PackedInt32Array
 	var weights: PackedFloat32Array
 	var thigh_blend := 0.0
-	var nose_depth := 0.0
-	var socket_depth := 0.0
-	var hairline := Vector2.ZERO
 
 	func _init(point: Vector3, size: Vector2, primary: int, secondary: int, blend: float) -> void:
 		center = point
@@ -109,13 +114,20 @@ func _build_body() -> void:
 		_build_arm(side, label)
 		_build_leg(side, label)
 
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.vertex_color_is_srgb = true
-	material.roughness = 0.92
+	if _body_material == null:
+		_body_material = StandardMaterial3D.new()
+		_body_material.vertex_color_use_as_albedo = true
+		_body_material.vertex_color_is_srgb = true
+		_body_material.albedo_texture = BODY_ALBEDO
+		_body_material.normal_enabled = true
+		_body_material.normal_texture = BODY_NORMAL
+		_body_material.normal_scale = 0.40
+		_body_material.roughness = 0.84
+		_body_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_surface.generate_normals()
 	_surface.index()
-	_surface.set_material(material)
+	_surface.generate_tangents()
+	_surface.set_material(_body_material)
 	var visual := MeshInstance3D.new()
 	visual.name = "ClothedBody"
 	visual.mesh = _surface.commit()
@@ -206,16 +218,13 @@ func _build_overshirt_details() -> void:
 	_front_panel(pocket_outer, pocket_lower, pocket_corner, pocket_color)
 
 
-func _front_panel(a: Vector3, b: Vector3, c: Vector3, color: Color, is_face := false) -> void:
+func _front_panel(a: Vector3, b: Vector3, c: Vector3, color: Color) -> void:
 	var clockwise := (b - a).cross(c - a).z >= 0.0
 	var points := [a, b, c] if clockwise else [a, c, b]
 	for point: Vector3 in points:
-		if is_face:
-			_vertex(_ring(point, 0.0, 0.0, "Head"), 0.0, Vector3.RIGHT, Vector3.BACK, color, 0.0)
-			continue
 		var neck_weight := clampf((point.y - 1.37) / 0.04, 0.0, 0.45)
 		_vertex(_ring(point, 0.0, 0.0, "Chest", "Neck", neck_weight),
-			0.0, Vector3.RIGHT, Vector3.BACK, color, 0.0)
+			0.0, Vector3.RIGHT, Vector3.BACK, color, 0.0, false)
 
 
 func _sadara_hem_ring(height: float, width: float, depth: float, thigh_blend: float) -> Ring:
@@ -274,86 +283,32 @@ func _build_head() -> void:
 		_ring(Vector3(0, 1.365, -0.012), 0.049, 0.047, "Chest", "Neck", 0.60),
 		_ring(Vector3(0, 1.412, -0.015), 0.052, 0.052, "Neck"),
 		_ring(Vector3(0, 1.474, -0.015), 0.055, 0.055, "Neck", "Head", 0.58),
-	], Vector3.UP, Vector3.RIGHT, 12, _skin)
+	], Vector3.UP, Vector3.RIGHT, 12, _skin, 0.0, -1, false)
 	var width := 1.04 if wears_overshirt else (1.0 if wears_dhotar else 0.94)
-	_tube([
-		_ring(Vector3(0, 1.443, -0.014), 0.0, 0.0, "Head"),
-		_face_ring(1.462, -0.022, 0.047 * width, 0.060),
-		_face_ring(1.482, -0.018, 0.061 * width, 0.071),
-		_face_ring(1.506, -0.014, 0.070 * width, 0.080, 0.003),
-		_face_ring(1.521, -0.016, 0.074 * width, 0.080, 0.007),
-		_face_ring(1.535, -0.014, 0.080 * width, 0.086, 0.025),
-		_face_ring(1.551, -0.014, 0.083 * width, 0.088, 0.022),
-		_face_ring(1.568, -0.014, 0.084 * width, 0.086, 0.011, 0.006),
-		_face_ring(1.587, -0.013, 0.083 * width, 0.089, 0.004),
-		_face_ring(1.611, -0.008, 0.083 * width, 0.088),
-		_face_ring(1.639, 0.001, 0.072 * width, 0.073),
-		_face_ring(1.658, 0.003, 0.048 * width, 0.051),
-		_face_ring(1.670, 0.003, 0.0, 0.0),
-	], Vector3.UP, Vector3.RIGHT, 24, _skin)
-	_build_scalp(width)
-	_build_face_details(width)
-
-
-func _face_ring(height: float, depth: float, width: float, radius: float, nose := 0.0, sockets := 0.0) -> Ring:
-	var profile := _ring(Vector3(0.0, height, depth), width, radius, "Head")
-	profile.nose_depth = nose
-	profile.socket_depth = sockets
-	return profile
-
-
-func _build_scalp(width: float) -> void:
-	var part := 0.013 if wears_dhotar else (-0.007 if wears_overshirt else -0.020)
-	var crown := 0.0 if wears_dhotar else (-0.005 if wears_overshirt else 0.010)
-	var hair := HAIR_COLOR.lightened(0.045) if wears_overshirt else HAIR_COLOR
-	_tube([
-		_scalp_ring(Vector3(0.0, 1.573, -0.008), Vector2(0.090 * width, 0.094), Vector2(0.037, part)),
-		_scalp_ring(Vector3(0.0, 1.602, -0.009), Vector2(0.091 * width, 0.096), Vector2(0.024, part * 0.60)),
-		_scalp_ring(Vector3(0.002, 1.633 + crown, -0.005), Vector2(0.089 * width, 0.089), Vector2(0.004, part * 0.38)),
-		_scalp_ring(Vector3(part * 0.4, 1.658 + crown, 0.000), Vector2(0.064 * width, 0.069), Vector2(0.001, part * 0.16)),
-		_ring(Vector3(part * 0.7, 1.676 + crown, 0.004), 0.034 * width, 0.040, "Head"),
-		_ring(Vector3(part * 1.2, 1.682 + crown, 0.009), 0.0, 0.0, "Head"),
-	], Vector3.UP, Vector3.RIGHT, 24, hair, 0.015)
-
-
-func _scalp_ring(point: Vector3, radii: Vector2, hairline: Vector2) -> Ring:
-	var profile := _ring(point, radii.x, radii.y, "Head")
-	profile.hairline = hairline
-	return profile
-
-
-func _build_face_details(width: float) -> void:
+	var face_tint := Color(_skin.r / 0.84, _skin.g / 0.69, _skin.b / 0.59)
+	_add_textured_head(width, face_tint)
 	for side: float in [-1.0, 1.0]:
-		_ellipsoid(Vector3(side * 0.081 * width, 1.550, -0.002), Vector3(0.011, 0.024, 0.015), "Head", _skin)
-		_ellipsoid(Vector3(side * 0.087 * width, 1.549, -0.009), Vector3(0.004, 0.013, 0.006), "Head", _skin.darkened(0.15))
-		_build_eye(side * width)
-	var lip_color := _skin.darkened(0.26)
-	var left := Vector3(-0.020 * width, 1.513, -0.094)
-	var right := Vector3(0.023 * width, 1.512, -0.093)
-	var lip_seam := Vector3(0.001, 1.511, -0.102)
-	var upper_lip := Vector3(0.000, 1.515, -0.102)
-	_front_panel(left, upper_lip, lip_seam, lip_color, true)
-	_front_panel(lip_seam, upper_lip, right, lip_color, true)
+		var position := Vector3(side * 0.031 * width, 1.546, -0.079)
+		_ellipsoid(position, Vector3(0.0125, 0.009, 0.014), "Head", EYE_WHITE)
+		_ellipsoid(position + Vector3.FORWARD * 0.012, Vector3(0.005, 0.0046, 0.003), "Head", IRIS)
 
 
-func _build_eye(side: float) -> void:
-	var inner := Vector3(side * 0.020, 1.567, -0.095)
-	var outer := Vector3(side * 0.050, 1.568, -0.081)
-	var upper := Vector3(side * 0.032, 1.574, -0.093)
-	var lower := Vector3(side * 0.034, 1.563, -0.091)
-	var corner := Vector3(side * 0.033, 1.569, -0.095)
-	var eye_shade := Color("d8c4b3")
-	_front_panel(inner, upper, corner, eye_shade, true)
-	_front_panel(upper, outer, corner, eye_shade, true)
-	_front_panel(outer, lower, corner, eye_shade, true)
-	_front_panel(lower, inner, corner, eye_shade, true)
-	_ellipsoid(Vector3(side * 0.033, 1.569, -0.095), Vector3(0.005, 0.0045, 0.0018), "Head", Color("473229"))
-	var brow_inner := Vector3(side * 0.018, 1.586, -0.103)
-	var brow_peak := Vector3(side * 0.032, 1.591, -0.097)
-	var brow_outer := Vector3(side * 0.053, 1.584, -0.085)
-	var brow_fold := Vector3(side * 0.031, 1.586, -0.099)
-	_front_panel(brow_inner, brow_peak, brow_fold, HAIR_COLOR, true)
-	_front_panel(brow_fold, brow_peak, brow_outer, HAIR_COLOR, true)
+func _add_textured_head(width: float, tint: Color) -> void:
+	# Bring the adapted head into the existing draw call and Head bone.
+	var arrays := HEAD_GEOMETRY.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var joint := PackedInt32Array([_bone_ids["Head"], 0, 0, 0])
+	var weight := PackedFloat32Array([1.0, 0.0, 0.0, 0.0])
+	for index in indices:
+		var point := vertices[index]
+		point.x *= width
+		_surface.set_bones(joint)
+		_surface.set_weights(weight)
+		_surface.set_color(tint)
+		_surface.set_uv((HEAD_ATLAS_EDGE + uvs[index] * HEAD_ATLAS_SPAN) / ATLAS_SIZE)
+		_surface.add_vertex(point)
 
 
 func _build_arm(side: float, label: String) -> void:
@@ -389,14 +344,14 @@ func _build_arm(side: float, label: String) -> void:
 		_ring(Vector3(side * 0.603, 1.350, 0.001), 0.035, 0.031, lower),
 		_ring(Vector3(side * 0.666, 1.350, 0.002), 0.027, 0.026, lower, hand, 0.56),
 		_ring(Vector3(side * 0.668, 1.350, 0.002), 0.0, 0.0, hand),
-	], outward, Vector3.UP, 8, _skin)
+	], outward, Vector3.UP, 10, _skin, 0.0, -1, false)
 	_tube([
 		_ring(Vector3(side * 0.646, 1.350, 0.002), 0.0, 0.0, lower),
 		_ring(Vector3(side * 0.665, 1.350, 0.003), 0.026, 0.026, hand, lower, 0.33),
 		_ring(Vector3(side * 0.702, 1.350, -0.004), 0.026, 0.039, hand),
 		_ring(Vector3(side * 0.741, 1.345, -0.005), 0.019, 0.034, hand),
 		_ring(Vector3(side * 0.768, 1.341, -0.005), 0.0, 0.0, hand),
-	], outward, Vector3.UP, 8, _skin)
+	], outward, Vector3.UP, 10, _skin, 0.0, -1, false)
 	_ellipsoid(Vector3(side * 0.701, 1.339, -0.031), Vector3(0.025, 0.015, 0.014), hand, _skin)
 
 
@@ -468,7 +423,7 @@ func _build_dhotar_leg(side: float, upper: String, lower: String, foot: String) 
 		_ring(Vector3(side * 0.103, 0.112, 0.009), 0.040, 0.041, lower, foot, 0.22),
 		_ring(Vector3(side * 0.104, 0.190, 0.010), 0.045, 0.046, lower),
 		_ring(Vector3(side * 0.104, 0.296, 0.011), 0.053, 0.054, lower),
-	], Vector3.UP, Vector3.RIGHT, 10, _skin)
+	], Vector3.UP, Vector3.RIGHT, 10, _skin, 0.0, -1, false)
 	_tube([
 		_ring(drape_hem.center + Vector3.UP * 0.002, 0.053, 0.054, lower),
 		drape_hem,
@@ -502,7 +457,7 @@ func _build_footwear(side: float, foot: String, toes: String) -> void:
 		_ring(Vector3(x, 0.037, -0.124), 0.058, 0.031, foot, toes, 0.62),
 		_ring(Vector3(x, 0.030, -0.168), 0.047, 0.024, toes),
 		_ring(Vector3(x, 0.029, -0.189), 0.0, 0.0, toes),
-	], Vector3.FORWARD, Vector3.RIGHT, 10, foot_color)
+	], Vector3.FORWARD, Vector3.RIGHT, 12, foot_color, 0.0, -1, not wears_dhotar)
 	_tube([
 		_ring(Vector3(x, 0.016, 0.088), 0.0, 0.0, foot),
 		_ring(Vector3(x, 0.017, 0.064), 0.047, 0.014, foot),
@@ -511,14 +466,14 @@ func _build_footwear(side: float, foot: String, toes: String) -> void:
 		_ring(Vector3(x, 0.016, -0.151), 0.059, 0.014, toes),
 		_ring(Vector3(x, 0.017, -0.178), 0.047, 0.013, toes),
 		_ring(Vector3(x, 0.018, -0.193), 0.0, 0.0, toes),
-	], Vector3.FORWARD, Vector3.RIGHT, 10, sole_color)
+	], Vector3.FORWARD, Vector3.RIGHT, 12, sole_color, 0.0, -1, false)
 	if wears_dhotar:
 		# Open leather vamp with a separate loop around the big toe.
 		_tube([
 			_ring(Vector3(x, 0.045, -0.067), 0.059, 0.045, foot, toes, 0.31),
 			_ring(Vector3(x, 0.043, -0.083), 0.060, 0.041, foot, toes, 0.40),
 			_ring(Vector3(x, 0.041, -0.111), 0.059, 0.038, foot, toes, 0.53),
-		], Vector3.FORWARD, Vector3.RIGHT, 10, CHAPPAL_COLOR)
+		], Vector3.FORWARD, Vector3.RIGHT, 12, CHAPPAL_COLOR, 0.0, -1, false)
 		_ellipsoid(Vector3(x - side * 0.028, 0.056, -0.146), Vector3(0.014, 0.009, 0.019), toes, CHAPPAL_COLOR)
 
 
@@ -533,46 +488,40 @@ func _ellipsoid(point: Vector3, size: Vector3, bone: String, color: Color) -> vo
 		_ring(point, size.x, size.z, bone),
 		_ring(point + Vector3.UP * size.y * 0.56, size.x * 0.78, size.z * 0.78, bone),
 		_ring(point + Vector3.UP * size.y, 0.0, 0.0, bone),
-	], Vector3.UP, Vector3.RIGHT, 8, color)
+	], Vector3.UP, Vector3.RIGHT, 12, color, 0.0, -1, false)
 
 
 func _tube(rings: Array[Ring], along: Vector3, across: Vector3, sides: int, color: Color,
-		folds := 0.0, border_sector := -1) -> void:
+		folds := 0.0, border_sector := -1, fabric := true) -> void:
 	var depth_axis := across.cross(along)
 	for row: int in range(rings.size() - 1):
 		var a := rings[row]
 		var b := rings[row + 1]
 		for i: int in range(sides):
 			var theta := TAU * float(i) / sides
-			var next := TAU * float((i + 1) % sides) / sides
+			var next := TAU * float(i + 1) / sides
 			var cloth_color := DHOTAR_BORDER_COLOR if i == border_sector else color
 			if a.radii.x > 0.0:
-				_vertex(a, theta, across, depth_axis, cloth_color, folds)
-				_vertex(a, next, across, depth_axis, cloth_color, folds)
-				_vertex(b, theta, across, depth_axis, cloth_color, folds)
+				_vertex(a, theta, across, depth_axis, cloth_color, folds, fabric)
+				_vertex(a, next, across, depth_axis, cloth_color, folds, fabric)
+				_vertex(b, theta, across, depth_axis, cloth_color, folds, fabric)
 			if b.radii.x > 0.0:
-				_vertex(a, next, across, depth_axis, cloth_color, folds)
-				_vertex(b, next, across, depth_axis, cloth_color, folds)
-				_vertex(b, theta, across, depth_axis, cloth_color, folds)
+				_vertex(a, next, across, depth_axis, cloth_color, folds, fabric)
+				_vertex(b, next, across, depth_axis, cloth_color, folds, fabric)
+				_vertex(b, theta, across, depth_axis, cloth_color, folds, fabric)
 
 
 func _vertex(ring: Ring, angle: float, across: Vector3, depth_axis: Vector3, color: Color,
-		folds: float) -> void:
-	var radial := across * (ring.radii.x * cos(angle)) + depth_axis * (ring.radii.y * sin(angle))
+		folds: float, fabric: bool) -> void:
+	var turn := wrapf(angle, 0.0, TAU)
+	var radial := across * (ring.radii.x * cos(turn)) + depth_axis * (ring.radii.y * sin(turn))
 	if folds > 0.0:
-		var crease := 0.66 * cos(angle * 5.0) + 0.34 * cos(angle * 7.0 + 0.5)
+		var crease := 0.66 * cos(turn * 5.0) + 0.34 * cos(turn * 7.0 + 0.5)
 		radial *= 1.0 + folds * crease
 		color = color.darkened(maxf(0.0, -crease) * folds * 0.65)
-	if ring.nose_depth > 0.0 or ring.socket_depth > 0.0:
-		var front := maxf(0.0, -sin(angle))
-		var socket := clampf(1.0 - absf(absf(cos(angle)) - 0.42) / 0.33, 0.0, 1.0)
-		radial += depth_axis * (ring.socket_depth * socket * front - ring.nose_depth * pow(front, 30.0))
-	if ring.hairline != Vector2.ZERO:
-		var forward := -sin(angle)
-		radial.y += ring.hairline.x * forward + ring.hairline.y * cos(angle) * (0.62 + forward * 0.38)
 	if ring.thigh_blend > 0.0:
 		# The side of the hem follows its leg. The front and back share both legs.
-		var right := 0.5 + 0.5 * cos(angle)
+		var right := 0.5 + 0.5 * cos(turn)
 		_surface.set_bones(PackedInt32Array([
 			_bone_ids["Hips"], _bone_ids["LeftUpperLeg"], _bone_ids["RightUpperLeg"], 0,
 		]))
@@ -582,5 +531,11 @@ func _vertex(ring: Ring, angle: float, across: Vector3, depth_axis: Vector3, col
 	else:
 		_surface.set_bones(ring.bones)
 		_surface.set_weights(ring.weights)
+	var point := ring.center + radial
+	if fabric:
+		var cloth_height := clampf(ring.center.y + absf(ring.center.x) * 0.50, 0.0, 1.78)
+		_surface.set_uv(Vector2(0.012 + angle / TAU * 0.728, 0.012 + cloth_height * 0.251))
+	else:
+		_surface.set_uv(Vector2(0.90 + (point.x + point.z) * 0.06, 0.04 + point.y * 0.23))
 	_surface.set_color(color)
-	_surface.add_vertex(ring.center + radial)
+	_surface.add_vertex(point)

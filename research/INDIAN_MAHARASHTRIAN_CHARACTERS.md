@@ -83,6 +83,10 @@ Omkar, Mira and Rafiq each have an original head profile and hairline. The nose 
 
 The same-configuration Windows Compatibility renders covered Omkar in idle, walk and jog and Rafiq from the normal Ranwar gameplay camera and in closer idle and walking views. The wardrobe probe verified the selected outfit, bone IDs, normalized weights, continuing animation and the pedestrian collision layers. Art acceptance and populated-scene performance on Android and minimum-spec Windows remain open.
 
+### Textured cast pass, 23 November 2026
+
+The next pass adopts a CC0 MakeHuman head with eyelid, lip and ear topology and a mapped skin diffuse. A cropped and decimated head fits the established Head bone. The cast uses individual face widths and skin tones, with a cropped hairline baked into the head texture. Poly Haven's photographed cotton diffuse and normal maps add woven detail to the original garments. The head and wardrobe share one skinned draw surface. The body still uses the original rig, locomotion and colliders. [Asset sources and transformations](../prototype/character/art/SOURCES.md)
+
 ## 4. Reusable base-body route
 
 MakeHuman's official [commercial-use FAQ](https://static.makehumancommunity.org/oldsite/faq/can_i_sell_models_created_with_makehuman.html) states that exported models are CC0 and can be used commercially. It is a potential original/non-celebrity base-body route if the toolchain is deliberately evaluated. Separately acquired clothing, hair, textures and community assets still need their own provenance/license records. This research did not install MakeHuman or validate a headless export pipeline.

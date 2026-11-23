@@ -6,10 +6,12 @@ The vehicles face local **−Z**. A spawn origin around **y = 0.55 m** places th
 
 API:
 
-- `set_driver_active(bool)`: enables controls; disabling parks horizontal movement immediately.
+- `set_driver_active(bool)`: enables controls. Disabling stops drive torque and parks the drivetrain.
 - `set_controls(throttle: float, steering: float, brake: bool)`: throttle -1 reverse / +1 forward; steering -1 left / +1 right. Values are finite-checked and clamped. Input mapping and touch UI belong to the caller.
 - `get_speed_mps() -> float`: absolute horizontal speed.
-- `reset_to(Transform3D)`: zeros motion and controls, preserves the supplied heading while restoring upright orientation. The caller supplies an unobstructed grounded pose. Invalid transforms are rejected. The latest reset pose becomes the fall-recovery pose.
+- `condition_percent() -> int`: returns current chassis condition, with 100 for an undamaged vehicle.
+- `impacted(vehicle, collider, closing_speed)`: reports an energetic contact. The impact point, normal and horizontal pre-contact movement are available on the vehicle during the signal.
+- `reset_to(Transform3D)`: zeros motion and controls and restores the vehicle's condition. It preserves the supplied heading while restoring upright orientation. The caller supplies an unobstructed grounded pose. Invalid transforms are rejected. The latest reset pose becomes the fall-recovery pose.
 - `vehicle_label: String`, `exit_side_offset: float`, and `follow_distance: float`: integration properties for prompts, safe exit placement, and chase-camera distance. Car values are `Car`, 1.48 m, 6.9 m; auto values are `Auto-rickshaw`, 1.30 m, 6.2 m.
 - `is_two_wheeler: bool`: false on the car/auto, true on motorcycle/scooter. The two-wheeler class exposes `rider: Node3D`, `lean_visual: Node3D`, and `max_lean_radians: float` for integration and observable checks.
 
@@ -24,6 +26,18 @@ Positive throttle travels along local −Z and right steering turns toward local
 The original chassis stopped at the vertical face of an ordinary curb. The shared controller now checks a short lookahead during grounded travel. A nearby static-world face can trigger an upward sweep, a sweep across the edge, and a downward sweep onto a supported surface. The full chassis stays subject to clearance checks, with a maximum rise of 25 cm and a 28 cm floor snap for descents. A tall wall, a blocked landing, a low ceiling or a peer vehicle stays solid. The chase camera eases the height change across the step. [Godot motion sweeps](https://docs.godotengine.org/en/stable/classes/class_physicsbody3d.html#class-physicsbody3d-method-test-move) · [Godot floor snap](https://docs.godotengine.org/en/stable/classes/class_characterbody3d.html#class-characterbody3d-property-floor-snap-length)
 
 The regression route crosses the existing 14 cm Hill Road curb and returns to ground level. The handling yard provides a 22 cm reverse crossing, a low-overhang test fixture and a solid wall. The yard ramp remains part of the smoke test. An automated drive also completed a lap through all 21 Ranwar road waypoints. [World layout](../world/README.md) · [Playtest guide](../README.md)
+
+## Crash damage
+
+Hard contacts use the component of relative velocity closing along the collision normal. A hit can reduce acceleration, maximum speed and steering authority. When a moving car hits another vehicle, the controller gives the struck chassis a short, mass-weighted push. Normal curb steps and parking-speed contacts keep the vehicle's condition intact.
+
+The hatchback has independently deformable front, rear and side panels. An impact can dent the body, leave scuffs, or knock out the lamp nearest a heavily crumpled end. Front and rear crumpling also shorten the solid hull at that end. Side damage can pull the steering. The damage lasts until recovery, which restores the body, lamps, collision shape and handling. The other three vehicle families share the condition and handling model. Their exterior meshes use their stock geometry.
+
+The controller remains an upright, low-cost simulation with a boxed hull and bounded impact motion. It uses the engine's collision point and normal to choose a response. [Godot collision data](https://docs.godotengine.org/en/stable/classes/class_kinematiccollision3d.html)
+
+```powershell
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 1800 --script res://tests/vehicle_damage_smoke.gd
+```
 
 ## Current vehicle art
 
