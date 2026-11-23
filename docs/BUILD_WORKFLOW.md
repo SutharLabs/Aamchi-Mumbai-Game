@@ -10,7 +10,7 @@ Use **F5** in the editor for the fastest iteration. To refresh the Windows playt
 .\tools\make-dev.ps1
 ```
 
-Always launch `builds/local/Aamchi Mumbai Game.exe`. The command exports into a staging directory and launches that executable headlessly with isolated app data. It checks that the packed title scene loads cleanly and then replaces the stable executable on the same volume. Export or startup failures preserve the existing playable build. Close the game before updating it. The command reports the SHA-256 hash.
+Always launch `builds/local/Aamchi Mumbai Game.exe`. The command exports into a staging directory and launches that executable headlessly with isolated app data. It checks that the packed title scene loads cleanly and then replaces the stable executable on the same volume. It retries short Windows sharing and lock errors during the replacement. Export or startup failures preserve the existing playable build. Close the game before updating it. The command reports the SHA-256 hash.
 
 - `builds/local/windows-build.json` records the source commit, whether the Godot project had local edits, build time, engine version and executable hash. Check the hash when identifying a copied executable.
 - `builds/local/windows-build.log` records the most recent export and startup attempt.

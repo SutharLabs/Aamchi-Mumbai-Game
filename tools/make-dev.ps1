@@ -77,13 +77,24 @@ function Publish-StagedFile {
     Assert-RegularPath $Destination
     if ([IO.File]::Exists($Destination)) {
         $backup = $Source + '.previous'
-        try {
-            [IO.File]::Replace($Source, $Destination, $backup)
-        } catch {
-            if ([IO.File]::Exists($backup) -and -not [IO.File]::Exists($Destination)) {
-                [IO.File]::Move($backup, $Destination)
+        $waits = @(500, 1000, 2000, 3500, 5000)
+        for ($attempt = 0; $attempt -le $waits.Length; $attempt++) {
+            try {
+                [IO.File]::Replace($Source, $Destination, $backup)
+                return
+            } catch {
+                if ([IO.File]::Exists($backup) -and -not [IO.File]::Exists($Destination)) {
+                    [IO.File]::Move($backup, $Destination)
+                    throw
+                }
+                # Startup verification can leave a scanner briefly holding the staged EXE.
+                $windowsError = $_.Exception.GetBaseException().HResult -band 0xFFFF
+                if ($windowsError -notin 32, 33 -or $attempt -eq $waits.Length -or
+                    [IO.File]::Exists($backup) -or -not [IO.File]::Exists($Source) -or -not [IO.File]::Exists($Destination)) {
+                    throw
+                }
+                Start-Sleep -Milliseconds $waits[$attempt]
             }
-            throw
         }
     } else {
         [IO.File]::Move($Source, $Destination)
