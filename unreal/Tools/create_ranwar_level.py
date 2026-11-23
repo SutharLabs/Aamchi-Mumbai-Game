@@ -139,7 +139,8 @@ def create_materials(source, manifest, asset_tools, assets):
     editor = unreal.MaterialEditingLibrary
 
     for name, descriptor in manifest.items():
-        material = assets.load_asset(f"{MATERIALS}/{name}")
+        asset_path = f"{MATERIALS}/{name}"
+        material = assets.load_asset(asset_path) if assets.does_asset_exist(asset_path) else None
         if material is None:
             material = asset_tools.create_asset(name, MATERIALS, unreal.Material, unreal.MaterialFactoryNew())
         if material is None:
@@ -245,10 +246,77 @@ def populate(actors, axes, manifest):
         actor = spawn(actors, landmark_class, marker["name"], axes.position(marker["position"]))
         actor.set_editor_property("display_name", unreal.Text(marker["name"]))
         actor.set_editor_property("details", unreal.Text(marker["details"]))
+    add_parcel_route(actors, axes, manifest, yaw)
+    add_traffic(actors, axes, manifest)
     unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).set_level_viewport_camera_info(
         unreal.Vector(start_x - forward_x * 4.1, start_y - forward_y * 4.1, start_z + 185),
         unreal.Rotator(pitch=-12.0, yaw=yaw),
     )
+
+
+def add_parcel_route(actors, axes, manifest, heading):
+    route = spawn(actors, unreal.RanwarRoute, "Ranwar Parcel Run")
+    feet = unreal.Vector(*axes.position(manifest["player_start"]["feet"]))
+    forward_x, forward_y, _ = axes.position(manifest["player_start"]["forward"])
+    forward = unreal.Vector(forward_x / 100.0, forward_y / 100.0, 0.0)
+    # Godot's right side of the westbound arrival route, transformed into Unreal axes.
+    source_x, source_y, _ = manifest["player_start"]["forward"]
+    across_x, across_y, _ = axes.position((-source_y, source_x, 0.0))
+    across = unreal.Vector(across_x / 100.0, across_y / 100.0, 0.0)
+    guide = feet + forward * 1710.0
+    route.set_editor_property("guide_stop", guide)
+    right = unreal.Vector(-forward.y, forward.x, 0.0)
+    bus = feet - forward * 272.0 + right * 140.0 - unreal.Vector(0.0, 0.0, 50.0)
+    add_arrival_prop(actors, "BestBus", "Bandra BEST arrival coach", bus, heading, False)
+    add_arrival_prop(actors, "Anjali", "Anjali", guide, heading + 180.0, True)
+    add_arrival_prop(actors, "Pedestrian", "Sameer", feet + forward * 2300.0, heading + 180.0, True)
+    # The Godot job-board coordinates (-9, 0, 5) convert to (-5, 9, 0) in the exchange.
+    route.set_editor_property("job_board", unreal.Vector(*axes.position((-5.0, 9.0, 0.0))))
+    footway = [unreal.Vector(*axes.position(point)) for point in manifest["footway"]]
+
+    def inset(start, next_point, distance):
+        delta = next_point - start
+        length = math.sqrt(delta.x ** 2 + delta.y ** 2 + delta.z ** 2)
+        return start + delta * min(1.0, distance / length) if length else start
+
+    route.set_editor_property("parcel_pickup", inset(footway[-1], footway[-2], 1300.0))
+    route.set_editor_property("parcel_dropoff", inset(footway[0], footway[1], 1000.0))
+    route.set_editor_property("road_heading", heading)
+    route.set_editor_property("loan_bays", [feet + forward * offset + across * 285.0 for offset in (1300.0, 2000.0, 2700.0)])
+
+    # Same paved bay footprint used by the original Ranwar parking planner.
+    yard_coordinates = [(x, z) for z in (-15.0, -24.0) for x in (-48.0, -32.0, -24.0, -16.0, -8.0)]
+    route.set_editor_property("yard_bays", [unreal.Vector(*axes.position((-z, -x, 0.55))) for x, z in yard_coordinates])
+    yard_x, yard_y, _ = axes.position((1.0, 0.0, 0.0))
+    route.set_editor_property("yard_heading", math.degrees(math.atan2(yard_y, yard_x)))
+
+
+def add_arrival_prop(actors, package, label, position, heading, solid):
+    asset_path = f"/Game/Ranwar/Arrival/{package}.{package}"
+    mesh = unreal.load_asset(asset_path)
+    if not isinstance(mesh, unreal.StaticMesh):
+        raise RuntimeError(f"Could not load the imported arrival asset {asset_path}.")
+    actor = spawn(actors, unreal.StaticMeshActor, label, (position.x, position.y, position.z), unreal.Rotator(yaw=heading))
+    component = actor.static_mesh_component
+    component.set_static_mesh(mesh)
+    component.set_collision_profile_name("BlockAll" if solid else "NoCollision")
+    if package == "Anjali":
+        component.set_collision_response_to_channel(
+            unreal.CollisionChannel.ECC_VISIBILITY, unreal.CollisionResponseType.ECR_IGNORE,
+        )
+
+
+def add_traffic(actors, axes, manifest):
+    traffic = spawn(actors, unreal.RanwarTraffic, "Ranwar left-hand traffic")
+    # Hill Road westbound, St Peter's Road both ways, Waroda eastbound and Waroda west both ways.
+    roads = []
+    for descriptor, directions in zip(manifest["roads"], (2, 3, 2, 3), strict=True):
+        road = unreal.RanwarTrafficRoad()
+        road.set_editor_property("points", [unreal.Vector(*axes.position(point)) for point in descriptor["points"]])
+        road.set_editor_property("width", 100.0 * descriptor["width_m"])
+        road.set_editor_property("directions", directions)
+        roads.append(road)
+    traffic.set_editor_property("roads", roads)
 
 
 def main():
@@ -260,11 +328,14 @@ def main():
     assets = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
     if assets.does_asset_exist(LEVEL):
         raise RuntimeError(f"{LEVEL} already exists. Move the generated map before rebuilding it.")
-    character = source / "omkar.glb"
-    if character.is_file():
-        sys.path.insert(0, str(project / "Tools"))
-        from import_omkar import import_omkar
-        import_omkar(character)
+    sys.path.insert(0, str(project / "Tools"))
+    from import_omkar import import_omkar
+    from import_ranwar_arrival import import_ranwar_arrival
+    from import_ranwar_vehicles import import_ranwar_vehicles
+
+    import_omkar(safe_source(source, "omkar.glb"))
+    import_ranwar_vehicles(source / "vehicles")
+    import_ranwar_arrival(source / "arrival")
 
     editor = unreal.EditorLoadingAndSavingUtils
     world = editor.new_blank_map(False)

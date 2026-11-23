@@ -1,7 +1,7 @@
 #include "RanwarGame.h"
 
 #include "Animation/AnimSequence.h"
-#include "Animation/ReferenceSkeleton.h"
+#include "ReferenceSkeleton.h"
 #include "AnimationRuntime.h"
 #include "Camera/CameraComponent.h"
 #include "CollisionQueryParams.h"
@@ -10,8 +10,8 @@
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Components/TextRenderComponent.h"
 #include "Engine/Canvas.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
@@ -21,6 +21,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
+#include "RanwarPlayerController.h"
+#include "RanwarRoute.h"
+#include "RanwarVehicle.h"
 #include "SeaLinkGame.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
@@ -36,6 +39,12 @@ namespace
     constexpr float LandmarkRange = 265.0f;
     constexpr float LandmarkScanInterval = 0.15f;
     constexpr double LandmarkReadTime = 6.0;
+
+    ARanwarRoute* FindRoute(const UWorld* World)
+    {
+        const ARanwarGameMode* Mode = World ? World->GetAuthGameMode<ARanwarGameMode>() : nullptr;
+        return Mode ? Mode->GetRoute() : nullptr;
+    }
 
     template <typename AssetType>
     AssetType* LoadOmkarAsset(const TCHAR* AssetName)
@@ -53,26 +62,6 @@ ARanwarLandmark::ARanwarLandmark()
 {
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("LandmarkOrigin"));
     DisplayName = NSLOCTEXT("Ranwar", "LandmarkName", "Landmark");
-    Sign = CreateDefaultSubobject<UTextRenderComponent>(TEXT("LandmarkSign"));
-    Sign->SetupAttachment(RootComponent);
-    Sign->SetRelativeLocation(FVector(0.0, 0.0, 155.0));
-    Sign->SetHorizontalAlignment(EHTA_Center);
-    Sign->SetVerticalAlignment(EVRTA_TextCenter);
-    Sign->SetWorldSize(23.0f);
-    Sign->SetTextRenderColor(FColor(255, 241, 191));
-    Sign->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-}
-
-void ARanwarLandmark::OnConstruction(const FTransform& Transform)
-{
-    Super::OnConstruction(Transform);
-    Sign->SetText(DisplayName);
-}
-
-void ARanwarLandmark::BeginPlay()
-{
-    Super::BeginPlay();
-    Sign->SetText(DisplayName);
 }
 
 ARanwarCharacter::ARanwarCharacter()
@@ -124,6 +113,8 @@ ARanwarCharacter::ARanwarCharacter()
 void ARanwarCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    StartTransform = GetActorTransform();
+    SafeGroundTransform = StartTransform;
     LoadOmkarAppearance();
     WalkTestMarker->SetVisibility(GetMesh()->GetSkeletalMeshAsset() == nullptr, true);
     GetWorldTimerManager().SetTimer(
@@ -133,10 +124,80 @@ void ARanwarCharacter::BeginPlay()
 void ARanwarCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    if (Health > 0.0f && IsPlayerControlled() && GetCharacterMovement()->IsMovingOnGround())
+    {
+        SafeGroundTransform = GetActorTransform();
+        if (Health < 50.0f && GetWorld()->GetTimeSeconds() - LastDamageTime > 7.0)
+        {
+            Health = FMath::Min(Health + DeltaSeconds * 4.0f, 50.0f);
+        }
+    }
     if (ActiveLoop)
     {
         UpdateLocomotion();
     }
+}
+
+float ARanwarCharacter::TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent,
+    AController* EventInstigator, AActor* DamageCauser)
+{
+    if (Health <= 0.0f || !FMath::IsFinite(DamageAmount) || DamageAmount <= 0.0f)
+    {
+        return 0.0f;
+    }
+    const float Applied = FMath::Clamp(Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser), 0.0f, Health);
+    if (Applied <= 0.0f)
+    {
+        return 0.0f;
+    }
+    Health -= Applied;
+    LastDamageTime = GetWorld()->GetTimeSeconds();
+    if (Health <= 0.0f)
+    {
+        GetCharacterMovement()->DisableMovement();
+        InteractionDetails = NSLOCTEXT("Ranwar", "Injured", "Omkar is injured and will recover at the BEST stop.");
+        DetailsUntil = LastDamageTime + 2.0;
+        GetWorldTimerManager().SetTimer(RecoveryTimer, this, &ARanwarCharacter::RecoverAtStop, 2.0f, false);
+    }
+    return Applied;
+}
+
+void ARanwarCharacter::Landed(const FHitResult& Hit)
+{
+    const float ImpactSpeed = static_cast<float>(-GetVelocity().Z);
+    Super::Landed(Hit);
+    if (ImpactSpeed > 840.0f)
+    {
+        TakeDamage((ImpactSpeed - 840.0f) * 0.11f, FDamageEvent(), nullptr, nullptr);
+    }
+}
+
+void ARanwarCharacter::FellOutOfWorld(const UDamageType& DamageType)
+{
+    if (TeleportTo(SafeGroundTransform.GetLocation() + FVector(0.0, 0.0, 8.0), SafeGroundTransform.Rotator()))
+    {
+        GetCharacterMovement()->StopMovementImmediately();
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        InteractionDetails = NSLOCTEXT("Ranwar", "ReturnToStreet", "Returned to the last safe spot on the street.");
+        DetailsUntil = GetWorld()->GetTimeSeconds() + LandmarkReadTime;
+        return;
+    }
+    RecoverAtStop();
+}
+
+void ARanwarCharacter::RecoverAtStop()
+{
+    if (!TeleportTo(StartTransform.GetLocation(), StartTransform.Rotator())
+        && !TeleportTo(SafeGroundTransform.GetLocation(), SafeGroundTransform.Rotator()))
+    {
+        GetWorldTimerManager().SetTimer(RecoveryTimer, this, &ARanwarCharacter::RecoverAtStop, 1.0f, false);
+        return;
+    }
+    GetCharacterMovement()->StopMovementImmediately();
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    Health = 100.0f;
+    InteractionDetails = NSLOCTEXT("Ranwar", "RecoverAtStop", "Recovered at St Peter's BEST stop.");
+    DetailsUntil = GetWorld()->GetTimeSeconds() + LandmarkReadTime;
 }
 
 void ARanwarCharacter::LoadOmkarAppearance()
@@ -214,6 +275,7 @@ void ARanwarCharacter::UpdateLocomotion()
 void ARanwarCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     GetWorldTimerManager().ClearTimer(LandmarkScanTimer);
+    GetWorldTimerManager().ClearTimer(RecoveryTimer);
     Super::EndPlay(EndPlayReason);
 }
 
@@ -237,6 +299,7 @@ void ARanwarCharacter::UnPossessed()
 {
     StopRunning();
     NearbyLandmark.Reset();
+    NearbyVehicle.Reset();
     Super::UnPossessed();
 }
 
@@ -275,12 +338,23 @@ void ARanwarCharacter::StopRunning()
 void ARanwarCharacter::UpdateLandmarkFocus()
 {
     NearbyLandmark.Reset();
+    NearbyVehicle.Reset();
     if (!IsLocallyControlled())
     {
         return;
     }
 
     UWorld* World = GetWorld();
+    double ClosestVehicleSquared = TNumericLimits<double>::Max();
+    for (TActorIterator<ARanwarVehicle> Vehicle(World); Vehicle; ++Vehicle)
+    {
+        const double DistanceSquared = FVector::DistSquared(GetActorLocation(), Vehicle->GetActorLocation());
+        if (DistanceSquared < ClosestVehicleSquared && Vehicle->CanEnter(this))
+        {
+            NearbyVehicle = *Vehicle;
+            ClosestVehicleSquared = DistanceSquared;
+        }
+    }
     const FVector Eyes = GetPawnViewLocation();
     double ClosestDistanceSquared = FMath::Square(static_cast<double>(LandmarkRange));
     for (TActorIterator<ARanwarLandmark> Landmark(World); Landmark; ++Landmark)
@@ -304,7 +378,24 @@ void ARanwarCharacter::UpdateLandmarkFocus()
 
 void ARanwarCharacter::Interact()
 {
+    if (Health <= 0.0f)
+    {
+        return;
+    }
     UpdateLandmarkFocus();
+    ARanwarRoute* Route = FindRoute(GetWorld());
+    if (Route && Route->Interact(*this))
+    {
+        return;
+    }
+    if (ARanwarVehicle* Vehicle = NearbyVehicle.Get(); Vehicle && Vehicle->TryEnter(this))
+    {
+        if (Route)
+        {
+            Route->OnVehicleEntry(*Vehicle);
+        }
+        return;
+    }
     if (const ARanwarLandmark* Landmark = NearbyLandmark.Get())
     {
         InteractionDetails = Landmark->GetDetails();
@@ -314,6 +405,22 @@ void ARanwarCharacter::Interact()
 
 FText ARanwarCharacter::GetInteractionPrompt() const
 {
+    if (Health <= 0.0f)
+    {
+        return FText::GetEmpty();
+    }
+    if (const ARanwarRoute* Route = FindRoute(GetWorld()))
+    {
+        FText Prompt = Route->GetPrompt(*this);
+        if (!Prompt.IsEmpty())
+        {
+            return Prompt;
+        }
+    }
+    if (const ARanwarVehicle* Vehicle = NearbyVehicle.Get())
+    {
+        return FText::Format(NSLOCTEXT("Ranwar", "VehiclePrompt", "Drive {0} (E / B)"), Vehicle->GetVehicleName());
+    }
     if (const ARanwarLandmark* Landmark = NearbyLandmark.Get())
     {
         return FText::Format(
@@ -332,20 +439,79 @@ FText ARanwarCharacter::GetInteractionDetails() const
 void ARanwarHUD::DrawHUD()
 {
     Super::DrawHUD();
-    const ARanwarCharacter* Walker = PlayerOwner ? Cast<ARanwarCharacter>(PlayerOwner->GetPawn()) : nullptr;
-    if (!Canvas || !Walker)
+    const APawn* Pawn = PlayerOwner ? PlayerOwner->GetPawn() : nullptr;
+    if (!Canvas || !Pawn)
     {
         return;
     }
 
-    const FText Details = Walker->GetInteractionDetails();
-    const FText Notice = Details.IsEmpty() ? Walker->GetInteractionPrompt() : Details;
-    if (Notice.IsEmpty())
+    const ARanwarCharacter* Walker = Cast<ARanwarCharacter>(Pawn);
+    const ARanwarVehicle* Vehicle = Cast<ARanwarVehicle>(Pawn);
+    const ARanwarRoute* Route = FindRoute(GetWorld());
+    const FLinearColor Backdrop(0.03f, 0.05f, 0.08f, 0.92f);
+    const FLinearColor Amber(1.0f, 0.76f, 0.31f);
+    if (Route)
+    {
+        DrawRect(Backdrop, 12.0f, 12.0f, 290.0f, 48.0f);
+        DrawText(TEXT("RANWAR  /  BANDRA WEST"), Amber, 23.0f, 19.0f);
+        DrawText(Route->GetObjective(Pawn->GetActorLocation()).ToString(), FLinearColor::White, 23.0f, 39.0f);
+
+        const float Right = Canvas->ClipX - 160.0f;
+        DrawRect(Backdrop, Right, 12.0f, 148.0f, 72.0f);
+        DrawText(FString::Printf(TEXT("INR %d"), Route->GetCash()), FLinearColor::White, Right + 11.0f, 19.0f);
+        const int32 Alert = Route->GetPoliceAlert();
+        DrawText(Alert ? TEXT("Police alert") : TEXT("Police clear"), Alert ? Amber : FLinearColor::White, Right + 11.0f, 39.0f);
+        const ARanwarCharacter* HealthOwner = Vehicle ? Vehicle->GetDriver() : Walker;
+        if (HealthOwner)
+        {
+            const float Vitality = HealthOwner->GetHealth() / 100.0f;
+            DrawText(TEXT("Health"), FLinearColor::White, Right + 11.0f, 60.0f);
+            DrawRect(FLinearColor(0.18f, 0.19f, 0.21f), Right + 63.0f, 63.0f, 70.0f, 8.0f);
+            DrawRect(FLinearColor(0.23f, 0.83f, 0.63f), Right + 63.0f, 63.0f, 70.0f * Vitality, 8.0f);
+        }
+
+        FVector Waypoint;
+        FVector2D Screen;
+        if (Route->GetWaypoint(Waypoint) && FVector::DistSquared2D(Pawn->GetActorLocation(), Waypoint) > FMath::Square(160.0)
+            && PlayerOwner->ProjectWorldLocationToScreen(Waypoint + FVector(0.0, 0.0, 150.0), Screen)
+            && Screen.X > 15.0 && Screen.X < Canvas->ClipX - 15.0 && Screen.Y > 80.0 && Screen.Y < Canvas->ClipY - 30.0)
+        {
+            const float X = static_cast<float>(Screen.X);
+            const float Y = static_cast<float>(Screen.Y);
+            DrawLine(X, Y - 8.0f, X + 8.0f, Y, Amber, 2.0f);
+            DrawLine(X + 8.0f, Y, X, Y + 8.0f, Amber, 2.0f);
+            DrawLine(X, Y + 8.0f, X - 8.0f, Y, Amber, 2.0f);
+            DrawLine(X - 8.0f, Y, X, Y - 8.0f, Amber, 2.0f);
+        }
+    }
+
+    FText Prompt;
+    FText Notice = Route ? Route->GetNotice() : FText::GetEmpty();
+    if (Vehicle)
+    {
+        const float Right = Canvas->ClipX - 136.0f;
+        const float Bottom = Canvas->ClipY - 65.0f;
+        DrawRect(Backdrop, Right, Bottom, 124.0f, 53.0f);
+        DrawText(FString::Printf(TEXT("%d km/h"), FMath::RoundToInt(Vehicle->GetSpeedKph())), Amber, Right + 12.0f, Bottom + 9.0f);
+        DrawText(FString::Printf(TEXT("Vehicle %d%%"), FMath::RoundToInt(Vehicle->GetCondition())), FLinearColor::White,
+            Right + 12.0f, Bottom + 29.0f);
+        Prompt = NSLOCTEXT("Ranwar", "DriveExit", "E / B  Exit     Space / A  Brake");
+    }
+    else if (Walker)
+    {
+        Prompt = Walker->GetInteractionPrompt();
+        if (Notice.IsEmpty())
+        {
+            Notice = Walker->GetInteractionDetails();
+        }
+    }
+
+    const FText VisibleText = Prompt.IsEmpty() ? Notice : Prompt;
+    if (VisibleText.IsEmpty())
     {
         return;
     }
-
-    const FString Line = Notice.ToString();
+    const FString Line = VisibleText.ToString();
     float TextWidth = 0.0f;
     float TextHeight = 0.0f;
     GetTextSize(Line, TextWidth, TextHeight, nullptr, 1.0f);
@@ -353,15 +519,26 @@ void ARanwarHUD::DrawHUD()
     TextWidth *= Scale;
     TextHeight *= Scale;
     const float Left = FMath::Max(12.0f, (Canvas->ClipX - TextWidth) * 0.5f);
-    const float Top = Canvas->ClipY * 0.80f;
-    DrawRect(FLinearColor(0.03f, 0.05f, 0.08f, 0.94f), Left - 8.0f, Top - 5.0f, TextWidth + 16.0f, TextHeight + 10.0f);
+    const float Top = Canvas->ClipY * 0.86f;
+    DrawRect(Backdrop, Left - 8.0f, Top - 5.0f, TextWidth + 16.0f, TextHeight + 10.0f);
     DrawText(Line, FLinearColor::White, Left, Top, nullptr, Scale, false);
 }
 
 ARanwarGameMode::ARanwarGameMode()
 {
     DefaultPawnClass = ARanwarCharacter::StaticClass();
+    PlayerControllerClass = ARanwarPlayerController::StaticClass();
     HUDClass = ARanwarHUD::StaticClass();
+}
+
+void ARanwarGameMode::BeginPlay()
+{
+    Super::BeginPlay();
+    const TActorIterator<ARanwarRoute> RouteActor(GetWorld());
+    if (RouteActor)
+    {
+        Route = *RouteActor;
+    }
 }
 
 UClass* ARanwarGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)

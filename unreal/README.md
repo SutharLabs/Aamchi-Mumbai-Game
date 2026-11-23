@@ -1,6 +1,18 @@
 # Aamchi Mumbai Game in Unreal
 
-The next game slice targets Unreal Engine 5.8. The native third-person Ranwar level starts at St Peter's BEST stop and uses the mapped street loop, the two walk-in shops, and the original Omkar rig with corrected run animation. [Remote development and editor setup](REMOTE_DEVELOPMENT.md) · [Ranwar street exchange](ContentSource/RANWAR_STREET.md)
+The Unreal Engine 5.8 playtest starts at St Peter's BEST stop with the original Omkar rig and the mapped Ranwar street loop. Talk to Anjali, visit the Hill Road job board, and finish the parcel run for INR 500. You can walk through both shops or drive a hatchback, auto-rickshaw, motorcycle, or scooter. Ambient traffic follows the registered left-hand route. [Remote development and editor setup](REMOTE_DEVELOPMENT.md) · [Ranwar street exchange](ContentSource/RANWAR_STREET.md)
+
+## Windows development build
+
+Install the Windows edition of Unreal Engine 5.8 through Epic Games Launcher, with Visual Studio C++ Build Tools and the Windows SDK. Prepare the [Ranwar exchange](ContentSource/RANWAR_STREET.md#build-the-exchange), then run this command from the repository root.
+
+```powershell
+powershell -NoProfile -File .\unreal\Tools\make-dev.ps1
+```
+
+Launch `builds/local/unreal-windows/Windows/AamchiMumbaiUnreal.exe` from its complete `Windows` folder. The other files in that folder contain the native game, cooked content, dependencies, and notices. Pass `-RefreshMap` when the generated level or its imported assets need rebuilding. Use `-EngineRoot` for an installation the script cannot find through Epic Games Launcher.
+
+The Windows playtest defaults to DirectX 11 and Shader Model 5. Its graphics quality and VSync settings are available from the startup and pause menus. Verify rendered performance on the intended Windows 10 device.
 
 ## Separate Sea Link study
 

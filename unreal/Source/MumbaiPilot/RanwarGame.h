@@ -9,8 +9,9 @@
 #include "RanwarGame.generated.h"
 
 class USceneComponent;
-class UTextRenderComponent;
 class UAnimSequence;
+class ARanwarRoute;
+class ARanwarVehicle;
 
 UCLASS()
 class MUMBAIPILOT_API ARanwarLandmark : public AActor
@@ -22,10 +23,6 @@ public:
     const FText& GetDisplayName() const { return DisplayName; }
     const FText& GetDetails() const { return Details; }
 
-protected:
-    void OnConstruction(const FTransform& Transform) override;
-    void BeginPlay() override;
-
 private:
     UPROPERTY(EditAnywhere, Category = "Ranwar")
     FText DisplayName;
@@ -33,8 +30,6 @@ private:
     UPROPERTY(EditAnywhere, Category = "Ranwar", meta = (MultiLine = "true"))
     FText Details;
 
-    UPROPERTY()
-    TObjectPtr<UTextRenderComponent> Sign;
 };
 
 UCLASS()
@@ -46,10 +41,15 @@ public:
     ARanwarCharacter();
     FText GetInteractionPrompt() const;
     FText GetInteractionDetails() const;
+    float GetHealth() const { return Health; }
+    float TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator,
+        AActor* DamageCauser) override;
 
 protected:
     void BeginPlay() override;
     void Tick(float DeltaSeconds) override;
+    void Landed(const FHitResult& Hit) override;
+    void FellOutOfWorld(const UDamageType& DamageType) override;
     void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     void SetupPlayerInputComponent(UInputComponent* Input) override;
     void UnPossessed() override;
@@ -65,6 +65,7 @@ private:
     void UpdateLocomotion();
     void UpdateLandmarkFocus();
     void Interact();
+    void RecoverAtStop();
 
     UPROPERTY()
     TObjectPtr<USceneComponent> WalkTestMarker;
@@ -82,9 +83,15 @@ private:
     TObjectPtr<UAnimSequence> ActiveLoop;
 
     TWeakObjectPtr<ARanwarLandmark> NearbyLandmark;
+    TWeakObjectPtr<ARanwarVehicle> NearbyVehicle;
     FTimerHandle LandmarkScanTimer;
+    FTimerHandle RecoveryTimer;
     FText InteractionDetails;
     double DetailsUntil = 0.0;
+    double LastDamageTime = 0.0;
+    float Health = 100.0f;
+    FTransform StartTransform;
+    FTransform SafeGroundTransform;
 };
 
 UCLASS()
@@ -104,4 +111,11 @@ class MUMBAIPILOT_API ARanwarGameMode : public AGameModeBase
 public:
     ARanwarGameMode();
     UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
+    ARanwarRoute* GetRoute() const { return Route.Get(); }
+
+protected:
+    void BeginPlay() override;
+
+private:
+    TWeakObjectPtr<ARanwarRoute> Route;
 };
