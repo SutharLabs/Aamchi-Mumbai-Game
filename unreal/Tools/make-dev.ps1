@@ -2,7 +2,13 @@
 [CmdletBinding()]
 param(
     [string]$EngineRoot,
-    [switch]$RefreshMap
+    [switch]$RefreshMap,
+    [switch]$FullCook,
+    [switch]$SmokeTest,
+    [switch]$Plan,
+    [ValidatePattern('\A[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*)?\z')]
+    [ValidateLength(5, 50)]
+    [string]$ReleaseVersion
 )
 
 Set-StrictMode -Version Latest
@@ -40,11 +46,52 @@ function Assert-PlainPath {
     }
 }
 
+function Restore-GeneratedAndroidDefaults {
+    param([string]$Path, [byte[]]$Before)
+
+    Assert-PlainPath $Path
+    $heading = '[/Script/AndroidFileServerEditor.AndroidFileServerRuntimeSettings]'
+    $beforeText = [Text.Encoding]::UTF8.GetString($Before).TrimStart([char]0xFEFF)
+    if ($beforeText.Contains($heading)) { return }
+    $afterText = [IO.File]::ReadAllText($Path)
+    $index = $afterText.IndexOf($heading, [StringComparison]::Ordinal)
+    if ($index -lt 0 -or $afterText.Substring(0, $index).TrimEnd() -cne $beforeText.TrimEnd()) { return }
+    $expectedDefaults = @(
+        'bEnablePlugin=True', 'bAllowNetworkConnection=True', 'bIncludeInShipping=False',
+        'bAllowExternalStartInShipping=False', 'bCompileAFSProject=False', 'bUseCompression=False',
+        'bLogFiles=False', 'bReportStats=False', 'ConnectionType=USBOnly',
+        'bUseManualIPAddress=False', 'ManualIPAddress='
+    )
+    $settings = @($afterText.Substring($index + $heading.Length) -split '\r?\n' | Where-Object { $_ })
+    $generatedToken = @($settings | Where-Object { $_ -match '^SecurityToken=[0-9a-f]{32}$' })
+    if ($settings.Count -ne $expectedDefaults.Count + 1 -or $generatedToken.Count -ne 1) { return }
+    foreach ($expected in $expectedDefaults) {
+        if ($expected -cnotin $settings) { return }
+    }
+    [IO.File]::WriteAllBytes($Path, $Before)
+}
+
 function Test-NonemptyFile {
     param([string]$Path)
 
     $item = Get-Item -LiteralPath $Path -ErrorAction SilentlyContinue
     return ($item -is [IO.FileInfo] -and $item.Length -gt 0)
+}
+
+function Get-Sha256FileDigest {
+    param([string]$Path)
+
+    $digest = [Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [IO.File]::OpenRead($Path)
+        try {
+            return [BitConverter]::ToString($digest.ComputeHash($stream)).Replace('-', '')
+        } finally {
+            $stream.Dispose()
+        }
+    } finally {
+        $digest.Dispose()
+    }
 }
 
 function Remove-BuildDirectory {
@@ -66,6 +113,105 @@ function Invoke-UnrealTool {
     & $Tool @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "$([IO.Path]::GetFileName($Tool)) exited with code $LASTEXITCODE."
+    }
+}
+
+function Assert-GameClosed {
+    param([string]$Package)
+
+    $runningGame = Get-Process -Name 'AamchiMumbaiUnreal*' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -and $_.Path.StartsWith("$Package\", [StringComparison]::OrdinalIgnoreCase) } |
+        Select-Object -First 1
+    if ($runningGame) { throw "Close the running development build before replacing $Package" }
+}
+
+function Get-ProfileItem {
+    param([string]$Path, [switch]$Directory)
+
+    try {
+        $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    } catch [System.Management.Automation.ItemNotFoundException] {
+        return $null
+    }
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+        ($item -is [IO.DirectoryInfo]) -ne $Directory.IsPresent) {
+        throw "Unexpected item at the packaged player profile path $Path"
+    }
+    return $item
+}
+
+function Copy-DevelopmentProfile {
+    param([string]$PriorWindows, [string]$StagedWindows)
+
+    $saved = 'AamchiMumbaiUnreal\Saved'
+    $saves = "$saved\SaveGames"
+    $preferences = "$saved\Config\Windows\GameUserSettings.ini"
+    # Check each ancestor before reading or writing paths below it.
+    foreach ($relativeDirectory in @('', 'AamchiMumbaiUnreal', $saved, $saves, "$saved\Config", "$saved\Config\Windows")) {
+        foreach ($package in @($PriorWindows, $StagedWindows)) {
+            $profileDirectory = if ($relativeDirectory) { Join-Path $package $relativeDirectory } else { $package }
+            $null = Get-ProfileItem $profileDirectory -Directory
+        }
+    }
+
+    $files = @($preferences)
+    $saveDirectory = Join-Path $PriorWindows $saves
+    if (Get-ProfileItem $saveDirectory -Directory) {
+        $files += Get-ChildItem -LiteralPath $saveDirectory -File -Filter '*.sav' -Force -ErrorAction Stop |
+            ForEach-Object { Join-Path $saves $_.Name }
+    }
+    foreach ($relativeFile in $files) {
+        $source = Get-ProfileItem (Join-Path $PriorWindows $relativeFile)
+        if ($null -eq $source) { continue }
+        $destination = Join-Path $StagedWindows $relativeFile
+        if (Get-ProfileItem $destination) { [IO.File]::Delete($destination) }
+        [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($destination)) | Out-Null
+        [IO.File]::Copy($source.FullName, $destination)
+    }
+}
+
+function Move-WindowsPayload {
+    param([string]$Source, [string]$Destination)
+
+    for ($attempt = 0; $attempt -lt 8; $attempt++) {
+        try {
+            [IO.Directory]::Move($Source, $Destination)
+            return
+        } catch {
+            if ($attempt -eq 7 -or -not [IO.Directory]::Exists($Source) -or [IO.Directory]::Exists($Destination)) {
+                throw
+            }
+            # Windows indexing or process teardown can retain a short-lived handle.
+            Start-Sleep -Milliseconds (250 * ($attempt + 1))
+        }
+    }
+}
+
+function Invoke-StagedSmokeTest {
+    param([string]$Executable, [string]$UserDir, [string]$Log)
+
+    [IO.Directory]::CreateDirectory($UserDir) | Out-Null
+    $info = [Diagnostics.ProcessStartInfo]::new()
+    $info.FileName = $Executable
+    $info.WorkingDirectory = $UserDir
+    $info.UseShellExecute = $false
+    $info.CreateNoWindow = $true
+    $info.Arguments = '-unattended -NullRHI -nosound -NoSplash -RanwarLedgerSmoke -UserDir="' + $UserDir + '" -abslog="' + $Log + '" ' +
+        '-ExecCmds="Automation RunTests AamchiMumbai.Ranwar.Playable" -TestExit="Automation Test Queue Empty"'
+    $process = [Diagnostics.Process]::Start($info)
+    try {
+        if (-not $process.WaitForExit(90000)) {
+            $process.Kill()
+            if (-not $process.WaitForExit(5000)) { throw "Timed out closing the staged test process. See $Log" }
+            throw "The staged gameplay test timed out. See $Log"
+        }
+        $passMarker = 'Result={Success} Name={Playable} Path={AamchiMumbai.Ranwar.Playable}'
+        if ($process.ExitCode -ne 0 -or -not (Test-NonemptyFile $Log) -or
+            -not (Select-String -LiteralPath $Log -Pattern $passMarker -SimpleMatch -Quiet)) {
+            throw "The staged gameplay test failed. See $Log"
+        }
+    } finally {
+        $process.Dispose()
     }
 }
 
@@ -98,59 +244,191 @@ Write-Host "Using Unreal Engine $versionText at $engine"
 
 $builds = Join-Path $root 'builds'
 $local = Join-Path $builds 'local'
-foreach ($directory in @($builds, $local)) {
-    Assert-PlainPath $directory
+$work = Join-Path $local 'unreal-work'
+$logs = Join-Path $work 'logs'
+$uatLogs = Join-Path $logs 'uat'
+$incoming = Join-Path $work 'staging'
+$previous = Join-Path $work 'previous-windows'
+$legacyWorkPrevious = Join-Path $work 'previous-package'
+$legacyPrevious = Join-Path $local '.unreal-windows.previous'
+$ranwarBackup = Join-Path $work 'previous-ranwar'
+$smokeProfile = Join-Path $work 'smoke-profile'
+$configuration = 'Development'
+$outputParent = $local
+$releaseRoot = Join-Path $builds 'release'
+if ($ReleaseVersion) {
+    if ($SmokeTest) { throw 'The packaged automation suite is available only in Development builds.' }
+    $configuration = 'Shipping'
+    $outputParent = Join-Path $releaseRoot $ReleaseVersion
+}
+$output = Join-Path $outputParent 'unreal-windows'
+$lockPath = Join-Path $local '.unreal-windows.lock'
+$unrealProject = Join-Path $root 'unreal'
+$content = Join-Path $unrealProject 'Content'
+$ranwar = Join-Path $content 'Ranwar'
+$exchange = Join-Path $local 'unreal-ranwar'
+$launchExe = 'AamchiMumbaiUnreal.exe'
+$vehicleNames = @('Hatchback', 'Rickshaw', 'Motorcycle', 'Scooter')
+$arrivalNames = @('BestBus', 'AnjaliKurta', 'Pedestrian', 'Farah', 'Nitin', 'Leena', 'Iqbal', 'Ravi', 'Kavita')
+$contactNames = @('Ravi', 'Kavita')
+$generatedAssets = @('RanwarStreet.umap', 'UI\TitleBackdrop.uasset', 'UI\TitleMark.uasset') + @(
+    @('Omkar', 'OmkarIdle', 'OmkarWalk', 'OmkarRun') | ForEach-Object { "Characters\Omkar\$_.uasset" }
+) + @($vehicleNames | ForEach-Object { "Vehicles\$_.uasset" }) + @(
+    $arrivalNames | ForEach-Object { "Arrival\$_.uasset" }
+) + @(
+    $contactNames | ForEach-Object {
+        $contact = $_
+        @($contact, "${contact}Breath", "${contact}Gesture") | ForEach-Object { "Characters\Contacts\$contact\$_.uasset" }
+    }
+)
+$exchangeFiles = @('ranwar-level.json', 'omkar.glb') + @(
+    $vehicleNames | ForEach-Object { "vehicles\$_.glb" }
+) + @($arrivalNames | ForEach-Object { "arrival\$_.glb" }) + @($contactNames | ForEach-Object { "contacts\$_.glb" })
+
+foreach ($path in @($builds, $local, $work, $logs, $uatLogs, $lockPath, $incoming, $previous, $legacyWorkPrevious, $legacyPrevious,
+        $ranwarBackup, $smokeProfile, $output, $unrealProject, $content, $ranwar)) {
+    Assert-PlainPath $path
+}
+if ($ReleaseVersion) {
+    Assert-PlainPath $releaseRoot
+    Assert-PlainPath $outputParent
+    if (Test-Path -LiteralPath $output) { throw "That release already has a Windows package at $output" }
+}
+$commit = git -C $root rev-parse HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Could not read the source revision.' }
+$changes = if ($ReleaseVersion) { @(git -C $root status --porcelain) } else { @(git -C $root status --porcelain -- unreal) }
+if ($LASTEXITCODE -ne 0) { throw 'Could not read the Git worktree status.' }
+if ($ReleaseVersion -and $null -ne $changes) {
+    throw 'Build a Shipping candidate from a clean, reviewed commit.'
+}
+
+$assetRoot = if ([IO.Directory]::Exists($ranwarBackup)) { $ranwarBackup } else { $ranwar }
+$missingAssets = @($generatedAssets | Where-Object { -not (Test-NonemptyFile (Join-Path $assetRoot $_)) })
+$needsImport = $RefreshMap -or $missingAssets.Count -gt 0
+if ($needsImport) {
+    foreach ($exchangeFile in $exchangeFiles) {
+        if (-not (Test-NonemptyFile (Join-Path $exchange $exchangeFile))) {
+            throw "Missing $exchangeFile in $exchange. Build or collect the Ranwar exchange documented in unreal/ContentSource/RANWAR_STREET.md."
+        }
+    }
+}
+$audio = Join-Path $content 'Audio\Ranwar'
+$sharedAudio = Join-Path $root 'prototype\shared\audio'
+$worldSoundNames = @('parcel-pickup.wav')
+foreach ($gait in @('walk', 'run')) {
+    foreach ($variant in (1..3)) { $worldSoundNames += "sandal-$gait-$variant.wav" }
+}
+foreach ($path in @($sharedAudio, (Join-Path $sharedAudio 'SOURCES.md'))) { Assert-PlainPath $path }
+foreach ($name in $worldSoundNames) {
+    $soundFile = Join-Path $sharedAudio $name
+    Assert-PlainPath $soundFile
+    if (-not (Test-NonemptyFile $soundFile)) { throw "Missing shared world sound at $soundFile" }
+}
+$dialogue = Join-Path $root 'prototype\shared\dialogue'
+$dialogueCatalog = Join-Path $dialogue 'lines.json'
+$dialogueNotice = Join-Path $dialogue 'SOURCES.md'
+foreach ($path in @($dialogue, $dialogueCatalog, $dialogueNotice)) { Assert-PlainPath $path }
+$dialogueRows = Get-Content -LiteralPath $dialogueCatalog -Raw -Encoding UTF8 | ConvertFrom-Json
+if ($dialogueRows -isnot [array] -or $dialogueRows.Count -eq 0) {
+    throw "Expected a non-empty array in the shared dialogue catalogue at $dialogueCatalog"
+}
+$dialogueFiles = @($dialogueCatalog)
+$dialogueIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+foreach ($line in $dialogueRows) {
+    if ($line.id -cnotmatch '^[a-z]+(-[a-z]+)+$' -or $line.duration -lt 0.5 -or $line.duration -gt 30 -or
+        [string]::IsNullOrWhiteSpace($line.speaker) -or [string]::IsNullOrWhiteSpace($line.text) -or
+        -not $dialogueIds.Add($line.id)) {
+        throw "Invalid or duplicate dialogue entry in $dialogueCatalog"
+    }
+    $lineFile = Join-Path $dialogue "$($line.id).wav"
+    Assert-PlainPath $lineFile
+    if (-not (Test-NonemptyFile $lineFile)) { throw "Missing shared dialogue WAV at $lineFile" }
+    $dialogueFiles += $lineFile
+}
+Assert-PlainPath (Join-Path $content 'Audio')
+Assert-PlainPath $audio
+foreach ($family in $vehicleNames) {
+    foreach ($state in @('idle','loaded')) {
+        $sample = Join-Path $audio ('{0}-{1}.wav' -f $family.ToLowerInvariant(), $state)
+        Assert-PlainPath $sample
+        if (-not (Test-NonemptyFile $sample)) { throw "Missing recorded vehicle audio at $sample" }
+    }
+}
+$incremental = -not ($ReleaseVersion -or $FullCook -or $needsImport)
+if ($Plan) {
+    Write-Host "Configuration: $configuration"
+    Write-Host "Source revision: $commit"
+    Write-Host "Regenerate Ranwar: $needsImport"
+    Write-Host "Incremental cook: $incremental"
+    Write-Host "Packaged gameplay test: $($SmokeTest.IsPresent)"
+    Write-Host "Launch path: $(Join-Path $output "Windows\$launchExe")"
+    Write-Host "Build work and logs: $work"
+    return
+}
+
+foreach ($directory in @($builds, $local, $work, $logs)) {
     [IO.Directory]::CreateDirectory($directory) | Out-Null
 }
-$attemptId = [guid]::NewGuid().ToString('N')
-$output = Join-Path $local 'unreal-windows'
-$previous = Join-Path $local '.unreal-windows.previous'
-$incoming = Join-Path $local ".unreal-windows.incoming-$attemptId"
-$lockPath = Join-Path $local '.unreal-windows.lock'
-Assert-PlainPath $lockPath
-$ranwarBackup = Join-Path $local "unreal-ranwar-before-refresh-$attemptId"
-$ranwarChanged = $false
 try {
     $lock = [IO.File]::Open($lockPath, 'OpenOrCreate', 'ReadWrite', 'None')
 } catch {
     throw "Could not lock $lockPath. Check whether another Unreal Windows build is running. $($_.Exception.Message)"
 }
 
+$ranwarChanged = $false
+$keepVerifiedStaging = $false
+$engineConfigPath = Join-Path $unrealProject 'Config\DefaultEngine.ini'
+$engineConfigBefore = $null
+$oldUatLogs = $env:uebp_LogFolder
+$oldUatFinalLogs = $env:uebp_FinalLogFolder
 try {
-    foreach ($directory in @($output, $previous)) { Assert-PlainPath $directory }
-    if ([IO.Directory]::Exists($previous) -and -not [IO.Directory]::Exists($output)) {
-        [IO.Directory]::Move($previous, $output)
-        Write-Host "Restored the previous development build to $output"
-    }
-
-    $unrealProject = Join-Path $root 'unreal'
-    $content = Join-Path $unrealProject 'Content'
-    $ranwar = Join-Path $content 'Ranwar'
-    foreach ($directory in @($unrealProject, $content, $ranwar)) { Assert-PlainPath $directory }
-    $map = Join-Path $ranwar 'RanwarStreet.umap'
-    $vehicleNames = @('Hatchback', 'Rickshaw', 'Motorcycle', 'Scooter')
-    $arrivalNames = @('BestBus', 'Anjali', 'Pedestrian')
-    if ($RefreshMap -or -not (Test-NonemptyFile $map)) {
-        $exchange = Join-Path $local 'unreal-ranwar'
-        $exchangeFiles = @('ranwar-level.json', 'omkar.glb') + @(
-            $vehicleNames | ForEach-Object { "vehicles\$_.glb" }
-        ) + @(
-            $arrivalNames | ForEach-Object { "arrival\$_.glb" }
-        )
-        foreach ($exchangeFile in $exchangeFiles) {
-            if (-not (Test-NonemptyFile (Join-Path $exchange $exchangeFile))) {
-                throw "Missing $exchangeFile in $exchange. Build or collect the Ranwar exchange documented in unreal/ContentSource/RANWAR_STREET.md."
-            }
+    Assert-PlainPath (Join-Path $unrealProject 'Config')
+    Assert-PlainPath $engineConfigPath
+    $engineConfigBefore = [IO.File]::ReadAllBytes($engineConfigPath)
+    $developmentOutput = Join-Path $local 'unreal-windows'
+    Assert-PlainPath $developmentOutput
+    foreach ($recovery in @($legacyWorkPrevious, $legacyPrevious)) {
+        if ([IO.Directory]::Exists($recovery) -and -not [IO.Directory]::Exists($developmentOutput)) {
+            [IO.Directory]::Move($recovery, $developmentOutput)
+            Write-Host "Restored the previous development build to $developmentOutput"
         }
+    }
+    $developmentWindows = Join-Path $developmentOutput 'Windows'
+    Assert-PlainPath $developmentWindows
+    if ([IO.Directory]::Exists($previous) -and -not [IO.Directory]::Exists($developmentWindows)) {
+        [IO.Directory]::CreateDirectory($developmentOutput) | Out-Null
+        [IO.Directory]::Move($previous, $developmentWindows)
+        Write-Host "Restored the previous development payload to $developmentWindows"
+    }
+    if ($ReleaseVersion) {
+        if (Test-Path -LiteralPath $output) { throw "That release already has a Windows package at $output" }
+        [IO.Directory]::CreateDirectory($outputParent) | Out-Null
+    } else {
+        Assert-GameClosed $output
+    }
+    if ([IO.Directory]::Exists($ranwarBackup)) {
+        Remove-BuildDirectory $ranwar $content
+        [IO.Directory]::Move($ranwarBackup, $ranwar)
+        Write-Host 'Restored the previous generated Ranwar content after an interrupted build.'
+    }
+    # Unreal owns reusable cook and compile caches under the project. Clean only our staging and per-run logs.
+    Remove-BuildDirectory $incoming $work
+    Remove-BuildDirectory $logs $work
+    Remove-BuildDirectory $smokeProfile $work
+    [IO.Directory]::CreateDirectory($uatLogs) | Out-Null
+    $env:uebp_LogFolder = $uatLogs
+    $env:uebp_FinalLogFolder = $uatLogs
+
+    if ($needsImport) {
 
         Write-Host 'Building the Unreal editor module for the initial Ranwar import'
-        Invoke-UnrealTool $builder @('AamchiMumbaiUnrealEditor', 'Win64', 'Development', "-Project=$project", '-WaitMutex')
+        $editorLog = Join-Path $logs 'editor-build.log'
+        Invoke-UnrealTool $builder @('AamchiMumbaiUnrealEditor', 'Win64', 'Development', "-Project=$project",
+            '-WaitMutex', "-Log=$editorLog")
 
         Write-Host 'Importing the Ranwar map, Omkar, arrival scene, and vehicles'
         $importer = Join-Path $PSScriptRoot 'create_ranwar_level.py'
-        $importLog = Join-Path $local 'unreal-ranwar-import.log'
-        Assert-PlainPath $importLog
-        if ([IO.File]::Exists($importLog)) { Remove-Item -LiteralPath $importLog }
+        $importLog = Join-Path $logs 'ranwar-import.log'
         if ([IO.Directory]::Exists($ranwar)) {
             $generated = Get-Item -LiteralPath $ranwar -Force
             if ($generated.FullName -ne $ranwar -or $generated.Parent.FullName -ne $content) {
@@ -161,87 +439,123 @@ try {
         $ranwarChanged = $true
         Invoke-UnrealTool $editor @($project, '-run=pythonscript', "-script=$importer",
             '-unattended', '-nosound', '-NoP4', '-NullRHI', '-stdout', '-FullStdOutLogOutput', "-abslog=$importLog")
-        if (-not (Test-NonemptyFile $map) -or -not (Test-NonemptyFile $importLog) -or
+        if (-not (Test-NonemptyFile $importLog) -or
             -not (Select-String -LiteralPath $importLog -Pattern 'Saved /Game/Ranwar/RanwarStreet with' -SimpleMatch -Quiet)) {
             throw "The Ranwar importer did not finish saving the map. See $importLog"
         }
     }
 
-    $gameplayAssets = @(
-        @('Omkar', 'OmkarIdle', 'OmkarWalk', 'OmkarRun') |
-            ForEach-Object { "Characters\Omkar\$_.uasset" }
-    ) + @(
-        $vehicleNames | ForEach-Object { "Vehicles\$_.uasset" }
-    ) + @(
-        $arrivalNames | ForEach-Object { "Arrival\$_.uasset" }
-    )
-    foreach ($relativeAsset in $gameplayAssets) {
+    foreach ($relativeAsset in $generatedAssets) {
         if (-not (Test-NonemptyFile (Join-Path $ranwar $relativeAsset))) {
             throw "Ranwar is missing $relativeAsset. Run again with -RefreshMap after generating the latest exchange."
         }
     }
 
     [IO.Directory]::CreateDirectory($incoming) | Out-Null
-    Write-Host 'Building, cooking, and staging a Win64 Development package'
-    Invoke-UnrealTool $runUat @('BuildCookRun', "-project=$project", '-platform=Win64',
-        '-clientconfig=Development', '-build', '-cook', '-map=/Game/Ranwar/RanwarStreet',
-        '-stage', '-pak', '-package', '-prereqs', '-archive', "-archivedirectory=$incoming",
+    foreach ($name in $worldSoundNames) {
+        $stagedSound = Join-Path $audio $name
+        Assert-PlainPath $stagedSound
+        Copy-Item -LiteralPath (Join-Path $sharedAudio $name) -Destination $stagedSound -Force
+    }
+    $stagedDialogue = Join-Path $audio 'Dialogue'
+    Assert-PlainPath $stagedDialogue
+    [IO.Directory]::CreateDirectory($stagedDialogue) | Out-Null
+    foreach ($source in $dialogueFiles) {
+        $dialogueFile = Join-Path $stagedDialogue ([IO.Path]::GetFileName($source))
+        Assert-PlainPath $dialogueFile
+        Copy-Item -LiteralPath $source -Destination $dialogueFile -Force
+    }
+    Write-Host "Building, cooking, and staging a Win64 $configuration package. Incremental cook: $incremental"
+    $uatArguments = @('BuildCookRun', "-project=$project", '-platform=Win64',
+        "-clientconfig=$configuration", '-build', '-cook', '-map=/Game/Ranwar/RanwarStreet',
+        '-stage', '-pak', '-package', '-prereqs', '-nodebuginfo', "-stagingdirectory=$incoming",
         '-unattended', '-nop4', '-utf8output')
+    if ($incremental) { $uatArguments += '-iterativecooking' }
+    if ($needsImport) {
+        # The refresh replaces the same directory; discover the new asset names from disk.
+        $uatArguments += '-AdditionalCookerOptions=-NoAssetRegistryCacheRead'
+    }
+    Invoke-UnrealTool $runUat $uatArguments
 
     $staged = Join-Path $incoming 'Windows'
-    $launchExe = 'AamchiMumbaiUnreal.exe'
-    $nativeExe = Join-Path $staged 'AamchiMumbaiUnreal\Binaries\Win64\AamchiMumbaiUnreal.exe'
+    $nativeFile = if ($ReleaseVersion) { 'AamchiMumbaiUnreal-Win64-Shipping.exe' } else { $launchExe }
+    $nativeExe = Join-Path $staged "AamchiMumbaiUnreal\Binaries\Win64\$nativeFile"
+    $stagedLauncher = Join-Path $staged $launchExe
     $paks = Join-Path $staged 'AamchiMumbaiUnreal\Content\Paks'
-    if (-not (Test-NonemptyFile (Join-Path $staged $launchExe)) -or
-        -not (Test-NonemptyFile $nativeExe) -or
-        -not (Get-ChildItem -LiteralPath $paks -Filter '*.pak' -File -ErrorAction SilentlyContinue |
-            Where-Object Length -gt 0 | Select-Object -First 1)) {
-        throw "The staged package at $staged is missing its executable or cooked content."
+    $pakBase = Join-Path $paks 'AamchiMumbaiUnreal-Windows'
+    foreach ($file in @($stagedLauncher, $nativeExe, "$pakBase.pak", "$pakBase.ucas", "$pakBase.utoc")) {
+        if (-not (Test-NonemptyFile $file)) { throw "The staged package is missing $file" }
+    }
+    if ($SmokeTest) {
+        Write-Host 'Running the staged Ranwar gameplay smoke test with isolated save data'
+        Invoke-StagedSmokeTest $nativeExe $smokeProfile (Join-Path $logs 'ranwar-smoke.log')
     }
 
     $notices = Join-Path $staged 'Notices'
     [IO.Directory]::CreateDirectory($notices) | Out-Null
     Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination (Join-Path $notices 'LICENSE')
     Copy-Item -LiteralPath (Join-Path $root 'docs\THIRD_PARTY.md') -Destination (Join-Path $notices 'THIRD_PARTY.md')
-    $mapNotice = 'assets\maps\reference\bandra-ranwar-modern-osm-2026-11-20\ATTRIBUTION.md'
-    Copy-Item -LiteralPath (Join-Path $root $mapNotice) -Destination (Join-Path $notices 'OpenStreetMap.md')
+    Copy-Item -LiteralPath (Join-Path $audio 'SOURCES.md') -Destination (Join-Path $notices 'VehicleAudio.md')
+    Copy-Item -LiteralPath (Join-Path $sharedAudio 'SOURCES.md') -Destination (Join-Path $notices 'SharedAudio.md')
+    Copy-Item -LiteralPath $dialogueNotice -Destination (Join-Path $notices 'Dialogue.md')
+    $motionNotices = Join-Path $root 'prototype\character\motion'
+    Copy-Item -LiteralPath (Join-Path $motionNotices '100STYLE-ATTRIBUTION.txt') -Destination $notices
+    Copy-Item -LiteralPath (Join-Path $motionNotices 'CMU-ATTRIBUTION.txt') -Destination $notices
+    $mapNotices = Join-Path $root 'assets\maps\reference\bandra-ranwar-modern-osm-2026-11-20'
+    Copy-Item -LiteralPath (Join-Path $mapNotices 'ATTRIBUTION.md') -Destination (Join-Path $notices 'OpenStreetMap.md')
+    Copy-Item -LiteralPath (Join-Path $mapNotices 'ODbL-1.0.txt') -Destination $notices
 
-    $runningGame = Get-Process -Name 'AamchiMumbaiUnreal*' -ErrorAction SilentlyContinue |
-        Where-Object { $_.Path -and $_.Path.StartsWith("$output\", [StringComparison]::OrdinalIgnoreCase) } |
-        Select-Object -First 1
-    if ($runningGame) { throw "Close the running development build before replacing $output" }
+    [ordered]@{
+        build = $configuration
+        release_version = $ReleaseVersion
+        source_commit = $commit
+        worktree_dirty = $null -ne $changes
+        unreal_engine = $versionText
+        incremental_cook = $incremental
+        generated_map_refreshed = $needsImport
+        gameplay_smoke = if ($SmokeTest) { 'passed' } else { 'not run' }
+        created_utc = [DateTimeOffset]::UtcNow.ToString('o')
+        launcher_sha256 = Get-Sha256FileDigest $stagedLauncher
+        native_exe_sha256 = Get-Sha256FileDigest $nativeExe
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $staged 'BuildReceipt.json') -Encoding UTF8
 
-    Remove-BuildDirectory $previous $local
-    if ([IO.Directory]::Exists($output)) {
-        [IO.Directory]::Move($output, $previous)
-    }
-    try {
+    if ($ReleaseVersion) {
         [IO.Directory]::Move($incoming, $output)
-    } catch {
-        if ([IO.Directory]::Exists($previous) -and -not [IO.Directory]::Exists($output)) {
-            [IO.Directory]::Move($previous, $output)
+    } else {
+        Assert-GameClosed $output
+        Assert-PlainPath $output
+        Assert-PlainPath $developmentWindows
+        [IO.Directory]::CreateDirectory($output) | Out-Null
+        if ([IO.Directory]::Exists($developmentWindows)) {
+            Copy-DevelopmentProfile $developmentWindows $staged
+            Assert-GameClosed $output
         }
-        throw
+        Remove-BuildDirectory $previous $work
+        # The outer install folder can be open in Explorer. Replace only the Windows payload.
+        if ([IO.Directory]::Exists($developmentWindows)) { Move-WindowsPayload $developmentWindows $previous }
+        try {
+            Move-WindowsPayload $staged $developmentWindows
+        } catch {
+            $keepVerifiedStaging = [IO.Directory]::Exists($staged)
+            if ([IO.Directory]::Exists($previous) -and -not [IO.Directory]::Exists($developmentWindows)) {
+                Move-WindowsPayload $previous $developmentWindows
+            }
+            throw
+        }
     }
     $ranwarChanged = $false
-    try {
-        Remove-BuildDirectory $previous $local
-    } catch {
-        Write-Warning "The new package is ready. The previous build remains at $previous. $($_.Exception.Message)"
+    foreach ($discard in @($previous, $ranwarBackup)) {
+        try {
+            Remove-BuildDirectory $discard $work
+        } catch {
+            Write-Warning "The new package is ready. The recovery folder remains at $discard. $($_.Exception.Message)"
+        }
     }
-    Write-Host "Windows development build ready at $(Join-Path $output "Windows\$launchExe")"
-    if ([IO.Directory]::Exists($ranwarBackup)) {
-        Write-Host "Previous generated Ranwar content was saved at $ranwarBackup"
-    }
+    Write-Host "Windows $configuration build ready at $(Join-Path $output "Windows\$launchExe")"
 } catch {
     if ($ranwarChanged) {
         try {
-            if ([IO.Directory]::Exists($ranwar)) {
-                Assert-PlainPath $ranwar
-                $failedRanwar = Join-Path $local "unreal-ranwar-failed-import-$attemptId"
-                [IO.Directory]::Move($ranwar, $failedRanwar)
-                Write-Warning "Preserved the failed Ranwar import at $failedRanwar"
-            }
+            Remove-BuildDirectory $ranwar $content
             if ([IO.Directory]::Exists($ranwarBackup)) {
                 [IO.Directory]::Move($ranwarBackup, $ranwar)
                 Write-Warning "Restored the previous Ranwar content to $ranwar"
@@ -250,13 +564,28 @@ try {
             Write-Warning "Could not restore the earlier Ranwar content. Check $ranwar and $ranwarBackup. $($_.Exception.Message)"
         }
     }
+    Write-Warning "See the build logs at $logs"
     throw
 } finally {
     try {
-        Remove-BuildDirectory $incoming $local
+        if ($keepVerifiedStaging) {
+            Write-Warning "The candidate passed validation and remains at $incoming."
+        } else {
+            Remove-BuildDirectory $incoming $work
+        }
     } catch {
         Write-Warning "Could not clean the staging directory at $incoming. $($_.Exception.Message)"
     } finally {
-        $lock.Dispose()
+        try {
+            if ($null -ne $engineConfigBefore) {
+                Restore-GeneratedAndroidDefaults $engineConfigPath $engineConfigBefore
+            }
+        } catch {
+            Write-Warning 'Could not restore the original Unreal project config after the Windows build.'
+        } finally {
+            $env:uebp_LogFolder = $oldUatLogs
+            $env:uebp_FinalLogFolder = $oldUatFinalLogs
+            $lock.Dispose()
+        }
     }
 }

@@ -15,10 +15,12 @@ const Walker := preload("res://player.gd")
 const Pedestrian := preload("res://character/practice_pedestrian.gd")
 const Hud := preload("res://phase1_hud.gd")
 const DeliveryRoute := preload("res://mission/ranwar_delivery_route.gd")
+const LedgerRoute := preload("res://mission/hill_road_ledger.gd")
 const MissionProgress := preload("res://mission/mission_progress.gd")
 const Delivery := preload("res://mission/ranwar_delivery.gd")
 const Career := preload("res://mission/ranwar_career.gd")
 const ArrivalIntro := preload("res://mission/ranwar_arrival_intro.gd")
+const Dialogue := preload("res://mission/ranwar_dialogue.gd")
 const Daylight := preload("res://world/district_daylight.gd")
 const Parking := preload("res://world/ranwar_parking.gd")
 const PLAYER_START := World.PLAYER_START
@@ -32,7 +34,6 @@ const STREET_SOLIDS := 1 | 2 | 4
 const GAMEPAD_LOOK_SPEED := 680.0
 const TRAFFIC_ENTRY_ROAD := 3 # West Waroda Road.
 const FIRST_AID := Vector3(-13.4, 0.0, 5.0)
-const MIRA_LEAD := "Mira: The parcel held receipts from the print shop. The same delivery name appears three times. I’ll ask Asha about tomorrow’s ledger."
 const WITNESS_RANGE := 17.0
 const CLAIMED_RETIRE_RANGE := 225.0
 
@@ -47,12 +48,15 @@ var motorcycle := Motorcycle.new()
 var scooter := Scooter.new()
 var camera := Camera3D.new()
 var hud := Hud.new()
+var dialogue := Dialogue.new()
+var dialogue_preferences: Node
 var pedestrians: Array[Pedestrian] = []
 var active_vehicle: Vehicle
 var startup_pause_enabled := false
 var look_sensitivity := 1.0
 var delivery_progress: MissionProgress
 var delivery: DeliveryRoute
+var ledger: LedgerRoute
 var career: Career
 var _mira: Pedestrian
 var _arrival_guide: Pedestrian
@@ -77,6 +81,8 @@ var _interact_requested := false
 var _reset_requested := false
 var _message := ""
 var _message_time := 0.0
+var _message_is_dialogue := false
+var _arrival_voice_started := false
 
 
 func _ready() -> void:
@@ -124,11 +130,19 @@ func _ready() -> void:
 		delivery = DeliveryRoute.new()
 		delivery.name = "RanwarParcelRun"
 		add_child(delivery)
-		delivery.setup(delivery_progress, world._gully)
+		delivery.setup(delivery_progress, world._gully, player.visual.skeleton)
 		career.parcel_completed = delivery.flow.state == Delivery.COMPLETED
+		ledger = LedgerRoute.new()
+		ledger.name = "HillRoadLedger"
+		add_child(ledger)
+		ledger.setup(delivery_progress, career, world.building_entrances())
 		_add_first_aid_sign()
 	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
+	hud.add_child(dialogue)
+	if dialogue_preferences != null:
+		dialogue_preferences.changed.connect(_apply_dialogue_preferences)
+	_apply_dialogue_preferences()
 	var local_facilities := PackedVector3Array()
 	for facility: Dictionary in world.facility_markers():
 		if facility["playable"]:
@@ -212,9 +226,14 @@ func _update_arrival_intro(delta: float) -> void:
 		_interact_requested or Input.is_action_just_pressed(&"interact"))
 	_interact_requested = false
 	_reset_requested = false
+	if skip:
+		dialogue.stop()
 	if skip or _arrival_intro.advance(delta, camera):
 		finish_arrival()
 	else:
+		if _arrival_intro.elapsed >= ArrivalIntro.ARRIVE and not _arrival_voice_started:
+			_arrival_voice_started = true
+			dialogue.speak("omkar-arrival")
 		hud.update_display(false, 0.0, "Skip intro", "", true, _arrival_intro.subtitle())
 
 
@@ -296,7 +315,7 @@ func _physics_process(delta: float) -> void:
 			elif nearby is Vehicle:
 				prompt = _entry_prompt(nearby)
 		can_interact = not prompt.is_empty()
-	if _message_time > 0.0:
+	if _message_time > 0.0 and not _message_is_dialogue:
 		prompt = _message
 		can_interact = false
 	var objective := delivery.objective(_actor_position()) if delivery != null else ""
@@ -304,8 +323,10 @@ func _physics_process(delta: float) -> void:
 		objective = "Find work at the Hill Road job board · %d m" % roundi(_actor_position().distance_to(delivery.target()))
 	if objective.is_empty() and career != null and career.has_lead():
 		objective = "Talk to Mira on Hill Road · %d m" % roundi(_actor_position().distance_to(_mira.global_position))
+	if objective.is_empty() and ledger != null:
+		objective = ledger.objective(_actor_position())
 	var edge_notice := world.district_edges.notice_at(_actor_position())
-	if not edge_notice.is_empty():
+	if not edge_notice.is_empty() and (driving or not world.mapped_buildings.contains_interior(player.global_position)):
 		objective = edge_notice if objective.is_empty() else objective + "\n" + edge_notice
 	var forward := -active_vehicle.global_basis.z if driving else -player.global_basis.z
 	var condition := active_vehicle.condition_percent() if driving else -1
@@ -321,6 +342,8 @@ func story_target() -> Vector3:
 	var destination := delivery.target() if delivery != null else Vector3.INF
 	if not destination.is_finite() and career != null and career.has_lead():
 		return _mira.global_position
+	if not destination.is_finite() and ledger != null:
+		return ledger.target()
 	return destination
 
 
@@ -331,7 +354,7 @@ func session_status() -> String:
 	if career.wanted > 0:
 		status += "  ·  Police alert %d" % career.wanted
 	if career.lead_seen:
-		status += "\nLead logged · Tomorrow’s ledger"
+		status += "\n%s complete" % LedgerRoute.NAME if career.ledger_completed else "\nLead logged · %s" % LedgerRoute.NAME
 	return status
 
 
@@ -341,6 +364,9 @@ func _special_interaction() -> String:
 	var job := delivery.prompt_for(player.global_position)
 	if not job.is_empty():
 		return job
+	var ledger_prompt := ledger.prompt_for(player.global_position)
+	if not ledger_prompt.is_empty():
+		return ledger_prompt
 	if _at_first_aid() and career.health < Career.MAX_HEALTH and career.wanted == 0:
 		return "First aid · ₹%d" % Career.TREATMENT_PRICE
 	return ""
@@ -542,9 +568,10 @@ func _try_interact() -> void:
 	if not player.can_interact():
 		return
 	if delivery != null and not delivery.prompt_for(player.global_position).is_empty():
-		var message := delivery.interact()
-		career.parcel_completed = delivery.flow.state == Delivery.COMPLETED
-		_show_message(message, 4.0)
+		_interact_with_parcel()
+		return
+	if ledger != null and not ledger.prompt_for(player.global_position).is_empty():
+		_interact_with_ledger()
 		return
 	if career != null and _at_first_aid() and career.health < Career.MAX_HEALTH and career.wanted == 0:
 		var message := "First aid costs ₹%d." % Career.TREATMENT_PRICE
@@ -555,15 +582,25 @@ func _try_interact() -> void:
 	var target := _nearby_interaction()
 	if target is Pedestrian:
 		if target == _mira and career != null and career.has_lead():
-			target.begin_conversation(player.global_position, 8.0)
-			_show_message(MIRA_LEAD if career.record_lead() else "Mira’s lead could not be saved. Try again.", 8.0)
+			if career.record_lead():
+				ledger.refresh_target()
+				target.begin_conversation(player.global_position, dialogue.speak("mira-ledger"))
+			else:
+				_show_message("Mira’s lead could not be saved. Try again.", 5.0)
 		elif target == _arrival_guide and _first_arrival and not _arrival_guided:
 			_arrival_guided = true
-			target.begin_conversation(player.global_position, 7.0)
-			_show_message("Anjali: Mira left the loan bike for you. Head west to the job board and ask about the print-shop delivery.", 7.0)
+			target.begin_conversation(player.global_position, dialogue.speak("anjali-bike"))
 		else:
-			target.begin_conversation(player.global_position, TALK_TIME)
-			_show_message("%s: %s" % [target.display_name, target.greeting], TALK_TIME)
+			var id := "%s-directions" % target.display_name.to_lower()
+			if target == _mira:
+				id = "mira-yard"
+			elif target.display_name == "Rafiq":
+				id = "rafiq-lane"
+			var spoken_time := dialogue.speak(id)
+			var duration := maxf(spoken_time, TALK_TIME)
+			target.begin_conversation(player.global_position, duration)
+			_show_message("%s: %s" % [target.display_name, target.greeting], duration)
+			_message_is_dialogue = spoken_time > 0.0
 		return
 	var vehicle := target as Vehicle
 	if vehicle == null:
@@ -592,6 +629,41 @@ func _try_interact() -> void:
 			_show_message("Theft reported · Police alert %d" % career.wanted, 3.0)
 		else:
 			_show_message("Vehicle taken.")
+
+
+func _interact_with_parcel() -> void:
+	var before := delivery.flow.state
+	var message := delivery.interact()
+	var after := delivery.flow.state
+	career.parcel_completed = after == Delivery.COMPLETED
+	var line := ""
+	if before == Delivery.PICKUP and after == Delivery.DROPOFF:
+		line = DeliveryRoute.PICKUP_VOICE
+	elif before == Delivery.DROPOFF and after == Delivery.COMPLETED:
+		line = DeliveryRoute.HANDOFF_VOICE
+		message = "Parcel delivered · +₹%d" % Career.PARCEL_PAY
+	if not line.is_empty():
+		var contact := delivery.contact_for(before)
+		var direction := contact.global_position - player.global_position
+		player.rotation.y = atan2(-direction.x, -direction.z)
+		contact.begin_conversation(player.global_position, maxf(dialogue.speak(line), TALK_TIME))
+	_show_message(message, 4.0)
+
+
+func _interact_with_ledger() -> void:
+	var result := ledger.interact()
+	match result:
+		LedgerRoute.PICKUP_LINE:
+			var spoken := dialogue.speak(result)
+			var message := "Ledger copy collected" if spoken > 0.0 \
+				else "Asha: Here’s the ledger copy. Take it to Chapel Corner Grocer by St Peter’s Road."
+			_show_message(message, maxf(spoken, 4.0))
+		LedgerRoute.HANDOFF_LINE:
+			dialogue.speak(result)
+			_show_message("%s complete · +₹%d" % [LedgerRoute.NAME, Career.LEDGER_PAY], 5.0)
+		_:
+			if not result.is_empty():
+				_show_message(result, 4.5)
 
 
 func _seat_player_in_car(vehicle: Car) -> void:
@@ -637,11 +709,27 @@ func _find_exit(vehicle: Vehicle) -> Vector3:
 func _show_message(message: String, duration := 2.3) -> void:
 	_message = message
 	_message_time = duration
+	_message_is_dialogue = false
+
+
+func _apply_dialogue_preferences() -> void:
+	if dialogue_preferences == null:
+		dialogue.configure(true, true, false, 1.0, hud.touch_enabled)
+		return
+	dialogue.configure(dialogue_preferences.subtitle_enabled, dialogue_preferences.subtitle_speaker_names,
+		dialogue_preferences.subtitle_large, dialogue_preferences.dialogue_volume, hud.touch_enabled)
+
+
+func can_abandon_delivery() -> bool:
+	return (delivery != null and delivery.can_abandon()) or (ledger != null and ledger.can_abandon())
 
 
 func abandon_delivery() -> void:
-	if delivery != null:
+	if delivery != null and delivery.can_abandon():
 		_show_message(delivery.abandon(), 4.0)
+	elif ledger != null and ledger.can_abandon():
+		dialogue.stop()
+		_show_message(ledger.abandon(), 4.0)
 
 
 func _reset_run(reason: StringName = &"") -> void:
@@ -693,10 +781,21 @@ func _update_camera(delta: float) -> void:
 	var distance := active_vehicle.follow_distance if driving else 4.8
 	var offset := Vector3(sin(_yaw) * cos(_pitch), sin(_pitch), cos(_yaw) * cos(_pitch))
 	var desired := focus + offset * distance
+	var space := get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(target, desired, 1)
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	var hit := space.intersect_ray(query)
 	if not hit.is_empty():
 		var point: Vector3 = hit.position
 		desired = target + (desired - target).normalized() * maxf(0.18, target.distance_to(point) - 0.24)
+	if not driving and world._distance_to_path(Vector3(target.x, 0, target.z), world._gully) < 1.2:
+		# Keep the shoulder camera within the lane even when the higher aim ray clears the wall.
+		var shoulder := player.global_position + Vector3.UP * 0.9
+		var horizontal := (desired - target).slide(Vector3.UP)
+		if horizontal.length_squared() > 0.06:
+			var shoulder_ray := PhysicsRayQueryParameters3D.create(shoulder, shoulder + horizontal, 1)
+			var shoulder_hit := space.intersect_ray(shoulder_ray)
+			if not shoulder_hit.is_empty():
+				var limit := maxf(0.18, shoulder.distance_to(shoulder_hit.position) - 0.20)
+				desired = target.lerp(desired, limit / horizontal.length())
 	camera.global_position = desired
 	camera.look_at(focus)

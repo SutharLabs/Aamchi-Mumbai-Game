@@ -89,7 +89,10 @@ private:
     FText InteractionDetails;
     double DetailsUntil = 0.0;
     double LastDamageTime = 0.0;
+    double DistanceSinceStep = 0.0;
+    double LastRunStepPosition = -1.0;
     float Health = 100.0f;
+    bool bRightFootNext = false;
     FTransform StartTransform;
     FTransform SafeGroundTransform;
 };

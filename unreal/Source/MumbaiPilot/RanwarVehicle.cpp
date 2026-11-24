@@ -1,5 +1,8 @@
 #include "RanwarVehicle.h"
 
+#include "Components/AudioComponent.h"
+#include "RanwarAudio.h"
+
 #include "Camera/CameraComponent.h"
 #include "CollisionQueryParams.h"
 #include "CollisionShape.h"
@@ -165,6 +168,7 @@ void ARanwarVehicle::BeginPlay()
 
 void ARanwarVehicle::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    StopEngineAudio();
     if (EndPlayReason == EEndPlayReason::Destroyed)
     {
         if (ARanwarCharacter* Character = Driver.Get())
@@ -289,6 +293,7 @@ bool ARanwarVehicle::TryEnter(ARanwarCharacter* Character)
     CameraLookTime = 0.0;
     Arm->SetRelativeRotation(FRotator(CameraPitch, CameraYaw, 0.0));
     ShowDriver(*Character);
+    EngineAudio = RanwarAudio::StartVehicleEngine(*this, VehicleKind);
     SetActorTickEnabled(true);
     return true;
 }
@@ -317,6 +322,7 @@ bool ARanwarVehicle::ExitDriver()
 
 void ARanwarVehicle::UnPossessed()
 {
+    StopEngineAudio();
     if (ARanwarCharacter* Character = Driver.Get())
     {
         FVector ExitLocation;
@@ -370,6 +376,7 @@ void ARanwarVehicle::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ARanwarVehicle::PressBrake);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ARanwarVehicle::ReleaseBrake);
     Input->BindAction(TEXT("Interact"), IE_Pressed, this, &ARanwarVehicle::RequestExit);
+    Input->BindAction(TEXT("Horn"), IE_Pressed, this, &ARanwarVehicle::UseHorn);
 }
 
 void ARanwarVehicle::Tick(float DeltaSeconds)
@@ -387,6 +394,26 @@ void ARanwarVehicle::Tick(float DeltaSeconds)
         Remaining -= Step;
     }
     UpdateVehicleLook(DeltaSeconds);
+    RanwarAudio::UpdateVehicleEngine(EngineAudio, static_cast<float>(GetSpeedKph()), static_cast<float>(Throttle));
+}
+
+void ARanwarVehicle::UseHorn()
+{
+    const double Now = GetWorld()->GetTimeSeconds();
+    if (HasDriver() && Now - LastHornAt >= 0.5)
+    {
+        RanwarAudio::PlayHorn(*this, VehicleKind);
+        LastHornAt = Now;
+    }
+}
+
+void ARanwarVehicle::StopEngineAudio()
+{
+    if (IsValid(EngineAudio.Get()))
+    {
+        EngineAudio->Stop();
+    }
+    EngineAudio = nullptr;
 }
 
 void ARanwarVehicle::Advance(double Step)

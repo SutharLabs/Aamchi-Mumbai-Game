@@ -3,6 +3,7 @@ extends RefCounted
 
 const Progress := preload("res://mission/mission_progress.gd")
 const PARCEL_PAY := 500
+const LEDGER_PAY := 400
 const TREATMENT_PRICE := 60
 const CLINIC_FEE := 100
 const POLICE_FINE := 150
@@ -14,13 +15,15 @@ const DETAIN_SECONDS := 2.4
 var health := MAX_HEALTH
 var wanted := 0
 var parcel_completed := false
+var ledger_completed := false
 var arrival_seen: bool
 var lead_seen: bool:
 	get:
 		return _lead_seen
 var cash: int:
 	get:
-		return maxi(0, (PARCEL_PAY if parcel_completed else 0) - _spent)
+		var earnings := (PARCEL_PAY if parcel_completed else 0) + (LEDGER_PAY if ledger_completed else 0)
+		return maxi(0, earnings - _spent)
 
 var _store: Progress
 var _spent := 0
@@ -38,6 +41,7 @@ func _init(store: Progress) -> void:
 	_spent = saved.get("spent", 0)
 	_lead_seen = saved.get("lead_seen", false)
 	arrival_seen = _store.arrival_seen()
+	ledger_completed = _store.load_ledger_checkpoint() == Progress.LEDGER_COMPLETED
 
 
 func record_arrival() -> void:

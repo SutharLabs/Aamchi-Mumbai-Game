@@ -9,3 +9,9 @@ Acquired and adapted on **23 November 2026**. One opaque material uses two 1024 
 | `civilian_normal.png` | [Poly Haven Stretch Poplin OpenGL normal](https://polyhaven.com/a/stretch_poplin), Rico Cilliers and colormass, [CC0 1.0](https://polyhaven.com/license). | Resized and tiled the cotton normals to the fabric section. Other regions use a flat normal. |
 
 Upstream head geometry SHA-256 `8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c`. Upstream skin diffuse SHA-256 `f50016a5507fc687dc8df06599c8ea48de950cd185de33a71cafc1319ddab4d5`. The downloaded 1K Poplin JPEG matches Poly Haven's published API checksums `03f707a3a0367d2cd3fa90b71eec4b89` for diffuse and `930a92aa642c2c4c196cc8c9d26bf65d` for the GL normal.
+
+## Ranwar cast refinement
+
+The shared mesh uses deeper-set globes under the existing eyelids, brown iris detail, tapered brows, less exaggerated hair and shoulder silhouettes, and subtler complexion and lip variation. The visible kurta and dupatta use the established materials and rig weights. Ravi and Kavita have original named presets in both engines. The edited details share the existing atlases and one material surface. [Shared character mesh](../player_character.gd) · [Unreal exchange](../../../unreal/ContentSource/RANWAR_STREET.md)
+
+Matched Godot Compatibility captures on Intel Iris Xe examined Omkar in a walk pose and the male and female silhouettes at street distance and in close-up. The Omkar GLB has 7,692 triangles after the refinement, up from 7,244. Verification confirmed the same 21 joint transforms, inverse bind matrices and byte-identical idle, walk and run samples. The eight posed contact GLBs each preserve one material section and a floor-level origin. The run foot check recorded 2 mm of planted forefoot drift.

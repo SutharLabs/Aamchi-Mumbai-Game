@@ -7,12 +7,14 @@ const CONCRETE := 2
 const CLAY := 3
 const TIMBER := 4
 
-const ASPHALT_TILE := preload("res://world/textures/asphalt.webp")
-const ASPHALT_NORMAL := preload("res://world/textures/asphalt_normal.png")
+const ASPHALT_TILE := preload("res://world/textures/rainwear_asphalt.webp")
+const ASPHALT_NORMAL := preload("res://world/textures/rainwear_asphalt_normal.png")
+const PAVER_TILE := preload("res://world/textures/hill_road_pavers.webp")
+const PAVER_NORMAL := preload("res://world/textures/hill_road_pavers_normal.png")
 const CONCRETE_TILE := preload("res://world/textures/concrete.webp")
 const CONCRETE_NORMAL := preload("res://world/textures/concrete_normal.png")
-const PLASTER_TILE := preload("res://world/textures/plaster.webp")
-const PLASTER_NORMAL := preload("res://world/textures/plaster_normal.png")
+const PLASTER_TILE := preload("res://world/textures/weathered_paint.webp")
+const PLASTER_NORMAL := preload("res://world/textures/weathered_paint_normal.png")
 const CLAY_TILE := preload("res://world/textures/clay_tile.webp")
 const TIMBER_TILE := preload("res://world/textures/timber.webp")
 const GRAVEL_TILE := preload("res://world/textures/gravel.webp")
@@ -22,14 +24,18 @@ const DETAIL_SHADER := preload("res://world/ranwar_surface_detail.gdshader")
 static func apply_box(material: StandardMaterial3D, key: String) -> void:
 	match key:
 		"asphalt", "bay":
-			_apply_tile(material, ASPHALT_TILE, 3.0, ASPHALT_NORMAL, 0.33)
-			material.albedo_color = Color("d4d6d2") if key == "asphalt" else Color("adb7b7")
-		"paving", "curb", "gully":
+			_apply_tile(material, ASPHALT_TILE, 2.5, ASPHALT_NORMAL, 1.0)
+			material.albedo_color = Color("e5e8e5") if key == "asphalt" else Color("bec6c8")
+			material.roughness = 0.94
+		"paving":
+			_apply_tile(material, PAVER_TILE, 1.3, PAVER_NORMAL, 1.0)
+			material.albedo_color = Color("e9e1d9")
+			material.roughness = 0.93
+		"curb", "gully":
 			_apply_tile(material, CONCRETE_TILE, 2.0, CONCRETE_NORMAL, 0.43)
-			if key != "curb":
-				material.albedo_color = Color("e6d8bc") if key == "paving" else Color("dcd5c7")
+			material.albedo_color = Color("dad7ce") if key == "curb" else Color("dcd5c7")
 		"cream", "ochre", "mint", "rose", "blue":
-			_apply_tile(material, PLASTER_TILE, 3.0, PLASTER_NORMAL, 0.40)
+			_apply_tile(material, PLASTER_TILE, 3.0, PLASTER_NORMAL, 1.0)
 		"roof":
 			_apply_tile(material, CLAY_TILE, 4.0)
 			material.albedo_color = Color("ccc3b6")

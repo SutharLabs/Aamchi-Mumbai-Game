@@ -1,16 +1,20 @@
 # Aamchi Mumbai Game in Unreal
 
-The Unreal Engine 5.8 playtest starts at St Peter's BEST stop with the original Omkar rig and the mapped Ranwar street loop. Talk to Anjali, visit the Hill Road job board, and finish the parcel run for INR 500. You can walk through both shops or drive a hatchback, auto-rickshaw, motorcycle, or scooter. Ambient traffic follows the registered left-hand route. [Remote development and editor setup](REMOTE_DEVELOPMENT.md) · [Ranwar street exchange](ContentSource/RANWAR_STREET.md)
+The Unreal Engine 5.8 playtest starts at St Peter's BEST stop with Omkar and the mapped Ranwar street loop. Talk to Anjali and accept work at the Hill Road job board. Collect the parcel from Ravi at the Hill Road end of Nagrana Lane and deliver it to Kavita on the Waroda side for INR 500. Approach each contact on foot and use Interact. Both face Omkar and speak, and Mira calls after Kavita finishes. Return to Anjali for repeatable INR 150 dabba deliveries. You can walk through both shops or drive a hatchback, auto-rickshaw, motorcycle, or scooter. Each blends recorded idle and loaded engine sounds as speed and throttle change. Press `H` or click the gamepad's left stick to use the horn. Ambient traffic follows the registered left-hand route. [Remote development and editor setup](REMOTE_DEVELOPMENT.md) · [Ranwar street exchange](ContentSource/RANWAR_STREET.md)
 
-## Windows development build
+The title offers **Continue** with saved progress, **New Game**, **Profiles**, **Settings**, **Controls**, **Credits** and **Quit to Desktop**. **Pause → Map** shows mapped Ranwar roads, Nagrana Lane, your position and the active objective. The smaller live map can be switched off in Settings. Settings persist after **Apply Settings**. The HUD shows context actions, vehicle information and story dialogue in separate areas. Anjali, Mira, Prakash and Nandini have Hindi dialogue with English subtitles and independent volume, visibility, size and speaker-name controls. [Menu and HUD research](../research/MENU_AND_HUD_RESEARCH.md) · [Voice sources](../prototype/shared/dialogue/SOURCES.md)
+
+**The Hill Road Ledger.** Finish Ranwar Parcel Run and hear Mira’s lead. Follow the objective to Asha inside Hill Road Tea Room and collect the ledger on foot. Hill Road, St Peter’s Road and the Chapel/Waroda approach connect to Chapel Corner Grocer. Deliver the copy on foot for **₹400 once**. Existing completed parcel profiles qualify. Continue resumes the saved handoff, and Abandon job returns the objective to Asha. Anjali still offers the existing dabba route. [Mission specification](../docs/OPEN_WORLD_GAME_SPEC.md#amg-p3-ledger--the-hill-road-ledger)
+
+## Unreal Windows development build
 
 Install the Windows edition of Unreal Engine 5.8 through Epic Games Launcher, with Visual Studio C++ Build Tools and the Windows SDK. Prepare the [Ranwar exchange](ContentSource/RANWAR_STREET.md#build-the-exchange), then run this command from the repository root.
 
 ```powershell
-powershell -NoProfile -File .\unreal\Tools\make-dev.ps1
+powershell -NoProfile -File .\unreal\Tools\make-dev.ps1 -SmokeTest
 ```
 
-Launch `builds/local/unreal-windows/Windows/AamchiMumbaiUnreal.exe` from its complete `Windows` folder. The other files in that folder contain the native game, cooked content, dependencies, and notices. Pass `-RefreshMap` when the generated level or its imported assets need rebuilding. Use `-EngineRoot` for an installation the script cannot find through Epic Games Launcher.
+Launch `builds/local/unreal-windows/Windows/AamchiMumbaiUnreal.exe` from its complete `Windows` folder. The build command updates that installation after staging and optional automated gameplay validation. Use `-RefreshMap` after updating the level or exchange assets, `-FullCook` to reset the cook, `-Plan` for a read-only preflight, and `-EngineRoot` if the script cannot locate Unreal. [Build, log and release paths](../docs/BUILD_WORKFLOW.md#unreal-windows-playtest)
 
 The Windows playtest defaults to DirectX 11 and Shader Model 5. Its graphics quality and VSync settings are available from the startup and pause menus. Verify rendered performance on the intended Windows 10 device.
 

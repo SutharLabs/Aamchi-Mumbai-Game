@@ -12,6 +12,11 @@ const TILE := Color("735548")
 const PAVING := Color("a5a098")
 const LEAF := Color("526345")
 const PORTAL_Z := -0.28
+const SIDE_BAYS: Array[float] = [6.5, 12.0, 17.5, 23.0]
+const SIDE_WINDOW_HALF_WIDTH := 0.81
+const SIDE_WINDOW_BASE := 5.84
+const SIDE_WINDOW_TOP := 9.47
+const SPOUT := Color("776450")
 
 
 static func create(material: Material) -> StaticBody3D:
@@ -40,7 +45,10 @@ static func create(material: Material) -> StaticBody3D:
 
 
 static func _build_church(surface: SurfaceTool) -> void:
-	_box(surface, Vector3(0, 5.8, 12.8), Vector3(23.4, 11.6, 25.6), STONE)
+	# The center mass leaves enough depth for the visible side-window jambs.
+	_box(surface, Vector3(0, 5.8, 12.8), Vector3(22.84, 11.6, 25.6), STONE)
+	for z: float in [0.13, 25.47]:
+		_box(surface, Vector3(0, 5.8, z), Vector3(23.4, 11.6, 0.26), STONE)
 	_box(surface, Vector3(0, 0.42, 12.9), Vector3(23.6, 0.84, 25.8), SHADOW)
 	_box(surface, Vector3(0, 11.42, 12.8), Vector3(23.7, 0.43, 25.9), TRIM)
 	var front := -0.12
@@ -55,8 +63,7 @@ static func _build_church(surface: SurfaceTool) -> void:
 	_triangle(surface, right + length, left + length, ridge + length, STONE.darkened(0.08))
 	_cross(surface, Vector3(0, 16.30, 0.08), 1.64, TRIM.lightened(0.08))
 	for side: float in [-1.0, 1.0]:
-		for z: float in [6.5, 12.0, 17.5, 23.0]:
-			_side_window(surface, side, z)
+		_side_wall(surface, side)
 		_build_tower(surface, side * 9.58)
 
 
@@ -135,11 +142,50 @@ static func _palm(surface: SurfaceTool, start: Vector3, height: float) -> void:
 		_triangle(surface, middle + across * 0.48, tip, middle - across * 0.48, color)
 
 
+static func _side_wall(surface: SurfaceTool, side: float) -> void:
+	# Upper and lower courses and the masonry between openings leave real visible reveals.
+	var depth := side * 11.55
+	_box(surface, Vector3(depth, SIDE_WINDOW_BASE * 0.5, 12.8),
+		Vector3(0.30, SIDE_WINDOW_BASE, 25.6), STONE)
+	_box(surface, Vector3(depth, (SIDE_WINDOW_TOP + 11.60) * 0.5, 12.8),
+		Vector3(0.30, 11.60 - SIDE_WINDOW_TOP, 25.6), STONE)
+	var previous := 0.0
+	for z: float in SIDE_BAYS:
+		var boundary := z - SIDE_WINDOW_HALF_WIDTH
+		_box(surface, Vector3(depth, (SIDE_WINDOW_TOP + SIDE_WINDOW_BASE) * 0.5, (previous + boundary) * 0.5),
+			Vector3(0.30, SIDE_WINDOW_TOP - SIDE_WINDOW_BASE, boundary - previous), STONE)
+		_side_window(surface, side, z)
+		previous = z + SIDE_WINDOW_HALF_WIDTH
+	_box(surface, Vector3(depth, (SIDE_WINDOW_TOP + SIDE_WINDOW_BASE) * 0.5, (previous + 25.6) * 0.5),
+		Vector3(0.30, SIDE_WINDOW_TOP - SIDE_WINDOW_BASE, 25.6 - previous), STONE)
+	# Stone stringcourse, eaves channel and clamps sit on the exterior only.
+	_box(surface, Vector3(side * 11.75, 1.04, 12.8), Vector3(0.17, 0.15, 25.6), TRIM.darkened(0.16))
+	_box(surface, Vector3(side * 11.86, 11.60, 13.0), Vector3(0.27, 0.15, 24.8), SPOUT)
+	for z: float in [3.48, 20.89]:
+		_box(surface, Vector3(side * 11.83, 5.98, z), Vector3(0.12, 11.11, 0.12), SPOUT)
+		_box(surface, Vector3(side * 11.93, 0.43, z), Vector3(0.29, 0.12, 0.12), SPOUT)
+		for y: float in [1.18, 3.60, 6.02, 8.44, 10.86]:
+			_box(surface, Vector3(side * 11.82, y, z), Vector3(0.21, 0.065, 0.19), TIMBER)
+
+
 static func _side_window(surface: SurfaceTool, side: float, z: float) -> void:
-	_box(surface, Vector3(side * 11.72, 7.68, z), Vector3(0.17, 3.38, 1.75), TRIM)
-	_box(surface, Vector3(side * 11.83, 7.68, z), Vector3(0.06, 3.00, 1.32), GLASS)
-	_box(surface, Vector3(side * 11.87, 7.68, z), Vector3(0.045, 2.99, 0.115), TRIM.darkened(0.16))
-	_box(surface, Vector3(side * 11.89, 6.05, z), Vector3(0.22, 0.16, 1.84), TRIM)
+	const WIDTH := SIDE_WINDOW_HALF_WIDTH * 2.0
+	const LOWER := SIDE_WINDOW_BASE + 0.12
+	const UPPER := SIDE_WINDOW_TOP - 0.13
+	const HEIGHT := UPPER - LOWER
+	const CENTER := (LOWER + UPPER) * 0.5
+	var x := side * 11.57
+	_box(surface, Vector3(x, CENTER, z), Vector3(0.055, HEIGHT, WIDTH), GLASS.darkened(0.28))
+	for pane: float in [-0.34, 0.34]:
+		_box(surface, Vector3(side * 11.61, CENTER - 0.21, z + pane),
+			Vector3(0.050, 2.73, 0.52), Color("466468") if pane < 0.0 else Color("53615a"))
+		_box(surface, Vector3(side * 11.65, CENTER, z + pane * 2.22),
+			Vector3(0.10, HEIGHT, 0.13), TRIM.darkened(0.13))
+	_box(surface, Vector3(side * 11.76, SIDE_WINDOW_BASE, z), Vector3(0.31, 0.20, 1.91), TRIM)
+	_box(surface, Vector3(side * 11.72, SIDE_WINDOW_TOP - 0.04, z), Vector3(0.18, 0.16, 1.84), TRIM)
+	_box(surface, Vector3(side * 11.66, CENTER, z), Vector3(0.10, HEIGHT, 0.103), TIMBER)
+	for offset: float in [-0.92, -0.31, 0.31, 0.92]:
+		_box(surface, Vector3(side * 11.66, CENTER + offset, z), Vector3(0.100, 0.06, 1.37), TIMBER)
 
 
 static func _cross(surface: SurfaceTool, at: Vector3, height: float, color: Color) -> void:

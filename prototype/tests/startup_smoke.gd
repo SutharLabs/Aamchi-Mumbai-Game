@@ -5,6 +5,7 @@ const Preferences := preload("res://startup/preferences.gd")
 const Controls := preload("res://startup/control_bindings.gd")
 const RanwarMap := preload("res://startup/ranwar_map.gd")
 const World := preload("res://world/phase1_world.gd")
+const Progress := preload("res://mission/mission_progress.gd")
 var _failures := 0
 var _checks := 0
 var _capture_enabled := false
@@ -31,8 +32,12 @@ func _run() -> void:
 	legacy.close()
 	root.add_child(app)
 	await _settle()
+	var touch_preview := Controls.uses_touch_ui()
 	_expect(is_equal_approx(app.preferences.master_volume, 0.8) and Controls.label("interact", Controls.KEYBOARD) == "E", "existing saves keep settings and receive default controls")
-	_expect(_button("PlayButton") != null and _button("QuitButton") != null, "home primary actions")
+	var title_options := ["New Game", "Profiles", "Settings", "Controls", "Credits"]
+	if not touch_preview:
+		title_options.append("Quit to Desktop")
+	_expect(_top_actions() == title_options, "title offers the shared actions in order and treats desktop Quit as platform-specific")
 	_expect(app.gameplay == null and _has_label("आमची मुंबई"), "title shows Marathi identity before creating a game")
 	_expect(root.gui_get_focus_owner() == _button("PlayButton"), "initial keyboard focus")
 	_expect(Input.emulate_mouse_from_touch, "touch emulation enabled on title")
@@ -48,7 +53,6 @@ func _run() -> void:
 	_press("HelpButton")
 	await _settle()
 	_expect(_has_label("Controls") and _has_label("On foot") and _has_label("Driving"), "title Help opens the controls guide")
-	var touch_preview := OS.has_feature("mobile") or "--touch-preview" in OS.get_cmdline_user_args()
 	_expect(_has_label("Left stick") if touch_preview else _has_label("WASD / arrows"), "Help lists the active platform controls")
 	_expect(root.gui_get_focus_owner() == _button("BackButton"), "Help focuses the Back button")
 	_press("BackButton")
@@ -77,19 +81,38 @@ func _run() -> void:
 	await _settle()
 	var volume := app.menu.find_child("MasterVolumeSlider", true, false) as HSlider
 	var look := app.menu.find_child("LookSensitivitySlider", true, false) as HSlider
+	var voice := app.menu.find_child("DialogueVolumeSlider", true, false) as HSlider
+	var names := app.menu.find_child("SpeakerNamesToggle", true, false) as CheckButton
+	var sizes := app.menu.find_child("SubtitleSize", true, false) as OptionButton
+	var quality := app.menu.find_child("GraphicsQuality", true, false) as OptionButton
+	_expect(_has_label("Gameplay") and _has_label("Controls") and _has_label("Audio") and _has_label("Display")
+		and _has_label("Accessibility"), "settings have the five shared groups")
+	_expect(app.preferences.subtitle_enabled and app.preferences.subtitle_speaker_names and not app.preferences.subtitle_large
+		and is_equal_approx(app.preferences.dialogue_volume, 1.0), "old preferences receive readable default dialogue settings")
 	volume.value = 0.65
 	look.value = 1.35
+	voice.value = 0.55
+	names.button_pressed = false
+	sizes.select(1)
+	quality.select(1)
+	_expect(is_equal_approx(app.preferences.dialogue_volume, 1.0) and app.preferences.subtitle_speaker_names,
+		"edits remain staged until Apply Settings")
 	_press("ApplySettingsButton")
 	await _settle()
 	_expect(is_equal_approx(app.preferences.master_volume, 0.65), "master volume applied")
 	_expect(is_equal_approx(app.preferences.look_sensitivity, 1.35), "camera sensitivity applied")
+	_expect(is_equal_approx(app.preferences.dialogue_volume, 0.55) and not app.preferences.subtitle_speaker_names
+		and app.preferences.subtitle_large, "dialogue volume, speaker names and subtitle size apply together")
+	_expect(root.msaa_3d == Viewport.MSAA_2X, "Medium graphics changes the actual viewport MSAA")
 	_expect(FileAccess.file_exists(storage), "settings saved locally")
 	var restored := Preferences.new()
 	restored.storage_path = storage
 	root.add_child(restored)
 	_expect(restored.profiles.size() == 2 and restored.active_profile_name == "Player" and is_equal_approx(restored.look_sensitivity, 1.35), "profiles and settings reload from disk")
+	_expect(restored.subtitle_large and not restored.subtitle_speaker_names and is_equal_approx(restored.dialogue_volume, 0.55),
+		"dialogue settings survive reload")
 	restored.queue_free()
-	if app.preferences.supports_fullscreen and DisplayServer.get_name() != "headless":
+	if app.preferences.supports_fullscreen and not touch_preview and DisplayServer.get_name() != "headless":
 		var fullscreen := app.menu.find_child("FullscreenToggle", true, false) as CheckButton
 		fullscreen.button_pressed = true
 		_press("ApplySettingsButton")
@@ -99,9 +122,30 @@ func _run() -> void:
 		_press("ApplySettingsButton")
 		await _settle()
 		_expect(root.mode == Window.MODE_WINDOWED, "windowed mode can be restored from settings")
+		var vsync := app.menu.find_child("VSyncToggle", true, false) as CheckButton
+		vsync.button_pressed = false
+		_press("ApplySettingsButton")
+		await _settle()
+		_expect(DisplayServer.window_get_vsync_mode() == DisplayServer.VSYNC_DISABLED, "VSync changes the actual desktop window setting")
+		vsync.button_pressed = true
+		_press("ApplySettingsButton")
+		await _settle()
 	await _capture("startup-settings.png")
+	_press("JumpToAccessibility")
+	await _settle()
+	var settings_scroll := app.menu.find_child("MenuScroll", true, false) as ScrollContainer
+	_expect(settings_scroll.scroll_vertical > 400 and settings_scroll.get_global_rect().has_point(names.get_global_rect().get_center()),
+		"Accessibility jumps directly to the subtitle options")
+	_expect(_button("ApplySettingsButton").get_global_rect().position.y >= settings_scroll.get_global_rect().end.y,
+		"Apply Settings remains visible while settings scroll")
+	await _capture("startup-accessibility.png")
+	_press("JumpToGameplay")
+	await _settle()
+	_expect(settings_scroll.scroll_vertical < 40, "Gameplay returns to the start of the settings page")
 	if touch_preview:
 		_expect(_button("ControlBindingsButton") == null, "touch settings do not expose desktop bindings")
+		_expect(app.menu.find_child("FullscreenToggle", true, false) == null and app.menu.find_child("VSyncToggle", true, false) == null,
+			"touch settings omit desktop-only window controls")
 	else:
 		await _check_control_bindings(storage)
 	_press("BackButton")
@@ -120,6 +164,7 @@ func _run() -> void:
 		quit(1)
 		return
 	app.gameplay.finish_arrival()
+	await _physics_frames(5)
 	_expect(not Input.emulate_mouse_from_touch, "touch emulation disabled in play")
 	_expect(is_equal_approx(app.gameplay.look_sensitivity, 1.35), "saved sensitivity reaches game")
 	var yaw: float = app.gameplay._yaw
@@ -139,6 +184,7 @@ func _run() -> void:
 	_key(KEY_ESCAPE)
 	await _settle()
 	_expect(paused and app.menu.visible and _button("ResumeButton") != null, "Escape pauses and opens menu")
+	_expect(_top_actions() == ["Resume", "Map", "Settings", "Controls", "Main Menu"], "pause presents the same action order without an active job")
 	_expect(_has_label(app.gameplay.player.display_name), "pause shows the protagonist's name")
 	_expect(not app.gameplay.hud.visible, "pause menu hides the gameplay HUD")
 	await _capture("startup-paused.png")
@@ -165,12 +211,16 @@ func _run() -> void:
 	_key(KEY_ESCAPE)
 	await _settle()
 	_expect(_button("ResumeButton") != null and paused, "Escape closes Help before resuming play")
+	_press("HelpButton")
+	await _settle()
 	_press("CreditsButton")
 	await _settle()
 	_expect(_has_label("Map data") and paused, "credits reachable from pause")
 	_key(KEY_ESCAPE)
 	await _settle()
-	_expect(_button("ResumeButton") != null and paused, "Escape closes paused subpage first")
+	_expect(_has_label("Controls") and paused, "Back returns from Credits to the Controls page")
+	_key(KEY_ESCAPE)
+	await _settle()
 	_press("ResumeButton")
 	await _settle()
 	_expect(not paused and not app.menu.visible and app.gameplay.hud.visible, "resume restores play and HUD")
@@ -190,13 +240,52 @@ func _run() -> void:
 	_press("MainMenuButton")
 	await _settle()
 	_expect(app.gameplay == null and app.menu.visible and not paused, "main menu disposes the level")
+	title_options.push_front("Continue")
+	_expect(_top_actions() == title_options and root.gui_get_focus_owner() == _button("ContinueButton"), "a saved arrival shows and focuses Continue")
+	_press("PlayButton")
+	await _settle()
+	_expect(root.gui_get_focus_owner() == _button("CancelNewGameButton"), "starting over requires confirmation and focuses Cancel")
+	_press("CancelNewGameButton")
+	await _settle()
+	_press("ContinueButton")
+	await _settle()
+	_expect(app.gameplay != null and app.gameplay._arrival_intro == null, "Continue resumes the existing arrival checkpoint")
+	app._pause_game()
+	await _settle()
+	_press("MainMenuButton")
+	await _settle()
+	_press("PlayButton")
+	await _settle()
+	_expect(Progress.new("1", app.mission_progress_directory, 1).save_arrival(),
+		"fixture simulates a newer arrival file after recovering older preferences")
+	_press("ConfirmNewGameButton")
+	await _settle()
+	var legacy_arrival: String = app.mission_progress_directory.path_join("arrival-1.json")
+	var newer_arrival: String = app.mission_progress_directory.path_join("arrival-1-1.json")
+	_expect(app.gameplay != null and app.gameplay._arrival_intro != null and app.preferences.active_campaign_generation == 2
+		and FileAccess.file_exists(legacy_arrival) and FileAccess.file_exists(newer_arrival),
+		"New Game restarts the story in a fresh generation and preserves previous files")
+	var new_campaign_preferences := Preferences.new()
+	new_campaign_preferences.storage_path = storage
+	root.add_child(new_campaign_preferences)
+	_expect(new_campaign_preferences.active_campaign_generation == 2, "the selected New Game generation survives restart")
+	new_campaign_preferences.queue_free()
 	for path in [storage, storage + ".bak", storage + ".tmp"]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(app.mission_progress_directory.path_join("arrival-1.json")))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(legacy_arrival))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(newer_arrival))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(app.mission_progress_directory))
 	print("Startup smoke: %d failures in %d checks" % [_failures, _checks])
 	quit(0 if _failures == 0 else 1)
+
+
+func _top_actions() -> Array[String]:
+	var actions: Array[String] = []
+	for item: Node in app.menu._content.get_children():
+		if item is Button:
+			actions.append(item.text)
+	return actions
 
 
 func _check_control_bindings(storage: String) -> void:

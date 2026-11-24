@@ -24,12 +24,18 @@ const BODY_NORMAL := preload("res://character/art/civilian_normal.png")
 const ATLAS_SIZE := 1024.0
 const HEAD_ATLAS_EDGE := Vector2(8.5, 512.5)
 const HEAD_ATLAS_SPAN := 503.0
-const EYE_WHITE := Color("ab9f93")
-const IRIS := Color("3a2c23")
+const EYE_WHITE := Color("8e8580")
+const LIMBAL_RING := Color("362c28")
+const IRIS := Color("5c4735")
+const PUPIL := Color("211b1a")
+const CAST_SKIN: Array[Color] = [Color("ad775a"), Color("a86d52"), Color("bd886b")]
 
 @export var shirt_color: Color = Color("447a75")
 @export var wears_dhotar := false
 @export var wears_overshirt := false
+@export var wears_kurta_with_dupatta := false
+@export_enum("Side part", "Braid", "Bob") var kurta_hair_style: int = 0
+@export_enum("Automatic", "Ravi", "Kavita") var face_variant := "Automatic"
 
 var skeleton := Skeleton3D.new()
 var _bone_ids: Dictionary[String, int] = {}
@@ -56,6 +62,13 @@ class Ring:
 func _ready() -> void:
 	if not wears_dhotar:
 		_skin = RAFIQ_SKIN if wears_overshirt else MIRA_SKIN
+	if wears_kurta_with_dupatta:
+		_skin = CAST_SKIN[clampi(kurta_hair_style, 0, CAST_SKIN.size() - 1)]
+	match face_variant:
+		"Ravi":
+			_skin = Color("a16b52")
+		"Kavita":
+			_skin = Color("b57d5f")
 	skeleton.name = "Skeleton3D"
 	add_child(skeleton)
 	_build_rig()
@@ -122,7 +135,8 @@ func _build_body() -> void:
 		_body_material.normal_enabled = true
 		_body_material.normal_texture = BODY_NORMAL
 		_body_material.normal_scale = 0.40
-		_body_material.roughness = 0.84
+		_body_material.roughness = 0.88
+		_body_material.metallic_specular = 0.27
 		_body_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_surface.generate_normals()
 	_surface.index()
@@ -140,6 +154,9 @@ func _build_body() -> void:
 
 
 func _build_torso() -> void:
+	if wears_kurta_with_dupatta:
+		_build_kurta_torso()
+		return
 	var top_color := SADARA_COLOR if wears_dhotar else shirt_color
 	var sections: Array[Ring]
 	if wears_dhotar:
@@ -164,9 +181,9 @@ func _build_torso() -> void:
 		_ring(Vector3(0, 1.001, 0.002), 0.175, 0.114, "Hips", "Spine", 0.48),
 		_ring(Vector3(0, 1.095, -0.001), 0.160, 0.109, "Spine", "Chest", 0.21),
 		_ring(Vector3(0, 1.233, -0.006), 0.196, 0.124, "Chest", "Spine", 0.24),
-		_ring(Vector3(0, 1.307, 0.001), 0.204, 0.118, "Chest"),
-		_ring(Vector3(0, 1.350, 0.002), 0.189, 0.104, "Chest"),
-		_ring(Vector3(0, 1.378, 0.004), 0.148, 0.083, "Chest"),
+		_ring(Vector3(0, 1.307, 0.001), 0.193, 0.113, "Chest"),
+		_ring(Vector3(0, 1.343, 0.002), 0.177, 0.100, "Chest"),
+		_ring(Vector3(0, 1.376, 0.004), 0.134, 0.080, "Chest"),
 		_ring(Vector3(0, 1.401, -0.004), 0.075, 0.062, "Chest", "Neck", 0.24),
 		_ring(Vector3(0, 1.402, -0.004), 0.0, 0.0, "Neck"),
 	])
@@ -176,6 +193,44 @@ func _build_torso() -> void:
 		_build_sadara_details()
 	elif wears_overshirt:
 		_build_overshirt_details()
+
+
+func _build_kurta_torso() -> void:
+	# Fitted woven kurta over trousers, with a soft hem weighted to both thighs.
+	_tube([
+		_sadara_hem_ring(0.708, 0.199, 0.146, 0.80),
+		_sadara_hem_ring(0.724, 0.201, 0.152, 0.77),
+		_sadara_hem_ring(0.840, 0.194, 0.142, 0.46),
+		_sadara_hem_ring(0.933, 0.183, 0.126, 0.14),
+		_ring(Vector3(0, 1.061, 0.003), 0.148, 0.111, "Spine", "Hips", 0.20),
+		_ring(Vector3(0, 1.168, -0.007), 0.168, 0.118, "Spine", "Chest", 0.55),
+		_ring(Vector3(0, 1.249, -0.017), 0.173, 0.133, "Chest"),
+		_ring(Vector3(0, 1.318, -0.001), 0.166, 0.102, "Chest"),
+		_ring(Vector3(0, 1.362, 0.004), 0.127, 0.078, "Chest"),
+		_ring(Vector3(0, 1.398, -0.005), 0.071, 0.060, "Chest", "Neck", 0.38),
+		_ring(Vector3(0, 1.404, -0.005), 0.0, 0.0, "Neck"),
+	], Vector3.UP, Vector3.RIGHT, 16, shirt_color, 0.027)
+	# A lighter dupatta crosses the chest and falls behind the same shoulder.
+	var scarf := shirt_color.lerp(Color("e5c995"), 0.62)
+	var folds := [
+		[Vector3(-0.140, 1.356, -0.088), Vector3(-0.055, 1.400, -0.067)],
+		[Vector3(-0.122, 1.277, -0.132), Vector3(-0.040, 1.323, -0.139)],
+		[Vector3(-0.056, 1.223, -0.151), Vector3(0.018, 1.254, -0.158)],
+		[Vector3(0.032, 1.183, -0.146), Vector3(0.112, 1.232, -0.135)],
+		[Vector3(0.103, 1.211, -0.126), Vector3(0.155, 1.282, -0.096)],
+	]
+	for index in range(folds.size() - 1):
+		var edge: Array = folds[index]
+		var next_edge: Array = folds[index + 1]
+		_front_panel(edge[0], next_edge[0], edge[1], scarf.darkened(0.06))
+		_front_panel(edge[1], next_edge[0], next_edge[1], scarf)
+	_tube([
+		_ring(Vector3(-0.111, 1.152, 0.093), 0.045, 0.013, "Chest"),
+		_ring(Vector3(-0.114, 1.243, 0.101), 0.052, 0.018, "Chest"),
+		_ring(Vector3(-0.107, 1.338, 0.082), 0.053, 0.013, "Chest"),
+		_ring(Vector3(-0.092, 1.401, 0.005), 0.047, 0.075, "Chest", "Neck", 0.18),
+		_ring(Vector3(-0.088, 1.393, -0.022), 0.035, 0.042, "Chest", "Neck", 0.20),
+	], Vector3.UP, Vector3.RIGHT, 10, scarf, 0.045)
 
 
 func _build_overshirt_details() -> void:
@@ -285,12 +340,111 @@ func _build_head() -> void:
 		_ring(Vector3(0, 1.474, -0.015), 0.055, 0.055, "Neck", "Head", 0.58),
 	], Vector3.UP, Vector3.RIGHT, 12, _skin, 0.0, -1, false)
 	var width := 1.04 if wears_overshirt else (1.0 if wears_dhotar else 0.94)
+	if wears_kurta_with_dupatta:
+		width = 0.92 if face_variant == "Kavita" else 0.90
+	elif face_variant == "Ravi":
+		width = 1.015
 	var face_tint := Color(_skin.r / 0.84, _skin.g / 0.69, _skin.b / 0.59)
 	_add_textured_head(width, face_tint)
 	for side: float in [-1.0, 1.0]:
-		var position := Vector3(side * 0.031 * width, 1.546, -0.079)
-		_ellipsoid(position, Vector3(0.0125, 0.009, 0.014), "Head", EYE_WHITE)
-		_ellipsoid(position + Vector3.FORWARD * 0.012, Vector3(0.005, 0.0046, 0.003), "Head", IRIS)
+		_build_eye(side, width)
+		_build_brow(side, width)
+	if wears_kurta_with_dupatta:
+		_build_kurta_hair()
+
+
+func _build_eye(side: float, width: float) -> void:
+	# The neutral head's eyelids mask the globe. Seat it under their widest opening.
+	var eye := Vector3(side * 0.0312 * width, 1.5467, -0.079)
+	var globe_height := 0.0075 if wears_kurta_with_dupatta else 0.0087
+	_ellipsoid(eye, Vector3(0.016 * width, globe_height, 0.0160), "Head", EYE_WHITE)
+	var gaze := eye + Vector3.UP * 0.0017
+	_ellipsoid(gaze + Vector3.FORWARD * 0.0154, Vector3(0.0049, 0.0047, 0.0016), "Head", LIMBAL_RING)
+	_ellipsoid(gaze + Vector3.FORWARD * 0.0166, Vector3(0.0039, 0.0039, 0.0009), "Head", IRIS)
+	_ellipsoid(gaze + Vector3.FORWARD * 0.0171, Vector3(0.0024, 0.0024, 0.00065), "Head", PUPIL)
+	_ellipsoid(gaze + Vector3(-0.0009, 0.00145, -0.0176),
+		Vector3(0.00065, 0.00056, 0.00033), "Head", Color("b8aaa0"))
+
+
+func _build_brow(side: float, width: float) -> void:
+	# These points follow the brow ridge of the neutral UV-mapped head.
+	const RIDGE: Array[Vector3] = [
+		Vector3(0.016, 1.560, -0.102), Vector3(0.023, 1.564, -0.101),
+		Vector3(0.031, 1.566, -0.099), Vector3(0.040, 1.563, -0.094),
+		Vector3(0.049, 1.557, -0.088),
+	]
+	const THICKNESS: Array[float] = [0.0005, 0.00135, 0.00145, 0.00098, 0.0002]
+	var hair := Color("6a5144") if wears_kurta_with_dupatta else Color("544135")
+	for index in range(RIDGE.size() - 1):
+		var a := RIDGE[index]
+		var b := RIDGE[index + 1]
+		a.x *= side * width
+		b.x *= side * width
+		var high_a := a + Vector3.UP * THICKNESS[index]
+		var low_a := a - Vector3.UP * THICKNESS[index]
+		var high_b := b + Vector3.UP * THICKNESS[index + 1]
+		var low_b := b - Vector3.UP * THICKNESS[index + 1]
+		# Two sides keep the same outward winding and taper at the temple.
+		var points := [high_a, high_b, low_a, low_a, high_b, low_b]
+		if side > 0.0:
+			points = [high_a, low_a, high_b, low_a, low_b, high_b]
+		for offset in points.size():
+			var at: Vector3 = points[offset]
+			_face_vertex(at, hair if offset % 3 == 0 else hair.darkened(0.12))
+
+
+func _face_vertex(at: Vector3, color: Color) -> void:
+	_surface.set_bones(PackedInt32Array([_bone_ids["Head"], 0, 0, 0]))
+	_surface.set_weights(PackedFloat32Array([1.0, 0.0, 0.0, 0.0]))
+	_surface.set_color(color)
+	_surface.set_uv(Vector2(0.90 + at.x * 0.06, 0.04 + at.y * 0.23))
+	_surface.add_vertex(at)
+
+
+func _build_kurta_hair() -> void:
+	var dark_hair := Color("28201b") if kurta_hair_style != 2 else Color("32261f")
+	_tube([
+		_ring(Vector3(0, 1.514, 0.062), 0.047, 0.024, "Head"),
+		_ring(Vector3(0, 1.561, 0.038), 0.074, 0.066, "Head"),
+		_ring(Vector3(0, 1.610, 0.007), 0.083, 0.096, "Head"),
+		_ring(Vector3(0.002, 1.642, -0.006), 0.074, 0.088, "Head"),
+		_ring(Vector3(0.006, 1.664, -0.010), 0.048, 0.060, "Head"),
+		_ring(Vector3(0.007, 1.676, -0.014), 0.0, 0.0, "Head"),
+	], Vector3.UP, Vector3.RIGHT, 20, dark_hair, 0.018, -1, false)
+	# Narrow, tapering temple pieces blend into the scalp across the part.
+	for side: float in [-1.0, 1.0]:
+		_tube([
+			_ring(Vector3(side * 0.069, 1.558, -0.033), 0.0, 0.0, "Head"),
+			_ring(Vector3(side * 0.072, 1.579, -0.034), 0.010, 0.020, "Head"),
+			_ring(Vector3(side * 0.074, 1.604, -0.032), 0.012, 0.037, "Head"),
+			_ring(Vector3(side * 0.063, 1.629, -0.029), 0.016, 0.051, "Head"),
+			_ring(Vector3(side * 0.050, 1.650, -0.024), 0.0, 0.0, "Head"),
+		], Vector3.UP, Vector3.RIGHT, 12, dark_hair, 0.016, -1, false)
+	match kurta_hair_style:
+		0:
+			_ellipsoid(Vector3(0.005, 1.532, 0.098), Vector3(0.043, 0.031, 0.047), "Head", dark_hair)
+			_ellipsoid(Vector3(-0.024, 1.631, -0.077), Vector3(0.039, 0.017, 0.021), "Head", dark_hair)
+		1:
+			# The braided silhouette falls over the shoulder and follows the upper body.
+			_tube([
+				_ring(Vector3(-0.107, 1.211, -0.128), 0.011, 0.011, "Chest"),
+				_ring(Vector3(-0.119, 1.271, -0.108), 0.018, 0.022, "Chest"),
+				_ring(Vector3(-0.151, 1.343, -0.063), 0.024, 0.029, "Chest", "Neck", 0.20),
+				_ring(Vector3(-0.129, 1.394, 0.024), 0.027, 0.029, "Chest", "Neck", 0.48),
+				_ring(Vector3(-0.059, 1.464, 0.062), 0.035, 0.036, "Neck", "Head", 0.65),
+				_ring(Vector3(-0.015, 1.529, 0.079), 0.046, 0.035, "Head"),
+			], Vector3.UP, Vector3.RIGHT, 10, dark_hair, 0.11, -1, false)
+		2:
+			for side: float in [-1.0, 1.0]:
+				_tube([
+					_ring(Vector3(side * 0.053, 1.451, 0.022), 0.0, 0.0, "Head"),
+					_ring(Vector3(side * 0.067, 1.478, 0.019), 0.022, 0.042, "Head"),
+					_ring(Vector3(side * 0.071, 1.520, 0.011), 0.020, 0.057, "Head"),
+					_ring(Vector3(side * 0.072, 1.574, -0.005), 0.018, 0.058, "Head"),
+					_ring(Vector3(side * 0.052, 1.630, -0.013), 0.015, 0.055, "Head"),
+					_ring(Vector3(side * 0.047, 1.657, -0.019), 0.0, 0.0, "Head"),
+				], Vector3.UP, Vector3.RIGHT, 12, dark_hair, 0.022, -1, false)
+			_ellipsoid(Vector3(0.0, 1.517, 0.067), Vector3(0.071, 0.074, 0.042), "Head", dark_hair)
 
 
 func _add_textured_head(width: float, tint: Color) -> void:
@@ -303,10 +457,39 @@ func _add_textured_head(width: float, tint: Color) -> void:
 	var weight := PackedFloat32Array([1.0, 0.0, 0.0, 0.0])
 	for index in indices:
 		var point := vertices[index]
+		var skin_tint := tint
+		if wears_kurta_with_dupatta:
+			# Reshape the neutral head while keeping the existing UV correspondence.
+			var chin := smoothstep(1.459, 1.486, point.y) * (1.0 - smoothstep(1.511, 1.553, point.y))
+			var front := smoothstep(0.014, 0.077, -point.z)
+			var bridge := smoothstep(1.519, 1.541, point.y) * (1.0 - smoothstep(1.554, 1.578, point.y))
+			var middle := 1.0 - smoothstep(0.012, 0.048, absf(point.x))
+			var cheek := smoothstep(1.490, 1.521, point.y) * (1.0 - smoothstep(1.533, 1.545, point.y))
+			var chin_shape := 0.105 if face_variant == "Kavita" else 0.12 + kurta_hair_style * 0.018
+			point.x *= 1.0 - chin_shape * chin * front
+			point.x *= 1.0 + 0.057 * cheek * front
+			point.y += 0.008 * chin * middle * front
+			point.z += 0.011 * bridge * middle * front
+			point.z -= 0.006 * cheek * (1.0 - middle) * front
+			var lip := smoothstep(1.476, 1.489, point.y) * (1.0 - smoothstep(1.496, 1.513, point.y))
+			lip *= front * (1.0 - smoothstep(0.011, 0.036, absf(point.x)))
+			point.z += 0.003 * lip
+			skin_tint.r *= 1.0 - 0.09 * lip
+		elif face_variant == "Ravi":
+			var jaw := smoothstep(1.453, 1.485, point.y) * (1.0 - smoothstep(1.510, 1.541, point.y))
+			point.x *= 1.0 + 0.085 * jaw
+			point.z -= 0.004 * jaw * (1.0 - smoothstep(0.018, 0.05, absf(point.x)))
+		if wears_dhotar or face_variant == "Ravi":
+			# Faint lower-face color variation follows the jaw and keeps the lip texture.
+			var lower := smoothstep(1.460, 1.477, point.y) * (1.0 - smoothstep(1.491, 1.529, point.y))
+			var lip_clear := smoothstep(0.013, 0.027, absf(point.x))
+			var front := smoothstep(0.015, 0.075, -point.z)
+			var stubble := 0.17 if face_variant == "Ravi" else 0.10
+			skin_tint = skin_tint.darkened(lower * front * lerpf(0.55, 1.0, lip_clear) * stubble)
 		point.x *= width
 		_surface.set_bones(joint)
 		_surface.set_weights(weight)
-		_surface.set_color(tint)
+		_surface.set_color(skin_tint)
 		_surface.set_uv((HEAD_ATLAS_EDGE + uvs[index] * HEAD_ATLAS_SPAN) / ATLAS_SIZE)
 		_surface.add_vertex(point)
 
@@ -316,7 +499,7 @@ func _build_arm(side: float, label: String) -> void:
 	var lower := label + "LowerArm"
 	var hand := label + "Hand"
 	var outward := Vector3(side, 0, 0)
-	if wears_dhotar:
+	if wears_dhotar or wears_kurta_with_dupatta:
 		_build_sadara_sleeve(side, upper, lower)
 	else:
 		var sleeve := _sleeve_shoulder(side, upper)
@@ -357,6 +540,19 @@ func _build_arm(side: float, label: String) -> void:
 
 func _build_sadara_sleeve(side: float, upper: String, lower: String) -> void:
 	var outward := Vector3(side, 0, 0)
+	if wears_kurta_with_dupatta:
+		var fitted := _sleeve_shoulder(side, upper)
+		for ring: Ring in fitted:
+			ring.radii *= 0.82
+		fitted.append_array([
+			_ring(Vector3(side * 0.345, 1.350, 0.002), 0.060, 0.056, upper),
+			_ring(Vector3(side * 0.439, 1.350, 0.004), 0.047, 0.045, upper, lower, 0.36),
+			_ring(Vector3(side * 0.476, 1.350, 0.004), 0.052, 0.049, lower, upper, 0.18),
+			_ring(Vector3(side * 0.549, 1.350, 0.001), 0.045, 0.040, lower),
+			_ring(Vector3(side * 0.550, 1.350, 0.001), 0.036, 0.033, lower),
+		])
+		_tube(fitted, outward, Vector3.UP, 12, shirt_color, 0.023)
+		return
 	var cuff_start := _ring(Vector3(side * 0.605, 1.350, 0.001), 0.041, 0.037, lower)
 	var sleeve := _sleeve_shoulder(side, upper)
 	sleeve.append_array([
@@ -378,10 +574,10 @@ func _sleeve_shoulder(side: float, upper: String) -> Array[Ring]:
 	# Bury the inner cap in the chest and transfer its weights across the deltoid.
 	return [
 		_ring(Vector3(side * 0.113, 1.332, 0.001), 0.0, 0.0, "Chest"),
-		_ring(Vector3(side * 0.155, 1.330, 0.001), 0.042, 0.068, "Chest", upper, 0.20),
-		_ring(Vector3(side * 0.194, 1.331, 0.004), 0.051, 0.073, "Chest", upper, 0.55),
-		_ring(Vector3(side * 0.230, 1.338, 0.005), 0.062, 0.071, upper, "Chest", 0.15),
-		_ring(Vector3(side * 0.274, 1.348, 0.004), 0.065, 0.063, upper),
+		_ring(Vector3(side * 0.155, 1.323, 0.001), 0.042, 0.063, "Chest", upper, 0.20),
+		_ring(Vector3(side * 0.194, 1.329, 0.004), 0.048, 0.065, "Chest", upper, 0.55),
+		_ring(Vector3(side * 0.230, 1.337, 0.005), 0.053, 0.066, upper, "Chest", 0.15),
+		_ring(Vector3(side * 0.274, 1.346, 0.004), 0.061, 0.062, upper),
 	]
 
 

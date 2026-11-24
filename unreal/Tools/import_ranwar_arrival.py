@@ -7,7 +7,7 @@ import struct
 import unreal
 
 DESTINATION = "/Game/Ranwar/Arrival"
-ASSETS = ("BestBus", "Anjali", "Pedestrian")
+ASSETS = ("BestBus", "AnjaliKurta", "Pedestrian", "Farah", "Nitin", "Leena", "Iqbal", "Ravi", "Kavita")
 
 
 def _source_bounds(path):
@@ -78,7 +78,7 @@ def import_ranwar_arrival(source):
 
     if not assets.save_directory(DESTINATION):
         raise RuntimeError("Could not save the Ranwar arrival meshes and finishes.")
-    unreal.log("Saved the Ranwar arrival bus, Anjali, and pedestrian meshes.")
+    unreal.log("Saved the Ranwar arrival bus and eight civilian meshes.")
 
 
 if __name__ == "__main__":

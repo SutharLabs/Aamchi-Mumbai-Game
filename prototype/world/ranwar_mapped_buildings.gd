@@ -46,6 +46,20 @@ func configure(material: Material) -> void:
 		_add_building(way, polygon, site[1], PALETTE[site[2]], shop, door, material)
 
 
+func contains_interior(position: Vector3) -> bool:
+	if not position.is_finite() or position.y < 0.0 or position.y >= ROOM_HEIGHT:
+		return false
+	for entrance: Dictionary in entrances:
+		var threshold: Vector3 = entrance["threshold"]
+		var inside: Vector3 = entrance["inside"]
+		var inward := (inside - threshold).normalized()
+		var offset := position - threshold
+		var depth := offset.dot(inward)
+		if depth > 0.0 and depth < ROOM_DEPTH and absf(offset.dot(Vector3.UP.cross(inward))) < ROOM_WIDTH * 0.5:
+			return true
+	return false
+
+
 func overlaps_placeholder(center: Vector3, yaw: float) -> bool:
 	const CORNERS: Array[Vector3] = [
 		Vector3(-6.2, 0.0, -6.9), Vector3(6.2, 0.0, -6.9),

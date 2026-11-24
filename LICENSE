@@ -27,5 +27,12 @@ Third-party software, data, fonts, and assets retain their own licenses. Nothing
 in this license limits rights granted by those licenses. See docs/THIRD_PARTY.md
 in the repository and the notices accompanying each build.
 
+Unreal Engine in Windows playtest builds
+
+The Unreal Engine technology included in Windows playtest builds is provided
+as incorporated in the game. All representations, warranties, conditions, and
+liabilities relating to that technology are disclaimed to the fullest extent
+permitted by applicable law.
+
 Permissions inquiries can be directed to SutharLabs through the project repository
 at https://github.com/SutharLabs/Aamchi-Mumbai-Game.

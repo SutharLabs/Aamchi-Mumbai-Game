@@ -7,7 +7,12 @@
 /unreal/Binaries/
 /unreal/Content/Pilot/
 /unreal/Content/Ranwar/
+/unreal/Content/ModelLibrary/
 /unreal/DerivedDataCache/
 /unreal/Intermediate/
 /unreal/Saved/
 /unreal/*.sln
+/unreal/Build/Windows/FileOpenOrder/
+/unreal/Content/Audio/Ranwar/parcel-pickup.wav
+/unreal/Content/Audio/Ranwar/sandal-*.wav
+/unreal/Content/Audio/Ranwar/Dialogue/

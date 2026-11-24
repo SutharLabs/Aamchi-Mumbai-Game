@@ -55,6 +55,8 @@ class MUMBAIPILOT_API ARanwarTraffic : public AActor
 
 public:
     ARanwarTraffic();
+    const TArray<FRanwarTrafficRoad>& GetRoads() const { return Roads; }
+    const TArray<FVector>& GetMapFootway() const { return MapFootway; }
 
 protected:
     virtual void BeginPlay() override;
@@ -81,6 +83,9 @@ private:
     // These points are already registered to the imported Ranwar mesh in world centimetres.
     UPROPERTY(EditAnywhere, Category = "Traffic")
     TArray<FRanwarTrafficRoad> Roads;
+
+    UPROPERTY(EditAnywhere, Category = "Map")
+    TArray<FVector> MapFootway;
 
     UPROPERTY(EditAnywhere, Category = "Traffic", meta = (ClampMin = "0", ClampMax = "4"))
     int32 CivilianLimit = 4;

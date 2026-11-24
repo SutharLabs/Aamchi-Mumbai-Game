@@ -5,6 +5,7 @@
 #include "RanwarVehicle.generated.h"
 
 class ARanwarCharacter;
+class UAudioComponent;
 class UBoxComponent;
 class UPoseableMeshComponent;
 class USpringArmComponent;
@@ -58,6 +59,8 @@ private:
     void PressBrake();
     void ReleaseBrake();
     void RequestExit();
+    void UseHorn();
+    void StopEngineAudio();
     void UpdateVehicleLook(double DeltaSeconds);
     void ShowDriver(const ARanwarCharacter& Character);
     void RestoreDriver(ARanwarCharacter& Character, const FVector* ExitLocation);
@@ -84,6 +87,9 @@ private:
     UPROPERTY()
     TObjectPtr<USpringArmComponent> Arm;
 
+    UPROPERTY()
+    TObjectPtr<UAudioComponent> EngineAudio;
+
     UPROPERTY(EditAnywhere, Category = "Vehicle")
     ERanwarVehicleKind VehicleKind = ERanwarVehicleKind::Hatchback;
 
@@ -95,6 +101,7 @@ private:
     double CameraPitch = -12.0;
     double CameraLookTime = 0.0;
     double LastImpactAt = -1.0;
+    double LastHornAt = -1.0;
     float Condition = 100.0f;
     bool bBrakePressed = false;
 };

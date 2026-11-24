@@ -1,6 +1,7 @@
 extends Control
 
 signal play_requested
+signal new_game_requested
 signal resume_requested
 signal main_menu_requested
 signal quit_requested
@@ -22,6 +23,7 @@ const MUTED := Color("bfc9d4")
 const GOLD := Color("f3c684")
 
 var preferences: Node
+var progress_available: Callable
 var _paused_menu := false
 var _character_name := ""
 var _map_roads: Array[PackedVector3Array] = []
@@ -41,9 +43,19 @@ var _content: VBoxContainer
 var _notice: Label
 var _profile_name: LineEdit
 var _volume: HSlider
+var _dialogue_volume: HSlider
 var _look: HSlider
 var _fullscreen: CheckButton
 var _live_map: CheckButton
+var _quality: OptionButton
+var _vsync: CheckButton
+var _subtitles: CheckButton
+var _speaker_names: CheckButton
+var _subtitle_size: OptionButton
+var _settings_header: VBoxContainer
+var _settings_footer: VBoxContainer
+var _settings_targets: Dictionary[String, Control] = {}
+var _credits_parent: StringName = &"top"
 var _binding_device := Controls.KEYBOARD
 var _binding_action := ""
 var _binding_button: Button
@@ -70,6 +82,7 @@ func _ready() -> void:
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_scroll.follow_focus = true
 	_scroll.scroll_deadzone = 10
+	_scroll.add_theme_constant_override("scrollbar_h_separation", 10)
 	add_child(_scroll)
 	resized.connect(_position_content)
 	show_home()
@@ -112,6 +125,7 @@ func back_requested() -> bool:
 		&"bindings": _show_page(&"settings")
 		&"district_services", &"landmarks": _show_page(&"map")
 		&"sea_link": _show_page(&"landmarks")
+		&"credits": _show_page(_credits_parent)
 		_: _show_page(&"top")
 	return true
 
@@ -119,6 +133,17 @@ func back_requested() -> bool:
 func _show_page(page: StringName) -> void:
 	_binding_action = ""
 	_binding_button = null
+	if is_instance_valid(_settings_header):
+		remove_child(_settings_header)
+		_settings_header.queue_free()
+		_settings_header = null
+	if is_instance_valid(_settings_footer):
+		remove_child(_settings_footer)
+		_settings_footer.queue_free()
+		_settings_footer = null
+	_settings_targets.clear()
+	if page == &"credits":
+		_credits_parent = _page
 	_page = page
 	_canvas.color = Color(0.03, 0.06, 0.10, 0.68) if _paused_menu else NAVY
 	_art.visible = not _paused_menu
@@ -129,12 +154,13 @@ func _show_page(page: StringName) -> void:
 	_content.name = "Page"
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_content.add_theme_constant_override("separation", 12)
+	_content.add_theme_constant_override("separation", 8 if page == &"top" else 12)
 	_content.alignment = BoxContainer.ALIGNMENT_CENTER if page == &"top" else BoxContainer.ALIGNMENT_BEGIN
 	_scroll.add_child(_content)
 	_scroll.set_deferred("scroll_vertical", 0)
 	_position_content()
 	match page:
+		&"new_game": _show_new_game_confirmation()
 		&"profiles": _show_profiles()
 		&"settings": _show_settings()
 		&"bindings": _show_bindings()
@@ -159,9 +185,8 @@ func _show_top() -> void:
 		if _can_abandon_job:
 			_button(_content, "AbandonJobButton", "Abandon job", func(): abandon_job_requested.emit())
 		_route_button("SettingsButton", "Settings", &"settings")
-		_route_button("HelpButton", "Help", &"help")
-		_route_button("CreditsButton", "Credits", &"credits")
-		_button(_content, "MainMenuButton", "Main menu", func(): main_menu_requested.emit())
+		_route_button("HelpButton", "Controls", &"help")
+		_button(_content, "MainMenuButton", "Main Menu", func(): main_menu_requested.emit())
 		return
 	var identity := HBoxContainer.new()
 	identity.add_theme_constant_override("separation", 15)
@@ -170,14 +195,14 @@ func _show_top() -> void:
 	mark.texture = _read_texture(MARK)
 	mark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	mark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	mark.custom_minimum_size = Vector2(58, 58)
+	mark.custom_minimum_size = Vector2(50, 50)
 	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if mark.texture != null:
 		identity.add_child(mark)
 	else:
 		mark.free()
 	_label(identity, "RANWAR, BANDRA WEST", 16, GOLD)
-	var title := _label(_content, "Aamchi\nMumbai Game", 57, CREAM)
+	var title := _label(_content, "Aamchi\nMumbai Game", 53, CREAM)
 	title.add_theme_font_override("font", _display_font())
 	title.add_theme_constant_override("line_spacing", -7)
 	var name_meaning := HBoxContainer.new()
@@ -189,12 +214,34 @@ func _show_top() -> void:
 	_label(name_meaning, "Our Mumbai", 20, GOLD)
 	_label(_content, "Profile  ·  %s" % preferences.active_profile_name, 17, MUTED).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_space(_content, 7)
-	_focus.call_deferred(_button(_content, "PlayButton", "Play", func(): play_requested.emit(), true))
+	var can_continue := progress_available.is_valid() and bool(progress_available.call())
+	if can_continue:
+		_focus.call_deferred(_button(_content, "ContinueButton", "Continue", func(): play_requested.emit(), true))
+		_route_button("PlayButton", "New Game", &"new_game")
+	else:
+		_focus.call_deferred(_button(_content, "PlayButton", "New Game", func(): new_game_requested.emit(), true))
 	_route_button("ProfilesButton", "Profiles", &"profiles")
 	_route_button("SettingsButton", "Settings", &"settings")
-	_route_button("HelpButton", "Help", &"help")
+	_route_button("HelpButton", "Controls", &"help")
 	_route_button("CreditsButton", "Credits", &"credits")
-	_button(_content, "QuitButton", "Quit", func(): quit_requested.emit())
+	if not Controls.uses_touch_ui():
+		_button(_content, "QuitButton", "Quit to Desktop", func(): quit_requested.emit())
+
+
+func _show_new_game_confirmation() -> void:
+	_page_header("Start a New Game?")
+	var detail := _label(_content, "Begin Omkar’s story again on this profile. Continue will use the new game once it is saved.", 19, CREAM)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_focus.call_deferred(_button(_content, "CancelNewGameButton", "Cancel", _show_page.bind(&"top"), true))
+	_button(_content, "ConfirmNewGameButton", "Start New Game", func(): new_game_requested.emit())
+	_notice = _label(_content, "", 17, GOLD)
+	_notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
+func show_new_game_error() -> void:
+	if _page != &"new_game":
+		_show_page(&"new_game")
+	_notice.text = "The new game could not be saved. Your current progress is available under Continue."
 
 
 func _show_map() -> void:
@@ -267,6 +314,7 @@ func _show_profiles() -> void:
 	_label(_content, "Active profile", 19, MUTED)
 	var selector := OptionButton.new()
 	selector.name = "ProfileSelector"
+	selector.accessibility_name = "Active profile"
 	selector.custom_minimum_size.y = 50
 	selector.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_style_button(selector)
@@ -282,6 +330,7 @@ func _show_profiles() -> void:
 	_label(_content, "Profile name", 19, MUTED)
 	_profile_name = LineEdit.new()
 	_profile_name.name = "ProfileNameInput"
+	_profile_name.accessibility_name = "Profile name"
 	_profile_name.placeholder_text = "Enter a name"
 	_profile_name.max_length = 32
 	_profile_name.custom_minimum_size.y = 50
@@ -324,32 +373,149 @@ func _profile_error(result: Error) -> String:
 
 
 func _show_settings() -> void:
-	_page_header("Settings")
-	_volume = _slider("MasterVolumeSlider", "Master volume", 0.0, 1.0, 0.01, preferences.master_volume, true)
-	_look = _slider("LookSensitivitySlider", "Camera sensitivity", 0.25, 2.0, 0.05, preferences.look_sensitivity, false)
-	_fullscreen = CheckButton.new()
-	_fullscreen.name = "FullscreenToggle"
-	_fullscreen.text = "Fullscreen"
-	_fullscreen.custom_minimum_size.y = 48
-	_fullscreen.button_pressed = preferences.fullscreen
-	_fullscreen.disabled = not preferences.supports_fullscreen
-	_content.add_child(_fullscreen)
-	_live_map = CheckButton.new()
-	_live_map.name = "LiveMapToggle"
-	_live_map.text = "Live map"
-	_live_map.custom_minimum_size.y = 48
-	_live_map.button_pressed = preferences.live_map
-	_content.add_child(_live_map)
-	_notice = _label(_content, "", 17, GOLD)
-	_button(_content, "ApplySettingsButton", "Apply settings", _apply_settings, true)
+	_settings_section("Gameplay")
+	_live_map = _setting_toggle("LiveMapToggle", "Live Map", preferences.live_map)
+	_settings_section("Controls")
+	_look = _slider("LookSensitivitySlider", "Camera Sensitivity", 0.25, 2.0, 0.05, preferences.look_sensitivity, false)
 	if not Controls.uses_touch_ui():
-		_route_button("ControlBindingsButton", "Control bindings", &"bindings")
-	_back_button()
-	_focus.call_deferred(_volume)
+		_route_button("ControlBindingsButton", "Control Bindings", &"bindings")
+	_settings_section("Audio")
+	_volume = _slider("MasterVolumeSlider", "Master Volume", 0.0, 1.0, 0.01, preferences.master_volume, true)
+	_dialogue_volume = _slider("DialogueVolumeSlider", "Dialogue Volume", 0.0, 1.0, 0.01, preferences.dialogue_volume, true)
+	_settings_section("Display")
+	var desktop_display: bool = preferences.supports_fullscreen and not Controls.uses_touch_ui()
+	_fullscreen = null
+	_vsync = null
+	if desktop_display:
+		_fullscreen = _setting_toggle("FullscreenToggle", "Window Mode", preferences.fullscreen, "Windowed", "Fullscreen")
+	_quality = _setting_choice("GraphicsQuality", "Graphics Quality", ["Low", "Medium", "High"], preferences.graphics_quality)
+	if desktop_display:
+		_vsync = _setting_toggle("VSyncToggle", "VSync", preferences.vsync)
+	_settings_section("Accessibility")
+	_subtitles = _setting_toggle("SubtitlesToggle", "Subtitles", preferences.subtitle_enabled)
+	_speaker_names = _setting_toggle("SpeakerNamesToggle", "Speaker Names", preferences.subtitle_speaker_names)
+	_subtitle_size = _setting_choice("SubtitleSize", "Subtitle Size", ["Standard", "Large"], int(preferences.subtitle_large))
+	_subtitles.toggled.connect(_set_subtitle_controls_enabled)
+	_set_subtitle_controls_enabled(_subtitles.button_pressed)
+	_build_settings_header({
+		"Gameplay": _live_map,
+		"Controls": _look,
+		"Audio": _volume,
+		"Display": _fullscreen if is_instance_valid(_fullscreen) else _quality,
+		"Accessibility": _subtitles,
+	})
+	_build_settings_footer()
+	_focus.call_deferred(_live_map)
+
+
+func _settings_section(title: String) -> void:
+	var rule := HSeparator.new()
+	_content.add_child(rule)
+	_settings_targets[title] = _label(_content, title, 21, GOLD)
+
+
+func _build_settings_header(fields: Dictionary) -> void:
+	_settings_header = VBoxContainer.new()
+	_settings_header.add_theme_constant_override("separation", 8)
+	add_child(_settings_header)
+	_label(_settings_header, "AAMCHI MUMBAI GAME", 16, GOLD)
+	var heading := _label(_settings_header, "Settings", 46, CREAM)
+	heading.add_theme_font_override("font", _display_font())
+	var sections := HFlowContainer.new()
+	sections.add_theme_constant_override("h_separation", 6)
+	sections.add_theme_constant_override("v_separation", 6)
+	_settings_header.add_child(sections)
+	for caption: String in fields:
+		var jump := _button(sections, "JumpTo" + caption, caption, _jump_to_setting.bind(caption))
+		jump.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		jump.custom_minimum_size.y = 44 if Controls.uses_touch_ui() else 37
+		jump.add_theme_font_size_override("font_size", 16)
+		for state: StringName in [&"normal", &"hover", &"pressed", &"focus"]:
+			var style := jump.get_theme_stylebox(state).duplicate() as StyleBoxFlat
+			style.content_margin_left = 11.0
+			style.content_margin_right = 11.0
+			jump.add_theme_stylebox_override(state, style)
+		jump.focus_neighbor_bottom = jump.get_path_to(fields[caption])
+	_settings_header.minimum_size_changed.connect(func(): _position_content.call_deferred())
+
+
+func _jump_to_setting(caption: String) -> void:
+	var section := _settings_targets.get(caption) as Control
+	if is_instance_valid(section):
+		_scroll.scroll_vertical = roundi(section.position.y)
+
+
+func _setting_toggle(node_name: String, caption: String, value: bool, off := "Off", on := "On") -> CheckButton:
+	var row := _settings_row(caption)
+	var toggle := CheckButton.new()
+	toggle.name = node_name
+	toggle.accessibility_name = caption
+	toggle.custom_minimum_size = Vector2(132, 42)
+	toggle.button_pressed = value
+	toggle.text = on if value else off
+	toggle.toggled.connect(func(enabled: bool): toggle.text = on if enabled else off)
+	row.add_child(toggle)
+	return toggle
+
+
+func _setting_choice(node_name: String, caption: String, items: PackedStringArray, value: int) -> OptionButton:
+	var row := _settings_row(caption)
+	var choices := OptionButton.new()
+	choices.name = node_name
+	choices.accessibility_name = caption
+	choices.custom_minimum_size = Vector2(132, 42)
+	_style_button(choices)
+	for item: String in items:
+		choices.add_item(item)
+	choices.select(value)
+	row.add_child(choices)
+	return choices
+
+
+func _settings_row(caption: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	_content.add_child(row)
+	var label := _label(row, caption, 19, CREAM)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return row
+
+
+func _set_subtitle_controls_enabled(enabled: bool) -> void:
+	_speaker_names.disabled = not enabled
+	_subtitle_size.disabled = not enabled
+
+
+func _build_settings_footer() -> void:
+	_settings_footer = VBoxContainer.new()
+	_settings_footer.add_theme_constant_override("separation", 5)
+	add_child(_settings_footer)
+	_notice = _label(_settings_footer, "", 16, GOLD)
+	_notice.accessibility_live = AccessibilityServer.LIVE_POLITE
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 10)
+	_settings_footer.add_child(actions)
+	_button(actions, "ApplySettingsButton", "Apply Settings", _apply_settings, true).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_button(actions, "BackButton", "Back", _show_page.bind(&"top")).custom_minimum_size.x = 120
+	_settings_footer.minimum_size_changed.connect(func(): _position_content.call_deferred())
+	_position_content()
 
 
 func _apply_settings() -> void:
-	var result: Error = preferences.set_settings(_volume.value, _fullscreen.button_pressed, _look.value, _live_map.button_pressed)
+	var changes := {
+		"master_volume": _volume.value,
+		"dialogue_volume": _dialogue_volume.value,
+		"look_sensitivity": _look.value,
+		"live_map": _live_map.button_pressed,
+		"graphics_quality": _quality.selected,
+		"subtitle_enabled": _subtitles.button_pressed,
+		"subtitle_speaker_names": _speaker_names.button_pressed,
+		"subtitle_large": _subtitle_size.selected == 1,
+	}
+	if is_instance_valid(_fullscreen):
+		changes["fullscreen"] = _fullscreen.button_pressed
+		changes["vsync"] = _vsync.button_pressed
+	var result: Error = preferences.update_settings(changes)
 	_notice.text = "Settings saved." if result == OK else "Settings could not be saved."
 
 
@@ -440,6 +606,7 @@ func _slider(node_name: String, caption: String, minimum: float, maximum: float,
 	var readout := _label(row, _setting_value(value, percent), 18, GOLD)
 	var slider := HSlider.new()
 	slider.name = node_name
+	slider.accessibility_name = caption
 	slider.min_value = minimum
 	slider.max_value = maximum
 	slider.step = step
@@ -457,6 +624,8 @@ func _setting_value(value: float, percent: bool) -> String:
 func _show_help() -> void:
 	_page_header("Controls")
 	_focus.call_deferred(_back_button())
+	if _paused_menu:
+		_route_button("CreditsButton", "Credits", &"credits")
 	if Controls.uses_touch_ui():
 		_control_group("On foot", {
 			"Left stick": "Walk near the center, run at the outer edge",
@@ -524,7 +693,7 @@ func _control_group(title: String, bindings: Dictionary) -> void:
 
 func _show_credits() -> void:
 	_page_header("Credits")
-	var back := _back_button()
+	var back := _button(_content, "BackButton", "Back", _show_page.bind(_credits_parent))
 	if not ResourceLoader.exists(CREDITS):
 		_label(_content, "Credit information is unavailable.", 18, MUTED)
 		_focus.call_deferred(back)
@@ -576,7 +745,7 @@ func _button(parent: Control, node_name: String, caption: String, handler: Calla
 	button.text = caption
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	button.custom_minimum_size.y = 48
+	button.custom_minimum_size.y = 44 if _page == &"top" and not Controls.uses_touch_ui() else 48
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_style_button(button, primary)
 	button.pressed.connect(handler)
@@ -608,8 +777,22 @@ func _position_content() -> void:
 		preferred_width = 620.0
 	elif _page == &"sea_link":
 		preferred_width = 860.0
-	_scroll.position = Vector2(left, top)
-	_scroll.size = Vector2(minf(preferred_width, size.x - left * 2.0), size.y - top * 2.0)
+	var width := minf(preferred_width, size.x - left * 2.0)
+	var scroll_height := size.y - top * 2.0
+	var scroll_top := top
+	if is_instance_valid(_settings_header):
+		var header_height := _settings_header.get_combined_minimum_size().y
+		_settings_header.position = Vector2(left, top)
+		_settings_header.size = Vector2(width, header_height)
+		scroll_top += header_height + 12.0
+		scroll_height -= header_height + 12.0
+	if is_instance_valid(_settings_footer):
+		var footer_height := _settings_footer.get_combined_minimum_size().y
+		_settings_footer.position = Vector2(left, size.y - top - footer_height)
+		_settings_footer.size = Vector2(width, footer_height)
+		scroll_height -= footer_height + 12.0
+	_scroll.position = Vector2(left, scroll_top)
+	_scroll.size = Vector2(width, maxf(scroll_height, 1.0))
 
 
 func _add_backdrop(backdrop: Control) -> void:

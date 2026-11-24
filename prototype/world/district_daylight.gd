@@ -25,6 +25,9 @@ func _ready() -> void:
 	_environment.sky = sky
 	_environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	_environment.ambient_light_sky_contribution = 0.0
+	_environment.fog_enabled = true
+	_environment.fog_sky_affect = 0.0
+	_environment.fog_sun_scatter = 0.06
 	var lighting := WorldEnvironment.new()
 	lighting.name = "WorldEnvironment"
 	lighting.environment = _environment
@@ -76,9 +79,11 @@ func _update_lighting() -> void:
 	_sky_material.ground_horizon_color = _sky_material.sky_horizon_color
 	_sky_material.ground_bottom_color = Color("323749").lerp(Color("8a8578"), daylight)
 	_environment.ambient_light_color = Color("898fb6").lerp(Color("c7d9e4"), daylight)
-	_environment.ambient_light_energy = lerpf(0.47, 0.58, daylight)
+	_environment.ambient_light_energy = lerpf(0.47, 0.67, daylight)
+	_environment.fog_light_color = Color("384861").lerp(Color("a4b4c0"), daylight)
+	_environment.fog_density = lerpf(0.0007, 0.0015, daylight)
 	_sun.rotation_degrees = Vector3(-50.0 * elevation, -36.0 + (_minutes - DEFAULT_MINUTES) * 0.18, 0.0)
-	_sun.light_energy = 1.08 * daylight
-	_sun.light_color = Color("fff1d9").lerp(Color("f9ae78"), twilight)
+	_sun.light_energy = 1.01 * daylight
+	_sun.light_color = Color("fff8ee").lerp(Color("f9ae78"), twilight)
 	_sun.shadow_enabled = daylight > 0.18 and not OS.has_feature("mobile")
 	_night_fill.light_energy = 0.32 * (1.0 - daylight)

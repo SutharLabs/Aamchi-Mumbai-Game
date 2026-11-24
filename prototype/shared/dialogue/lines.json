@@ -1,0 +1,173 @@
+[
+  {
+    "id": "omkar-arrival",
+    "speaker": "Omkar",
+    "text": "First day in Mumbai. Mira said the print shop was hiring.",
+    "spoken": "मुंबई में पहला दिन। मीरा ने कहा था कि प्रिंट की दुकान में काम मिल सकता है।",
+    "voice": "hm_omega",
+    "speed": 1.07,
+    "duration": 5.595
+  },
+  {
+    "id": "anjali-bike",
+    "speaker": "Anjali",
+    "text": "Mira left the bike for you. The Hill Road job board has a delivery for the print shop.",
+    "spoken": "मीरा ने तुम्हारे लिए बाइक छोड़ी है। हिल रोड के जॉब बोर्ड पर प्रिंट की दुकान की एक डिलीवरी है।",
+    "voice": "hf_alpha",
+    "speed": 1.02,
+    "duration": 6.73
+  },
+  {
+    "id": "mira-ledger",
+    "speaker": "Mira",
+    "text": "The parcel held print-shop receipts. One name appears three times. I'll ask Asha about tomorrow's ledger.",
+    "spoken": "पार्सल में प्रिंट की दुकान की रसीदें थीं। डिलीवरी पर एक ही नाम तीन बार है। मैं आशा से कल के हिसाब के बारे में पूछूँगी।",
+    "voice": "hf_beta",
+    "speed": 1.04,
+    "duration": 7.653
+  },
+  {
+    "id": "mira-yard",
+    "speaker": "Mira",
+    "text": "The practice yard is just west of Hill Road.",
+    "spoken": "अभ्यास करने की खुली जगह हिल रोड से थोड़ा पश्चिम में है।",
+    "voice": "hf_beta",
+    "speed": 1.03,
+    "duration": 3.659
+  },
+  {
+    "id": "rafiq-lane",
+    "speaker": "Rafiq",
+    "text": "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.",
+    "spoken": "नागराना गली में पैदल जाना आसान है। गाड़ी से जा रहे हो, तो वरोडा रोड लो।",
+    "voice": "hm_psi",
+    "speed": 0.97,
+    "duration": 5.933
+  },
+  {
+    "id": "anjali-directions",
+    "speaker": "Anjali",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "हिल रोड का जॉब बोर्ड यहाँ से पश्चिम में है।",
+    "voice": "hf_alpha",
+    "speed": 1.04,
+    "duration": 3.058
+  },
+  {
+    "id": "sameer-directions",
+    "speaker": "Sameer",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "हिल रोड के जॉब बोर्ड के लिए यहाँ से पश्चिम की ओर जाओ।",
+    "voice": "hm_omega",
+    "speed": 1.12,
+    "duration": 3.822
+  },
+  {
+    "id": "farah-directions",
+    "speaker": "Farah",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "बोर्ड ढूँढ रहे हो? हिल रोड पर पश्चिम की तरफ़ है।",
+    "voice": "hf_beta",
+    "speed": 1.11,
+    "duration": 3.034
+  },
+  {
+    "id": "nitin-directions",
+    "speaker": "Nitin",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "यहाँ से पश्चिम की तरफ़ चलो। जॉब बोर्ड हिल रोड पर है।",
+    "voice": "hm_psi",
+    "speed": 1.08,
+    "duration": 3.758
+  },
+  {
+    "id": "leena-directions",
+    "speaker": "Leena",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "जॉब बोर्ड हिल रोड पर है। यहाँ से पश्चिम की तरफ़।",
+    "voice": "hf_alpha",
+    "speed": 0.91,
+    "duration": 3.966
+  },
+  {
+    "id": "iqbal-directions",
+    "speaker": "Iqbal",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "हिल रोड का जॉब बोर्ड उधर पश्चिम में है।",
+    "voice": "hm_psi",
+    "speed": 0.94,
+    "duration": 3.165
+  },
+  {
+    "id": "anjali-dabba-hill",
+    "speaker": "Anjali",
+    "text": "Take the dabba from the Hill Road end of the lane. Prakash is at the job board.",
+    "spoken": "गली के हिल रोड वाले छोर से डब्बा ले लो। प्रकाश जॉब बोर्ड के पास इंतज़ार कर रहा है।",
+    "voice": "hf_alpha",
+    "speed": 1.04,
+    "duration": 6.599
+  },
+  {
+    "id": "anjali-dabba-waroda",
+    "speaker": "Anjali",
+    "text": "Nandini's dabba is ready on Hill Road. She's waiting at the Waroda end of the lane.",
+    "spoken": "नंदिनी का डब्बा हिल रोड पर तैयार है। वह गली के वरोडा रोड वाले छोर पर इंतज़ार कर रही है।",
+    "voice": "hf_alpha",
+    "speed": 1.04,
+    "duration": 7.085
+  },
+  {
+    "id": "prakash-dabba",
+    "speaker": "Prakash",
+    "text": "Thanks, Omkar. I owe Anjali a favour.",
+    "spoken": "शुक्रिया, ओमकार। अंजलि ने बड़ी मदद की।",
+    "voice": "hm_omega",
+    "speed": 0.94,
+    "duration": 3.157
+  },
+  {
+    "id": "nandini-dabba",
+    "speaker": "Nandini",
+    "text": "Thanks, Omkar. Just in time for lunch!",
+    "spoken": "शुक्रिया, ओमकार। बिल्कुल खाने के समय पहुँचे!",
+    "voice": "hf_beta",
+    "speed": 1.09,
+    "duration": 2.835
+  },
+  {
+    "id": "asha-ledger-pickup",
+    "speaker": "Asha",
+    "text": "Here’s the ledger copy. Take it to Chapel Corner Grocer by St Peter’s Road.",
+    "spoken": "ये रही बहीखाते की नकल। सेंट पीटर्स रोड से चैपल कॉर्नर की किराना दुकान तक ले जाओ।",
+    "voice": "hf_beta",
+    "speed": 1.05,
+    "duration": 5.562
+  },
+  {
+    "id": "grocer-ledger-handoff",
+    "speaker": "Grocer",
+    "text": "Thanks, Omkar. These entries match Mira’s receipts. Here’s your four hundred rupees.",
+    "spoken": "शुक्रिया, ओमकार। ये हिसाब मीरा की रसीदों से मिलते हैं। ये रहे तुम्हारे चार सौ रुपये।",
+    "voice": "hm_psi",
+    "speed": 0.98,
+    "duration": 6.456
+  },
+  {
+    "id": "ranwar-parcel-pickup",
+    "speaker": "Ravi",
+    "text": "You’re Omkar? Here’s the parcel. Kavita is waiting at the Waroda end of the lane.",
+    "spoken": "तुम ओमकार हो? यह पार्सल लो। कविता गली के वरोडा रोड वाले छोर पर इंतज़ार कर रही है।",
+    "voice": "hm_psi",
+    "speed": 1.06,
+    "duration": 6.645
+  },
+  {
+    "id": "ranwar-parcel-handoff",
+    "speaker": "Kavita",
+    "text": "Thanks, Omkar. That’s the one. I’ll let Mira know it arrived.",
+    "spoken": "शुक्रिया, ओमकार। हाँ, यही पार्सल है। मैं मीरा को बता दूँगी कि यह पहुँच गया।",
+    "voice": "hf_alpha",
+    "speed": 1.02,
+    "duration": 5.275
+  }
+]

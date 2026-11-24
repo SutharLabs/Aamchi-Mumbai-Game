@@ -10,6 +10,7 @@ const Controls := preload("res://startup/control_bindings.gd")
 const MapView := preload("res://startup/ranwar_map.gd")
 const StatusView := preload("res://startup/player_status.gd")
 const PROMPT_WIDTH := 342.0
+const OBJECTIVE_WIDTH := 372.0
 const HUD_MARGIN := 24.0
 const TOUCH_DOCK_CLEARANCE := 225.0
 const TOUCH_RUN_ENTER := 0.92
@@ -20,7 +21,9 @@ var pause_enabled := false
 var move_axis := Vector2.ZERO
 var run_held := false
 var brake_held := false
-var _status_panel: PanelContainer
+var _objective_panel: PanelContainer
+var _speed_panel: PanelContainer
+var _prompt_panel: PanelContainer
 var _objective := Label.new()
 var _speed := Label.new()
 var _prompt_row := HBoxContainer.new()
@@ -50,31 +53,55 @@ func _ready() -> void:
 	_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_navigation_dock()
-	_status_panel = _card()
-	_status_panel.position = Vector2(18, 18)
-	_canvas.add_child(_status_panel)
+	_objective_panel = _card(true)
+	_objective_panel.name = "ObjectiveCard"
+	_canvas.add_child(_objective_panel)
 	var details := VBoxContainer.new()
 	details.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	details.add_theme_constant_override("separation", 4)
-	_status_panel.add_child(details)
+	_objective_panel.add_child(details)
+	var district := Label.new()
+	district.text = "RANWAR / BANDRA WEST"
+	district.add_theme_color_override("font_color", Color("f3c684"))
+	district.add_theme_font_size_override("font_size", 13)
+	details.add_child(district)
 	_objective.name = "JobObjective"
-	_objective.add_theme_color_override("font_color", Color("ffe0bc"))
-	_objective.add_theme_font_size_override("font_size", 17)
+	_objective.add_theme_color_override("font_color", Color("f9f1e3"))
+	_objective.add_theme_font_size_override("font_size", 18)
+	_objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	details.add_child(_objective)
+	_speed_panel = _card()
+	_speed_panel.name = "SpeedCard"
+	_canvas.add_child(_speed_panel)
 	_speed.add_theme_color_override("font_color", Color("deebef"))
 	_speed.add_theme_font_size_override("font_size", 17)
-	details.add_child(_speed)
-	details.add_child(_prompt_row)
+	_speed_panel.add_child(_speed)
+	_prompt_panel = _card()
+	_prompt_panel.name = "InteractionCard"
+	_canvas.add_child(_prompt_panel)
+	_prompt_panel.add_child(_prompt_row)
 	_prompt_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_prompt_row.add_theme_constant_override("separation", 8)
-	_interact_key.add_theme_color_override("font_color", Color("deebef"))
-	_interact_key.add_theme_font_size_override("font_size", 17)
-	_prompt_row.add_child(_interact_key)
-	_prompt.add_theme_color_override("font_color", Color("ffd07a"))
+	_prompt_row.add_theme_constant_override("separation", 10)
+	var hint := PanelContainer.new()
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var key_background := StyleBoxFlat.new()
+	key_background.bg_color = Color("f3c684")
+	key_background.set_corner_radius_all(4)
+	key_background.content_margin_left = 7.0
+	key_background.content_margin_right = 7.0
+	hint.add_theme_stylebox_override("panel", key_background)
+	_interact_key.add_theme_color_override("font_color", Color("1b1410"))
+	_interact_key.add_theme_font_size_override("font_size", 15)
+	hint.add_child(_interact_key)
+	_prompt_row.add_child(hint)
+	_prompt.add_theme_color_override("font_color", Color("f9f1e3"))
 	_prompt.add_theme_font_size_override("font_size", 17)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_prompt_row.add_child(_prompt)
+	_canvas.resized.connect(_layout_hud_cards)
+	_objective_panel.minimum_size_changed.connect(func(): _layout_hud_cards.call_deferred())
+	_prompt_panel.minimum_size_changed.connect(func(): _layout_hud_cards.call_deferred())
 	update_display(false, 0.0, "", "", false)
 	if touch_enabled:
 		_touch_surface = Control.new()
@@ -157,8 +184,7 @@ func refresh_bindings() -> void:
 		return
 	var device := Controls.GAMEPAD if _using_gamepad else Controls.KEYBOARD
 	_interact_key.text = Controls.label("interact", device, true)
-	if _status_panel.visible:
-		_status_panel.reset_size.call_deferred()
+	_layout_hud_cards.call_deferred()
 	if _pause_card != null:
 		_pause_hint.text = "%s  Pause" % Controls.label("pause_game", device, true)
 		var minimum := _pause_card.get_combined_minimum_size()
@@ -166,16 +192,21 @@ func refresh_bindings() -> void:
 		_pause_card.offset_bottom = 18.0 + minimum.y
 
 
-func _card() -> PanelContainer:
+func _card(accented := false) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var decoration := StyleBoxFlat.new()
-	decoration.bg_color = Color("132433e8")
-	decoration.set_corner_radius_all(5)
-	decoration.content_margin_left = 10.0
-	decoration.content_margin_right = 10.0
-	decoration.content_margin_top = 5.0
-	decoration.content_margin_bottom = 5.0
+	decoration.bg_color = Color("11202ff0")
+	decoration.border_color = Color("f3c684") if accented else Color("405268")
+	decoration.border_width_left = 3 if accented else 1
+	decoration.border_width_right = 0 if accented else 1
+	decoration.border_width_top = 0 if accented else 1
+	decoration.border_width_bottom = 0 if accented else 1
+	decoration.set_corner_radius_all(6)
+	decoration.content_margin_left = 12.0
+	decoration.content_margin_right = 12.0
+	decoration.content_margin_top = 7.0
+	decoration.content_margin_bottom = 7.0
 	panel.add_theme_stylebox_override("panel", decoration)
 	return panel
 
@@ -190,7 +221,8 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		_touch_surface.queue_redraw()
 	var speed_text := "%s  ·  %d km/h" % [vehicle_label, roundi(speed * 3.6)] if driving else ""
 	var show_key := can_interact and not touch_enabled
-	var changed := (_speed.text != speed_text or _prompt.text != prompt or _interact_key.visible != show_key
+	var hint := _interact_key.get_parent() as PanelContainer
+	var changed := (_speed.text != speed_text or _prompt.text != prompt or hint.visible != show_key
 		or _objective.text != objective)
 	if _speed.text != speed_text:
 		_speed.text = speed_text
@@ -198,17 +230,34 @@ func update_display(driving: bool, speed: float, prompt: String, vehicle_label: 
 		_objective.text = objective
 	if _prompt.text != prompt:
 		_prompt.text = prompt
-		var font := _prompt.get_theme_font("font")
-		var font_size := _prompt.get_theme_font_size("font_size")
-		var text_width := font.get_string_size(prompt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		_prompt.custom_minimum_size.x = minf(ceilf(text_width) + 1.0, PROMPT_WIDTH)
-	_speed.visible = driving
-	_objective.visible = not objective.is_empty()
-	_prompt_row.visible = not prompt.is_empty()
-	_interact_key.visible = show_key
-	_status_panel.visible = driving or _prompt_row.visible or _objective.visible
-	if changed and _status_panel.visible:
-		_status_panel.reset_size.call_deferred()
+	_speed_panel.visible = driving
+	_objective_panel.visible = not objective.is_empty()
+	_prompt_panel.visible = not prompt.is_empty()
+	hint.visible = show_key
+	if changed:
+		_layout_hud_cards.call_deferred()
+
+
+func _layout_hud_cards() -> void:
+	var objective_width := minf(OBJECTIVE_WIDTH, _canvas.size.x * 0.48)
+	var prompt_width := minf(PROMPT_WIDTH, maxf(_canvas.size.x - (410.0 if touch_enabled else 120.0), 160.0))
+	_size_wrapped_label(_objective, objective_width)
+	_size_wrapped_label(_prompt, prompt_width)
+	_objective_panel.size = _objective_panel.get_combined_minimum_size()
+	_objective_panel.position = Vector2(HUD_MARGIN, HUD_MARGIN)
+	_speed_panel.size = _speed_panel.get_combined_minimum_size()
+	var above := _objective_panel.size.y + 6.0 if _objective_panel.visible else 0.0
+	_speed_panel.position = Vector2(HUD_MARGIN, HUD_MARGIN + above)
+	_prompt_panel.size = _prompt_panel.get_combined_minimum_size()
+	_prompt_panel.position = Vector2((_canvas.size.x - _prompt_panel.size.x) * 0.5,
+		_canvas.size.y - _prompt_panel.size.y - HUD_MARGIN)
+
+
+func _size_wrapped_label(label: Label, width: float) -> void:
+	var font := label.get_theme_font("font")
+	var font_size := label.get_theme_font_size("font_size")
+	var text_width := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	label.custom_minimum_size.x = minf(ceilf(text_width) + 1.0, width)
 
 
 func _notification(what: int) -> void:

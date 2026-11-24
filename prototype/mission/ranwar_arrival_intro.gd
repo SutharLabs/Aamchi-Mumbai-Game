@@ -64,4 +64,4 @@ func advance(delta: float, camera: Camera3D) -> bool:
 func subtitle() -> String:
 	if elapsed < STEP_OUT:
 		return "Bandra West, Mumbai\nOmkar Shirodkar steps into a city he barely knows."
-	return "Mira said the print shop is hiring.\nFind the Hill Road job board when you’re ready."
+	return ""

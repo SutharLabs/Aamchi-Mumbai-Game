@@ -11,6 +11,20 @@ const GRAVITY := 18.0
 const JUMP_VELOCITY := 4.45
 const TAKEOFF_TIME := 0.08
 const LANDING_TIME := 0.15
+const WALK_STEP_DISTANCE := 0.595
+# First supported frames in the captured run, as checked by run_foot_contact_smoke.gd.
+const RUN_RIGHT_CONTACT := 5.0 / 30.0
+const RUN_LEFT_CONTACT := 16.0 / 30.0
+const WALK_STEPS := [
+	preload("res://shared/audio/sandal-walk-1.wav"),
+	preload("res://shared/audio/sandal-walk-2.wav"),
+	preload("res://shared/audio/sandal-walk-3.wav"),
+]
+const RUN_STEPS := [
+	preload("res://shared/audio/sandal-run-1.wav"),
+	preload("res://shared/audio/sandal-run-2.wav"),
+	preload("res://shared/audio/sandal-run-3.wav"),
+]
 
 enum { GROUNDED, TAKEOFF, AIRBORNE, LANDING }
 
@@ -25,6 +39,12 @@ var _impact := ImpactReaction.new()
 var _jump_stage := GROUNDED
 var _jump_seconds := 0.0
 var _jump_requested := false
+var _step_player := AudioStreamPlayer3D.new()
+var _walk_steps: AudioStreamRandomizer
+var _run_steps: AudioStreamRandomizer
+var _walk_distance := 0.0
+var _last_run_position := -1.0
+var _right_foot_next := false
 
 
 func _ready() -> void:
@@ -39,6 +59,13 @@ func _ready() -> void:
 	visual.name = "CharacterVisual"
 	visual.wears_dhotar = true
 	add_child(visual)
+	_walk_steps = _step_bank(WALK_STEPS)
+	_run_steps = _step_bank(RUN_STEPS)
+	_step_player.name = "Sandals"
+	_step_player.unit_size = 3.0
+	_step_player.max_distance = 12.0
+	_step_player.max_polyphony = 1
+	add_child(_step_player)
 
 
 func set_on_foot(enabled: bool) -> void:
@@ -51,6 +78,9 @@ func set_on_foot(enabled: bool) -> void:
 	running = false
 	_jump_stage = GROUNDED
 	_jump_requested = false
+	_reset_step_timing()
+	if not enabled:
+		_step_player.stop()
 	if is_reacting():
 		_impact.reset(_collider, visual)
 	visual.animation_player.active = enabled
@@ -82,6 +112,7 @@ func _physics_process(delta: float) -> void:
 	_jump_requested = false
 	if _impact.step(self, _collider, visual, delta):
 		_jump_stage = GROUNDED
+		_reset_step_timing()
 		return
 	if jump and _jump_stage == GROUNDED and is_on_floor():
 		_jump_stage = TAKEOFF
@@ -106,6 +137,58 @@ func _physics_process(delta: float) -> void:
 	if _jump_stage == GROUNDED:
 		var travel := get_real_velocity()
 		visual.set_ground_speed(Vector2(travel.x, travel.z).length())
+	_update_steps()
+
+
+func _step_bank(samples: Array) -> AudioStreamRandomizer:
+	var bank := AudioStreamRandomizer.new()
+	bank.playback_mode = AudioStreamRandomizer.PLAYBACK_RANDOM_NO_REPEATS
+	bank.random_pitch = 1.025
+	for sample: AudioStreamWAV in samples:
+		bank.add_stream(-1, sample)
+	return bank
+
+
+func _reset_step_timing() -> void:
+	_walk_distance = 0.0
+	_last_run_position = -1.0
+
+
+func _update_steps() -> void:
+	var clip := visual.animation_player.current_animation
+	if not is_on_floor() or _jump_stage != GROUNDED or clip not in [&"walk", &"run"]:
+		_reset_step_timing()
+		return
+	if clip == &"run":
+		_walk_distance = 0.0
+		var current := visual.animation_player.current_animation_position
+		var previous := _last_run_position
+		_last_run_position = current
+		if previous < 0.0 or previous == current:
+			return
+		if current < previous:
+			previous -= visual.animation_player.current_animation_length
+		if previous < RUN_LEFT_CONTACT and current >= RUN_LEFT_CONTACT:
+			_play_step(true, false)
+		elif previous < RUN_RIGHT_CONTACT and current >= RUN_RIGHT_CONTACT:
+			_play_step(true, true)
+		return
+	_last_run_position = -1.0
+	var moved := get_position_delta()
+	_walk_distance += Vector2(moved.x, moved.z).length()
+	if _walk_distance >= WALK_STEP_DISTANCE:
+		_play_step(false, _right_foot_next)
+		_right_foot_next = not _right_foot_next
+		_walk_distance = fmod(_walk_distance, WALK_STEP_DISTANCE)
+
+
+func _play_step(is_run: bool, right: bool) -> void:
+	_step_player.position = Vector3(0.10 if right else -0.10, 0.04, 0.0)
+	var bank := _run_steps if is_run else _walk_steps
+	if _step_player.stream != bank:
+		_step_player.stream = bank
+	_step_player.volume_linear = 0.50 if is_run else 0.35
+	_step_player.play()
 
 
 func _advance_jump(delta: float) -> void:

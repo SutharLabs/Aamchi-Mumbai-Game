@@ -32,6 +32,15 @@ func _run() -> void:
 		"Omkar is animated stepping down onto the bus-stop pavement")
 	_expect(game.player.visual.animation_player.current_animation == &"walk",
 		"the disembark uses the skinned walking animation")
+	var dialogue = game.dialogue
+	_expect(dialogue._player.playing and dialogue._caption.text.begins_with("Omkar:") and dialogue._card.visible,
+		"the bus arrival plays Omkar's voice with a separate caption")
+	dialogue.configure(true, false, true, 0.4, game.hud.touch_enabled)
+	_expect(not dialogue._caption.text.begins_with("Omkar:") and dialogue._caption.get_theme_font_size("font_size") == 25
+		and is_equal_approx(dialogue._player.volume_linear, 0.4), "speaker, subtitle size and dialogue volume are independent")
+	dialogue.configure(false, true, false, 1.0, game.hud.touch_enabled)
+	_expect(not dialogue._card.visible and dialogue._player.playing, "turning subtitles off leaves dialogue enabled")
+	dialogue.configure(true, true, false, 1.0, game.hud.touch_enabled)
 	_expect(opening._bus._doors[1].position.z - opening._bus._doors[0].position.z > 1.4,
 		"the curb-side doors visibly open before the player steps outside")
 	if DisplayServer.get_name() != "headless" and "--capture" in OS.get_cmdline_user_args():

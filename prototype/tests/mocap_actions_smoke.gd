@@ -27,9 +27,12 @@ func _run() -> void:
 	key.physical_keycode = KEY_SPACE
 	key.pressed = true
 	Input.parse_input_event(key)
+	Input.flush_buffered_events()
 	await _frames(3)
-	key.pressed = false
-	Input.parse_input_event(key)
+	var key_up := key.duplicate() as InputEventKey
+	key_up.pressed = false
+	Input.parse_input_event(key_up)
+	Input.flush_buffered_events()
 	_expect(motion.assigned_animation == &"jump_takeoff" and not player.can_interact(),
 		"Space starts recorded takeoff and gates interaction")
 	await _frames(17)
@@ -54,9 +57,12 @@ func _run() -> void:
 		pad.button_index = JOY_BUTTON_LEFT_SHOULDER
 		pad.pressed = true
 		Input.parse_input_event(pad)
+		Input.flush_buffered_events()
 		await _frames(1)
-		pad.pressed = false
-		Input.parse_input_event(pad)
+		var pad_up := pad.duplicate() as InputEventJoypadButton
+		pad_up.pressed = false
+		Input.parse_input_event(pad_up)
+		Input.flush_buffered_events()
 	await _frames(17)
 	_expect(player.position.y > 0.34 and motion.assigned_animation == &"jump_air",
 		"touch Jump or gamepad LB enters the same airborne phase")

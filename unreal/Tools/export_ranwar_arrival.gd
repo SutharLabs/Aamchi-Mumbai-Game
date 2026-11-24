@@ -1,9 +1,19 @@
 extends "./export_ranwar_vehicles.gd"
-## Bake the existing arrival coach and two civilian looks for Unreal.
+## Bake the arrival coach and the arrival and parcel contact looks for Unreal.
 
 const Bus := preload("res://world/arrival_bus.gd")
 const Civilian := preload("res://character/locomotion_visual.gd")
 const UNREAL_AXES := Basis(Vector3.UP, -PI / 2.0)
+const CIVILIANS := [
+	["AnjaliKurta", Color("8b513c"), false, true, 0.94, 0],
+	["Pedestrian", Color("587e77"), true, false, 1.00, 0],
+	["Farah", Color("6c536f"), false, true, 0.97, 1],
+	["Nitin", Color("a5744f"), true, false, 1.03, 0],
+	["Leena", Color("809262"), false, true, 0.99, 2],
+	["Iqbal", Color("62788d"), false, false, 0.98, 0],
+	["Ravi", Color("786859"), true, false, 1.00, 0],
+	["Kavita", Color("567c75"), false, true, 0.96, 1],
+]
 
 
 func _export() -> void:
@@ -16,10 +26,11 @@ func _export() -> void:
 	var result := DirAccess.make_dir_recursive_absolute(output)
 	if result == OK:
 		result = _write_mesh(_bake_bus(), "BestBus", output)
-	if result == OK:
-		result = _write_mesh(_bake_civilian(Color("8b513c"), false), "Anjali", output)
-	if result == OK:
-		result = _write_mesh(_bake_civilian(Color("587e77"), true), "Pedestrian", output)
+	for entry: Array in CIVILIANS:
+		if result != OK:
+			break
+		var mesh := _bake_civilian(entry[0], entry[1], entry[2], entry[3], entry[4], entry[5])
+		result = _write_mesh(mesh, entry[0], output)
 	if result != OK:
 		printerr("Ranwar arrival export failed: ", error_string(result))
 	quit(result)
@@ -37,10 +48,15 @@ func _bake_bus() -> ArrayMesh:
 	return mesh
 
 
-func _bake_civilian(shirt: Color, overshirt: bool) -> ArrayMesh:
+func _bake_civilian(identity: String, shirt: Color, overshirt: bool, kurta_with_dupatta: bool,
+		stature: float, hair_style: int) -> ArrayMesh:
 	var actor := Civilian.new()
 	actor.shirt_color = shirt
 	actor.wears_overshirt = overshirt
+	actor.wears_kurta_with_dupatta = kurta_with_dupatta
+	actor.kurta_hair_style = hair_style
+	if identity in ["Ravi", "Kavita"]:
+		actor.face_variant = identity
 	root.add_child(actor)
 	actor.animation_player.seek(0.32, true)
 	actor.skeleton.force_update_all_bone_transforms()
@@ -70,7 +86,7 @@ func _bake_civilian(shirt: Color, overshirt: bool) -> ArrayMesh:
 				position += weight * (pose * positions[index])
 				normal += weight * (pose.basis * normals[index])
 				tangent += weight * (pose.basis * source_tangent)
-		positions[index] = UNREAL_AXES * position
+		positions[index] = UNREAL_AXES * (position * stature)
 		normals[index] = (UNREAL_AXES * normal).normalized()
 		var rotated := (UNREAL_AXES * tangent).slide(normals[index]).normalized()
 		tangents[4 * index] = rotated.x

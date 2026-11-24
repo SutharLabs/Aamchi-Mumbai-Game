@@ -7,16 +7,17 @@ const UNLOAD_DISTANCE := 224.0
 const REFRESH_INTERVAL := 0.20
 
 
-class BoxVisual:
+class ChunkVisual:
 	var label: String
 	var pose: Transform3D
 	var size: Vector3
 	var material: Material
+	var mesh: Mesh
 
 
 class Chunk:
 	var bounds: Rect2
-	var visuals: Array[BoxVisual] = []
+	var visuals: Array[ChunkVisual] = []
 	var node: Node3D
 
 
@@ -33,16 +34,28 @@ var _time_until_refresh := REFRESH_INTERVAL
 
 
 func register_box(anchor: Vector3, label: String, at: Vector3, size: Vector3, yaw: float, material: Material) -> void:
+	var visual := ChunkVisual.new()
+	visual.label = label
+	visual.pose = Transform3D(Basis(Vector3.UP, yaw), at)
+	visual.size = size
+	visual.material = material
+	_register_visual(anchor, visual)
+
+
+func register_mesh(anchor: Vector3, label: String, pose: Transform3D, mesh: Mesh) -> void:
+	var visual := ChunkVisual.new()
+	visual.label = label
+	visual.pose = pose
+	visual.mesh = mesh
+	_register_visual(anchor, visual)
+
+
+func _register_visual(anchor: Vector3, visual: ChunkVisual) -> void:
 	var cell := Vector2i(floori(anchor.x / CHUNK_SIZE), floori(anchor.z / CHUNK_SIZE))
 	if not _chunks.has(cell):
 		var chunk := Chunk.new()
 		chunk.bounds = Rect2(Vector2(cell) * CHUNK_SIZE, Vector2.ONE * CHUNK_SIZE)
 		_chunks[cell] = chunk
-	var visual := BoxVisual.new()
-	visual.label = label
-	visual.pose = Transform3D(Basis(Vector3.UP, yaw), at)
-	visual.size = size
-	visual.material = material
 	_chunks[cell].visuals.append(visual)
 	_total_meshes += 1
 
@@ -111,14 +124,17 @@ func _load_chunk(cell: Vector2i) -> void:
 	var chunk := _chunks[cell]
 	var group := Node3D.new()
 	group.name = "VisualChunk_%d_%d" % [cell.x, cell.y]
-	for visual: BoxVisual in chunk.visuals:
+	for visual: ChunkVisual in chunk.visuals:
 		var instance := MeshInstance3D.new()
 		instance.name = visual.label
 		instance.transform = visual.pose
-		var mesh := BoxMesh.new()
-		mesh.size = visual.size
-		instance.mesh = mesh
-		instance.material_override = visual.material
+		if visual.mesh != null:
+			instance.mesh = visual.mesh
+		else:
+			var mesh := BoxMesh.new()
+			mesh.size = visual.size
+			instance.mesh = mesh
+			instance.material_override = visual.material
 		group.add_child(instance)
 	add_child(group)
 	chunk.node = group

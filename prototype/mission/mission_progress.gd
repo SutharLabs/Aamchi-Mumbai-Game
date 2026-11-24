@@ -6,38 +6,82 @@ const VERSION := 1
 const MAX_FILE_BYTES := 2048
 const MAX_PROFILE_ID := 2147483647
 const RECEIPT_SUFFIX := ".receipt"
+const LEDGER_ID := "hill_road_ledger"
+const LEDGER_COLLECT := &"collect"
+const LEDGER_HANDOFF := &"handoff"
+const LEDGER_COMPLETED := &"completed"
 
 var _profile_id: String
 var _path := ""
 var _career_path := ""
 var _arrival_path := ""
+var _ledger_path := ""
 
 
-func _init(profile_id: String, directory: String = "user://") -> void:
+func _init(profile_id: String, directory: String = "user://", generation: int = 0) -> void:
 	_profile_id = profile_id
-	if not _valid_profile_id(profile_id):
+	if not _valid_profile_id(profile_id) or generation < 0 or generation > MAX_PROFILE_ID:
 		return
 	# Alternate directories keep smoke fixtures away from actual profile saves.
 	var folder := directory.get_file()
 	if directory != "user://" and (directory != "user://" + folder or not folder.is_valid_filename() or folder.begins_with(".")):
 		return
-	_path = directory.path_join("mission-progress-%s.json" % profile_id)
-	_career_path = directory.path_join("career-progress-%s.json" % profile_id)
-	_arrival_path = directory.path_join("arrival-%s.json" % profile_id)
+	var slot := profile_id if generation == 0 else "%s-%d" % [profile_id, generation]
+	_path = directory.path_join("mission-progress-%s.json" % slot)
+	_career_path = directory.path_join("career-progress-%s.json" % slot)
+	_arrival_path = directory.path_join("arrival-%s.json" % slot)
+	_ledger_path = directory.path_join("ledger-progress-%s.json" % slot)
+
+
+func has_progress() -> bool:
+	return arrival_seen() or not load_snapshot().is_empty() or not load_career().is_empty() or has_incompatible_save() \
+		or load_ledger_checkpoint() != LEDGER_COLLECT or has_incompatible_ledger()
+
+
+func save_files_exist() -> bool:
+	if _path.is_empty():
+		return false
+	for path: String in [_path, _path + ".bak", _path + RECEIPT_SUFFIX, _career_path, _career_path + ".bak", _arrival_path,
+			_ledger_path, _ledger_path + ".bak", _ledger_path + RECEIPT_SUFFIX]:
+		if FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(path):
+			return true
+	return false
 
 
 func load_snapshot() -> Dictionary:
-	if _path.is_empty():
+	return _load_checkpoint(_path, _validated_snapshot)
+
+
+func load_ledger_checkpoint() -> StringName:
+	var saved := _load_checkpoint(_ledger_path, _validated_ledger_snapshot)
+	return StringName(saved.get("state", LEDGER_COLLECT))
+
+
+func _load_checkpoint(path: String, validate: Callable) -> Dictionary:
+	if path.is_empty():
 		return {}
-	var receipt := _validated_snapshot(_read_document(_path + RECEIPT_SUFFIX))
+	var receipt: Dictionary = validate.call(_read_document(path + RECEIPT_SUFFIX))
 	if _is_completed(receipt):
 		return receipt
-	return _select_snapshot(_read_document(_path), _read_document(_path + ".bak"))
+	return _select_snapshot(_read_document(path), _read_document(path + ".bak"), validate)
 
 
 func has_incompatible_save() -> bool:
 	return not _path.is_empty() and _has_protected_document(
 		_read_document(_path), _read_document(_path + ".bak"), _read_document(_path + RECEIPT_SUFFIX))
+
+
+func has_incompatible_ledger() -> bool:
+	if _ledger_path.is_empty():
+		return false
+	for path: String in [_ledger_path, _ledger_path + ".bak", _ledger_path + RECEIPT_SUFFIX]:
+		var document := _read_document(path)
+		if _protected_document(document):
+			return true
+		var mission: Variant = document.get("mission")
+		if mission is Dictionary and mission.has("mission_id") and mission["mission_id"] != LEDGER_ID:
+			return true
+	return false
 
 
 func arrival_seen() -> bool:
@@ -102,31 +146,48 @@ func _validated_career(document: Dictionary) -> Dictionary:
 
 
 func save_snapshot(snapshot: Dictionary) -> bool:
-	if _path.is_empty() or not Delivery.valid_snapshot(snapshot):
+	if not Delivery.valid_snapshot(snapshot):
 		return false
-	var primary := _read_document(_path)
-	var backup := _read_document(_path + ".bak")
-	var receipt := _read_document(_path + RECEIPT_SUFFIX)
+	return _save_checkpoint(_path, snapshot, _validated_snapshot)
+
+
+func save_ledger_checkpoint(state: StringName) -> bool:
+	if state not in [LEDGER_COLLECT, LEDGER_HANDOFF, LEDGER_COMPLETED] or has_incompatible_ledger():
+		return false
+	var current := load_ledger_checkpoint()
+	if state == LEDGER_COLLECT and current != LEDGER_HANDOFF:
+		return false
+	if state == LEDGER_COMPLETED and current == LEDGER_COLLECT:
+		return false
+	return _save_checkpoint(_ledger_path, {"mission_id": LEDGER_ID, "state": String(state)}, _validated_ledger_snapshot)
+
+
+func _save_checkpoint(path: String, snapshot: Dictionary, validate: Callable) -> bool:
+	if path.is_empty():
+		return false
+	var primary := _read_document(path)
+	var backup := _read_document(path + ".bak")
+	var receipt := _read_document(path + RECEIPT_SUFFIX)
 	if _has_protected_document(primary, backup, receipt):
 		return false
-	var completed_receipt := _is_completed(_validated_snapshot(receipt))
+	var completed_receipt := _is_completed(validate.call(receipt))
 	var completing := _is_completed(snapshot)
-	if not completing and (completed_receipt or _is_completed(_select_snapshot(primary, backup))):
+	if not completing and (completed_receipt or _is_completed(_select_snapshot(primary, backup, validate))):
 		return false
-	var directory := ProjectSettings.globalize_path(_path.get_base_dir())
+	var directory := ProjectSettings.globalize_path(path.get_base_dir())
 	if DirAccess.make_dir_recursive_absolute(directory) != OK:
 		return false
 	var document := {"version": VERSION, "profile_id": _profile_id, "mission": snapshot}
 	# Only completion can write the receipt. Checkpoint writers that already
 	# passed the earlier read cannot roll back the committed result.
-	if completing and not completed_receipt and not _write_atomic(_path + RECEIPT_SUFFIX, document):
+	if completing and not completed_receipt and not _write_atomic(path + RECEIPT_SUFFIX, document):
 		return false
-	if _validated_snapshot(primary) != snapshot and not _write_atomic(_path, document):
+	if validate.call(primary) != snapshot and not _write_atomic(path, document):
 		if not completing:
 			return false
 		push_warning("Mission completion was recorded. The primary save could not be refreshed.")
 	# Retain the latest good state for recovery, including for older builds.
-	if _validated_snapshot(backup) != snapshot and not _write_atomic(_path + ".bak", document):
+	if validate.call(backup) != snapshot and not _write_atomic(path + ".bak", document):
 		push_warning("Mission progress was saved. The backup could not be refreshed.")
 	return true
 
@@ -135,9 +196,9 @@ func _has_protected_document(primary: Dictionary, backup: Dictionary, receipt: D
 	return _protected_document(primary) or _protected_document(backup) or _protected_document(receipt)
 
 
-func _select_snapshot(primary: Dictionary, backup: Dictionary) -> Dictionary:
-	var current := _validated_snapshot(primary)
-	var fallback := _validated_snapshot(backup)
+func _select_snapshot(primary: Dictionary, backup: Dictionary, validate: Callable) -> Dictionary:
+	var current: Dictionary = validate.call(primary)
+	var fallback: Dictionary = validate.call(backup)
 	if current.is_empty() or _is_completed(fallback):
 		return fallback
 	return current
@@ -150,6 +211,17 @@ func _validated_snapshot(document: Dictionary) -> Dictionary:
 	var snapshot: Variant = document.get("mission")
 	if snapshot is Dictionary and Delivery.valid_snapshot(snapshot):
 		return snapshot
+	return {}
+
+
+func _validated_ledger_snapshot(document: Dictionary) -> Dictionary:
+	if document.size() != 3 or not _supported_version(document.get("version")) or document.get("profile_id") != _profile_id:
+		return {}
+	var mission: Variant = document.get("mission")
+	if mission is Dictionary and mission.size() == 2 and mission.get("mission_id") == LEDGER_ID:
+		var state: Variant = mission.get("state")
+		if state is String and state in [String(LEDGER_COLLECT), String(LEDGER_HANDOFF), String(LEDGER_COMPLETED)]:
+			return mission
 	return {}
 
 

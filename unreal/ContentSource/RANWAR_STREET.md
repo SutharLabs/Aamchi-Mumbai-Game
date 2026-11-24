@@ -14,6 +14,7 @@ $exports = @{
     export_omkar = 'omkar.glb'
     export_ranwar_vehicles = 'vehicles'
     export_ranwar_arrival = 'arrival'
+    export_ranwar_contacts = 'contacts'
 }
 foreach ($name in $exports.Keys) {
     $exporter = (Resolve-Path "unreal/Tools/$name.gd").Path
@@ -30,7 +31,7 @@ The remote Blender stage needs only `build_ranwar_exchange.py`, the scene JSON, 
 
 ## Import the playable level
 
-With the native MumbaiPilot Editor module compiled in UE 5.8, run `unreal/Tools/create_ranwar_level.py` through Unreal Editor Python. The importer needs `ranwar-level.json`, the street sections and textures, `omkar.glb`, and the `vehicles/` and `arrival/` exchanges under `builds/local/unreal-ranwar/`. Launch the licensed Unreal editor with the project and `-ExecutePythonScript`, using absolute project and script paths.
+With the native MumbaiPilot Editor module compiled in UE 5.8, run `unreal/Tools/create_ranwar_level.py` through Unreal Editor Python. The importer needs `ranwar-level.json`, the street sections and textures, `omkar.glb`, and the `vehicles/`, `arrival/` and `contacts/` exchanges under `builds/local/unreal-ranwar/`. Launch the licensed Unreal editor with the project and `-ExecutePythonScript`, using absolute project and script paths.
 
 ```powershell
 $project = (Resolve-Path 'unreal/AamchiMumbaiUnreal.uproject').Path
@@ -41,6 +42,22 @@ $script = (Resolve-Path 'unreal/Tools/create_ranwar_level.py').Path
 The importer checks each FBX hash, verifies the Unreal axis registration and centimetre scale against the ground mesh and all section bounds, and uses Unreal PBR materials with the supplied textures and vertex tint. It brings in authored wall, floor, doorway, and boundary collision as a dedicated static mesh. The generator creates `/Game/Ranwar/RanwarStreet` and guards an existing map from overwrite. Open that map before using Play In Editor.
 
 The importer registers mission waypoints, parking bays, the bus and arrival cast against the same streets. It brings over the source road directions for the native ambient traffic. The game saves parcel checkpoints in its own Unreal save directory.
+
+Ravi and Kavita each use the original 21-joint cast rig, one skinned surface and a separate breathing loop and handover motion in `/Game/Ranwar/Characters/Contacts/`. The exporter samples the project's existing idle pose and uses weighted shoe vertices to place both motion clips on the same ground plane. The native contact capsule follows the authored map position and the appearance turns toward nearby visitors. A successful interaction triggers the temporary handover gesture. The saved mission and voiced dialogue still use the common route transitions. The earlier posed contact meshes supply a fallback for existing maps. [Grounded pose generation](../../prototype/character/parcel_contact_motion.gd) · [Native contact actor](../Source/MumbaiPilot/RanwarParcelContact.cpp)
+
+## Reusable model library and title art
+
+The map refresh imports the 11 documented original model studies, the adopted Indian street shop and the local Bandra-Worli Sea Link study when its exchange file is available. Look for them under `/Game/ModelLibrary` in Unreal Editor. Input GLBs must contain their geometry and images. The importer records the source SHA-256 on each static mesh and reuses the current import when the source is unchanged. The studies stay available for scene dressing and review. Only map references and the explicit cook paths enter the game automatically. Review scale, collision, materials, source credit and placement before assigning a study to the street. [Asset acceptance](../../docs/ASSET_PRODUCTION_PLAN.md) | [Third-party notices](../../docs/THIRD_PARTY.md)
+
+The original Godot title artwork and rickshaw mark supply the Unreal menu. `ContentSource/UI/title-backdrop.jpg` is a JPEG conversion of `prototype/startup/art/mumbai-dusk.webp`. `Content/Splash/Splash.bmp` is a 720 x 405 conversion of the same image for Unreal's Windows startup splash. Both are checked in so normal builds can use them directly. The level rebuild generates the two runtime title textures under `/Game/Ranwar/UI`. [Brand guide](../../docs/BRAND.md)
+
+## Native daylight and practical lights
+
+An unpaused Ranwar session begins at 10:30 and advances one in-game minute per second. The sky atmosphere, sun, cool night fill, camera exposure and height haze transition together. Ten streetlights cover selected points on Hill Road, St Peter’s Road and both Waroda Road segments. Lenses light up at dusk, including the warmer fixture under the BEST shelter. The Hill Road Tea Room and Chapel Corner Grocer each use a ceiling light and a softer entrance fill. Local lights illuminate nearby surfaces without casting dynamic shadows. [Native clock](../Source/MumbaiPilot/RanwarEnvironment.cpp) · [Epic Sky Lights](https://dev.epicgames.com/documentation/unreal-engine/sky-lights-in-unreal-engine) · [Epic movable lighting](https://dev.epicgames.com/documentation/unreal-engine/movable-light-mobility-in-unreal-engine)
+
+The importer generates one original 512 × 512 cloud mask and one non-solid batch of distant silhouette buildings. The horizon and light fixtures are authored scenery. Use the existing street, door and parcel routes when reviewing them. [Environment importer](../Tools/create_ranwar_environment.py) · [Epic exponential height fog](https://dev.epicgames.com/documentation/unreal-engine/exponential-height-fog-in-unreal-engine)
+
+For matched development captures, keep the camera and resolution fixed and add `-RanwarTime=630` for 10:30, `-RanwarTime=1050` for 17:30 or `-RanwarTime=1290` for 21:30. The flag freezes the clock for the run. The `AamchiMumbai.Ranwar.Playable` smoke accepts `-RanwarClockSmoke` to exercise the phase transitions, lamp states and live clock on a fresh scratch profile. Run `make-dev.ps1 -RefreshMap -SmokeTest` after editing the environment importer. [Windows build workflow](../../docs/BUILD_WORKFLOW.md)
 
 ## Sources
 

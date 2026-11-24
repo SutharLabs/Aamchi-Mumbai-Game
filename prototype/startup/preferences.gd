@@ -37,6 +37,27 @@ var look_sensitivity: float:
 var live_map: bool:
 	get:
 		return _state["settings"]["live_map"]
+var dialogue_volume: float:
+	get:
+		return _state["settings"]["dialogue_volume"]
+var subtitle_enabled: bool:
+	get:
+		return _state["settings"]["subtitle_enabled"]
+var subtitle_speaker_names: bool:
+	get:
+		return _state["settings"]["subtitle_speaker_names"]
+var subtitle_large: bool:
+	get:
+		return _state["settings"]["subtitle_large"]
+var graphics_quality: int:
+	get:
+		return _state["settings"]["graphics_quality"]
+var vsync: bool:
+	get:
+		return _state["settings"]["vsync"]
+var active_campaign_generation: int:
+	get:
+		return _state["campaign_generations"].get(active_profile_id, 0)
 var supports_fullscreen: bool:
 	get:
 		return OS.has_feature("pc") and not OS.has_feature("web")
@@ -111,20 +132,45 @@ func select_profile(id: String) -> Error:
 	return _commit(next_state)
 
 
+func start_new_campaign(generation: int) -> Error:
+	if generation <= active_campaign_generation or generation > _MAX_PROFILE_ID:
+		return ERR_INVALID_PARAMETER
+	var next_state := _state.duplicate(true)
+	next_state["campaign_generations"][active_profile_id] = generation
+	return _commit(next_state)
+
+
 func set_settings(volume: float, use_fullscreen: bool, sensitivity: float, show_live_map: Variant = null) -> Error:
-	if not is_finite(volume) or volume < 0.0 or volume > 1.0:
-		return ERR_INVALID_PARAMETER
-	if not is_finite(sensitivity) or sensitivity < MIN_LOOK_SENSITIVITY or sensitivity > MAX_LOOK_SENSITIVITY:
-		return ERR_INVALID_PARAMETER
-	if show_live_map != null and not show_live_map is bool:
-		return ERR_INVALID_PARAMETER
-	var desktop_fullscreen := use_fullscreen if supports_fullscreen else fullscreen
-	var next_settings := {
+	return update_settings({
 		"master_volume": volume,
-		"fullscreen": desktop_fullscreen,
+		"fullscreen": use_fullscreen,
 		"look_sensitivity": sensitivity,
 		"live_map": live_map if show_live_map == null else show_live_map,
-	}
+	})
+
+
+func update_settings(changes: Dictionary) -> Error:
+	var next_settings: Dictionary = _state["settings"].duplicate()
+	for key: Variant in changes:
+		var value: Variant = changes[key]
+		match key:
+			"master_volume", "dialogue_volume":
+				if not _number_in_range(value, 0.0, 1.0):
+					return ERR_INVALID_PARAMETER
+			"look_sensitivity":
+				if not _number_in_range(value, MIN_LOOK_SENSITIVITY, MAX_LOOK_SENSITIVITY):
+					return ERR_INVALID_PARAMETER
+			"graphics_quality":
+				if not value is int or value < 0 or value > 2:
+					return ERR_INVALID_PARAMETER
+			"fullscreen", "vsync", "live_map", "subtitle_enabled", "subtitle_speaker_names", "subtitle_large":
+				if not value is bool:
+					return ERR_INVALID_PARAMETER
+				if key in ["fullscreen", "vsync"] and not supports_fullscreen:
+					continue
+			_:
+				return ERR_INVALID_PARAMETER
+		next_settings[key] = value
 	if next_settings == _state["settings"]:
 		return OK
 	var next_state := _state.duplicate(true)
@@ -164,7 +210,19 @@ func _default_state() -> Dictionary:
 		"version": _SCHEMA_VERSION,
 		"profiles": entries,
 		"active_profile_id": "1",
-		"settings": {"master_volume": 1.0, "fullscreen": false, "look_sensitivity": 1.0, "live_map": true},
+		"campaign_generations": {},
+		"settings": {
+			"master_volume": 1.0,
+			"dialogue_volume": 1.0,
+			"fullscreen": false,
+			"graphics_quality": 0,
+			"vsync": true,
+			"look_sensitivity": 1.0,
+			"live_map": true,
+			"subtitle_enabled": true,
+			"subtitle_speaker_names": true,
+			"subtitle_large": false,
+		},
 		"control_bindings": Controls.defaults(),
 	}
 
@@ -199,14 +257,21 @@ func _normalize(raw: Dictionary) -> Dictionary:
 		normalized["active_profile_id"] = selected
 	else:
 		normalized["active_profile_id"] = normalized["profiles"][0]["id"]
+	var generations: Variant = raw.get("campaign_generations")
+	if generations is Dictionary:
+		for entry: Dictionary in normalized["profiles"]:
+			var generation: Variant = generations.get(entry["id"])
+			if _number_in_range(generation, 1, _MAX_PROFILE_ID) and generation == int(generation):
+				normalized["campaign_generations"][entry["id"]] = int(generation)
 	var settings: Dictionary = normalized["settings"]
 	settings["master_volume"] = _bounded_number(saved_settings.get("master_volume"), 1.0, 0.0, 1.0)
+	settings["dialogue_volume"] = _bounded_number(saved_settings.get("dialogue_volume"), 1.0, 0.0, 1.0)
 	settings["look_sensitivity"] = _bounded_number(
 		saved_settings.get("look_sensitivity"), 1.0, MIN_LOOK_SENSITIVITY, MAX_LOOK_SENSITIVITY)
-	if saved_settings.get("fullscreen") is bool:
-		settings["fullscreen"] = saved_settings["fullscreen"]
-	if saved_settings.get("live_map") is bool:
-		settings["live_map"] = saved_settings["live_map"]
+	settings["graphics_quality"] = int(_bounded_number(saved_settings.get("graphics_quality"), 0.0, 0.0, 2.0))
+	for key: String in ["fullscreen", "vsync", "live_map", "subtitle_enabled", "subtitle_speaker_names", "subtitle_large"]:
+		if saved_settings.get(key) is bool:
+			settings[key] = saved_settings[key]
 	normalized["control_bindings"] = Controls.normalized(raw.get("control_bindings"))
 	return normalized
 
@@ -248,6 +313,10 @@ func _name_exists(entries: Array[Dictionary], display_name: String, except_id :=
 
 func _is_number(value: Variant) -> bool:
 	return value is int or value is float
+
+
+func _number_in_range(value: Variant, low: float, high: float) -> bool:
+	return _is_number(value) and is_finite(float(value)) and value >= low and value <= high
 
 
 func _bounded_number(value: Variant, fallback: float, low: float, high: float) -> float:
@@ -319,8 +388,10 @@ func _apply_settings() -> void:
 	if master >= 0:
 		AudioServer.set_bus_volume_db(master, linear_to_db(maxf(master_volume, 0.0001)))
 		AudioServer.set_bus_mute(master, master_volume == 0.0)
+	get_window().msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][graphics_quality]
 	if supports_fullscreen and DisplayServer.get_name() != "headless":
 		var window := get_window()
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED, window.get_window_id())
 		var in_fullscreen := window.mode == Window.MODE_FULLSCREEN or window.mode == Window.MODE_EXCLUSIVE_FULLSCREEN
 		if fullscreen != in_fullscreen:
 			window.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED

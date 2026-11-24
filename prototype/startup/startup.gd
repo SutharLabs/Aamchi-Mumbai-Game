@@ -18,11 +18,13 @@ func _ready() -> void:
 	add_child(preferences)
 	preferences.changed.connect(_apply_gameplay_preferences)
 	menu.preferences = preferences
+	menu.progress_available = _active_profile_has_progress
 	var menu_layer := CanvasLayer.new()
 	menu_layer.layer = 10
 	add_child(menu_layer)
 	menu_layer.add_child(menu)
 	menu.play_requested.connect(_start_game)
+	menu.new_game_requested.connect(_start_new_game)
 	menu.resume_requested.connect(_resume_game)
 	menu.main_menu_requested.connect(_return_to_title)
 	menu.abandon_job_requested.connect(_abandon_job)
@@ -71,13 +73,38 @@ func _start_game() -> void:
 	gameplay.process_mode = Node.PROCESS_MODE_PAUSABLE
 	gameplay.startup_pause_enabled = true
 	var profile_id := preferences.active_profile_id
-	gameplay.delivery_progress = MissionProgress.new(profile_id, mission_progress_directory)
+	gameplay.delivery_progress = _active_profile_progress()
 	gameplay.career = _session_careers.get(profile_id)
+	gameplay.dialogue_preferences = preferences
 	_apply_gameplay_preferences()
 	gameplay.pause_requested.connect(_pause_game)
 	add_child(gameplay)
 	_session_careers[profile_id] = gameplay.career
 	_resume_game()
+
+
+func _start_new_game() -> void:
+	if gameplay != null:
+		return
+	if _active_profile_has_progress():
+		var profile := preferences.active_profile_id
+		var generation := preferences.active_campaign_generation + 1
+		# A recovered preferences backup can point to an older run. Keep later files intact.
+		while MissionProgress.new(profile, mission_progress_directory, generation).save_files_exist():
+			generation += 1
+		if preferences.start_new_campaign(generation) != OK:
+			menu.show_new_game_error()
+			return
+		_session_careers.erase(profile)
+	_start_game()
+
+
+func _active_profile_progress() -> MissionProgress:
+	return MissionProgress.new(preferences.active_profile_id, mission_progress_directory, preferences.active_campaign_generation)
+
+
+func _active_profile_has_progress() -> bool:
+	return _active_profile_progress().has_progress()
 
 
 func _pause_game() -> void:
@@ -90,12 +117,12 @@ func _pause_game() -> void:
 	Input.emulate_mouse_from_touch = true
 	var landmarks := {"places": gameplay.world.landmark_markers(), "sea_link": gameplay.world.sea_link_route()}
 	menu.show_pause(gameplay.player.display_name, gameplay.world._roads, gameplay.world._gully,
-		gameplay._actor_position(), gameplay.story_target(), gameplay.delivery.can_abandon(), gameplay.session_status(),
+		gameplay._actor_position(), gameplay.story_target(), gameplay.can_abandon_delivery(), gameplay.session_status(),
 		gameplay.world.facility_markers(), landmarks)
 
 
 func _abandon_job() -> void:
-	if gameplay != null and get_tree().paused and gameplay.delivery.can_abandon():
+	if gameplay != null and get_tree().paused and gameplay.can_abandon_delivery():
 		gameplay.abandon_delivery()
 		_resume_game()
 

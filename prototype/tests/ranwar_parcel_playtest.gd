@@ -39,7 +39,22 @@ func _run() -> void:
 	await _place_player(_game.delivery.target())
 	await _interact()
 	_expect(_game.delivery.flow.state == Delivery.PICKUP and _game.delivery.can_abandon(), "on-foot interaction at the board starts the parcel run")
+	_expect(_game.delivery.get_node_or_null("ParcelPickupCue") == null, "accepting the job stays quiet until physical pickup")
 	var pickup: Vector3 = _game.delivery.target()
+	var ravi: CharacterBody3D = _game.delivery.contact_for(Delivery.PICKUP)
+	var kavita: CharacterBody3D = _game.delivery.contact_for(Delivery.DROPOFF)
+	_expect(ravi.is_on_floor() and kavita.is_on_floor() and is_equal_approx(Vector2(ravi.position.x - pickup.x, ravi.position.z - pickup.z).length(), Route.CONTACT_OFFSET),
+		"Ravi and Kavita stand on the ground at the sides of the existing lane")
+	_expect(_game.delivery._marker.get_child_count() == 0 and _game.delivery._marker.position.y < 0.06,
+		"parcel wayfinding stays at pavement level")
+	_expect(_game.delivery._ravi_parcel.is_visible_in_tree() and not _game.delivery._carried_parcel.visible,
+		"Ravi holds the paper parcel before collection")
+	_expect(_game.delivery._ravi_parcel.bone_idx == ravi.visual.skeleton.find_bone("RightHand")
+		and _game.delivery._carried_parcel.bone_idx == _game.player.visual.skeleton.find_bone("RightHand"),
+		"the parcel follows the shared hand bones")
+	var far_side := pickup + (ravi.position - pickup).slide(Vector3.UP).normalized() * 2.1
+	_expect(far_side.distance_to(ravi.position) < Route.ON_FOOT_RANGE and _game.delivery.prompt_for(far_side).is_empty(),
+		"the nearby pedestrian cannot be interacted with through the lane wall")
 	await _capture("ranwar-parcel-hud.png")
 	await _pause()
 	_press("MapButton")
@@ -58,20 +73,30 @@ func _run() -> void:
 	_expect(reached_hill, "Omkar traverses Nagrana from Waroda toward Hill Road through both bollard gaps")
 	await _interact()
 	_expect(_game.delivery.flow.state == Delivery.DROPOFF, "physical arrival at Hill Road permits the pickup")
+	_expect(_game.delivery._carried_parcel.is_visible_in_tree() and not _game.delivery._ravi_parcel.visible,
+		"the parcel leaves Ravi’s wrist and appears on Omkar’s wrist after the checkpoint commits")
+	var pickup_cue := _game.delivery.get_node_or_null("ParcelPickupCue") as AudioStreamPlayer3D
+	_expect(pickup_cue != null and pickup_cue.stream == Route.PICKUP_CUE
+		and pickup_cue.global_position.is_equal_approx(pickup + Vector3.UP * 0.8),
+		"successful parcel pickup creates the shared positional cue at the handoff")
+	await _assert_exchange(ravi, "ranwar-parcel-ravi.png")
 	var dropoff: Vector3 = _game.delivery.target()
 
 	await _title()
 	_expect(_app.gameplay == null, "Main menu disposes the active level")
 	await _play()
 	_expect(_game.delivery.flow.state == Delivery.DROPOFF and _game.delivery.target().is_equal_approx(dropoff), "reopening Play restores the dropoff checkpoint")
+	_expect(_game.delivery._carried_parcel.is_visible_in_tree(), "Continue restores the carried package")
 	await _recover()
 	_expect(_game.delivery.flow.state == Delivery.FAILED and _game.delivery.flow.checkpoint == Delivery.DROPOFF, "world recovery interrupts the job and keeps the dropoff checkpoint")
+	_expect(not _game.delivery._carried_parcel.visible, "recovery removes the carried parcel until the saved job is retried")
 	await _title()
 	await _play()
 	_expect(_game.delivery.flow.state == Delivery.FAILED, "the retry state survives exit to title and reopen")
 	await _place_player(_game.delivery.target())
 	await _interact()
 	_expect(_game.delivery.flow.state == Delivery.DROPOFF and _game.delivery.target().is_equal_approx(dropoff), "retry at the board restores the collected parcel")
+	_expect(_game.delivery._carried_parcel.is_visible_in_tree(), "retry restores Omkar’s carried parcel")
 
 	var return_path := footway.duplicate()
 	return_path.reverse()
@@ -79,6 +104,9 @@ func _run() -> void:
 	_expect(reached_waroda, "Omkar traverses Nagrana from Hill Road toward Waroda through both bollard gaps")
 	await _interact()
 	_expect(_game.delivery.flow.state == Delivery.COMPLETED and not _game.delivery.target().is_finite(), "walking handoff completes the job and removes the objective")
+	_expect(not _game.delivery._carried_parcel.visible and _game.delivery._kavita_parcel.is_visible_in_tree(),
+		"the handoff removes the carried parcel and gives it to Kavita")
+	await _assert_exchange(_game.delivery.contact_for(Delivery.DROPOFF), "ranwar-parcel-kavita.png")
 	_expect(_game.career.cash == Career.PARCEL_PAY and _game.career.has_lead()
 		and _game.story_target().is_equal_approx(_game._mira.global_position), "completion pays once and directs the player to Mira")
 	var receipt: Dictionary = _game.delivery.flow.snapshot()
@@ -144,7 +172,8 @@ func _run() -> void:
 func _check_career() -> void:
 	await _place_player(_game._mira.global_position + Vector3.LEFT * 1.2)
 	await _interact()
-	_expect(_game.career.lead_seen and not _game.story_target().is_finite(), "talking to Mira logs the lead and removes its marker")
+	_expect(_game.career.lead_seen and _game.story_target().is_equal_approx(_game.ledger.target())
+		and _game.story_target().is_finite(), "talking to Mira logs the lead and points to Asha")
 
 	var wall := _game.world.get_node("ImpactWall") as Node3D
 	await _place_player(_game.car.global_position + Vector3.BACK * 2.45)
@@ -224,7 +253,11 @@ func _check_vehicle_handoffs(pickup: Vector3) -> void:
 	var pickup_basis := Basis(Vector3.UP, atan2(-direction.x, -direction.z))
 	for vehicle: Node3D in [_game.car, _game.rickshaw, _game.motorcycle, _game.scooter]:
 		var parked := vehicle.global_transform
-		await _place_player(parked.origin + parked.basis.x * 2.25)
+		# Parking bays vary. Approach from a side the actual interaction can reach.
+		for side: float in [1.0, -1.0]:
+			await _place_player(parked.origin + parked.basis.x * (2.25 * side))
+			if _game._nearby_interaction() == vehicle and _game._can_reach(vehicle, Vector3.UP * 0.3):
+				break
 		await _interact()
 		var entered: bool = _game.active_vehicle == vehicle
 		_expect(entered, "Interacting takes control of the %s" % vehicle.vehicle_label)
@@ -240,6 +273,29 @@ func _check_vehicle_handoffs(pickup: Vector3) -> void:
 		await _frames(4)
 		if _game.driving:
 			await _interact()
+
+
+func _assert_exchange(contact: Node3D, filename: String) -> void:
+	await _frames(7)
+	var toward_omkar: Vector3 = (_game.player.global_position - contact.global_position).slide(Vector3.UP).normalized()
+	_expect((-contact.global_basis.z).dot(toward_omkar) > 0.92, "%s faces Omkar during the exchange" % contact.name)
+	var crossing := -toward_omkar
+	_expect((-_game.player.global_basis.z).dot(crossing) > 0.92, "Omkar turns to face %s without locking movement" % contact.name)
+	_game._yaw = atan2(-crossing.x, -crossing.z)
+	_game._update_camera(0.0)
+	var shoulder: Vector3 = _game.player.global_position + Vector3.UP * 0.9
+	var horizontal: Vector3 = (_game.camera.global_position - shoulder).slide(Vector3.UP)
+	var sight := PhysicsRayQueryParameters3D.create(shoulder, shoulder + horizontal, 1)
+	_expect(_game.get_world_3d().direct_space_state.intersect_ray(sight).is_empty(),
+		"the shoulder camera stays on Omkar’s side of the wall")
+	if "--voice" in OS.get_cmdline_user_args():
+		_expect(_game.dialogue._player.playing and _game.dialogue._caption.text.begins_with(String(contact.name) + ":"),
+			"%s has a matching spoken line and caption" % contact.name)
+	if DisplayServer.get_name() != "headless" and "--capture" in OS.get_cmdline_user_args():
+		var direction := crossing.rotated(Vector3.UP, 0.93)
+		_game._yaw = atan2(-direction.x, -direction.z)
+		_game._update_camera(0.0)
+		await _capture(filename)
 
 
 func _traverse(path: PackedVector3Array, destination: Vector3) -> bool:
@@ -318,7 +374,7 @@ func _tap(action: StringName) -> void:
 
 
 func _play() -> void:
-	_press("PlayButton")
+	_press("ContinueButton" if _button("ContinueButton") != null else "PlayButton")
 	await _settle_menu()
 	_game = _app.gameplay
 	_game.finish_arrival()

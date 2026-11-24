@@ -222,19 +222,13 @@ def add_geometry(actors, asset_tools, assets, source, manifest, materials):
     return axes
 
 
-def populate(actors, axes, manifest):
+def populate(actors, axes, manifest, source):
     mode = getattr(unreal, "RanwarGameMode", None)
     landmark_class = getattr(unreal, "RanwarLandmark", None)
     if mode is None or landmark_class is None:
         raise RuntimeError("Build the native MumbaiPilot editor module before creating the Ranwar level.")
-    sun = spawn(actors, unreal.DirectionalLight, "Bandra sunlight", rotation=unreal.Rotator(pitch=-43, yaw=-41))
-    sun.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
-    sun.light_component.set_editor_property("atmosphere_sun_light", True)
-    sun.light_component.set_editor_property("intensity", 28000.0)
-    sky = spawn(actors, unreal.SkyLight, "Bandra skylight")
-    sky.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
-    sky.light_component.set_editor_property("real_time_capture", True)
-    spawn(actors, unreal.SkyAtmosphere, "Bandra daylight")
+    from create_ranwar_environment import add_environment
+    add_environment(actors, spawn, axes, manifest, source, import_task, imported)
 
     start_x, start_y, start_z = axes.position(manifest["player_start"]["feet"])
     forward_x, forward_y, _ = axes.position(manifest["player_start"]["forward"])
@@ -263,13 +257,22 @@ def add_parcel_route(actors, axes, manifest, heading):
     source_x, source_y, _ = manifest["player_start"]["forward"]
     across_x, across_y, _ = axes.position((-source_y, source_x, 0.0))
     across = unreal.Vector(across_x / 100.0, across_y / 100.0, 0.0)
-    guide = feet + forward * 1710.0
+    guide = ground_arrival_civilian(route, "Anjali", feet + forward * 1710.0)
     route.set_editor_property("guide_stop", guide)
     right = unreal.Vector(-forward.y, forward.x, 0.0)
-    bus = feet - forward * 272.0 + right * 140.0 - unreal.Vector(0.0, 0.0, 50.0)
-    add_arrival_prop(actors, "BestBus", "Bandra BEST arrival coach", bus, heading, False)
-    add_arrival_prop(actors, "Anjali", "Anjali", guide, heading + 180.0, True)
-    add_arrival_prop(actors, "Pedestrian", "Sameer", feet + forward * 2300.0, heading + 180.0, True)
+    # Use the curb strip so the camera, sidewalk and left-hand traffic lane stay clear.
+    bus = feet - forward * 530.0 + right * 200.0 - unreal.Vector(0.0, 0.0, 45.0)
+    add_arrival_prop(actors, "BestBus", "Bandra BEST arrival coach", bus, heading, True)
+    add_arrival_prop(actors, "AnjaliKurta", "Anjali", guide, heading + 180.0, True)
+    for package, name, distance, lateral, facing in (
+        ("Pedestrian", "Sameer", 2300.0, -1630.0, 15.0),
+        ("Farah", "Farah", 2800.0, 36.0, 180.0),
+        ("Nitin", "Nitin", 3400.0, -1666.0, 175.0),
+        ("Leena", "Leena", 2600.0, -1594.0, 10.0),
+        ("Iqbal", "Iqbal", 3700.0, 36.0, -15.0),
+    ):
+        point = ground_arrival_civilian(route, name, feet + forward * distance + across * lateral)
+        add_arrival_prop(actors, package, name, point, heading + facing, True)
     # The Godot job-board coordinates (-9, 0, 5) convert to (-5, 9, 0) in the exchange.
     route.set_editor_property("job_board", unreal.Vector(*axes.position((-5.0, 9.0, 0.0))))
     footway = [unreal.Vector(*axes.position(point)) for point in manifest["footway"]]
@@ -279,8 +282,33 @@ def add_parcel_route(actors, axes, manifest, heading):
         length = math.sqrt(delta.x ** 2 + delta.y ** 2 + delta.z ** 2)
         return start + delta * min(1.0, distance / length) if length else start
 
-    route.set_editor_property("parcel_pickup", inset(footway[-1], footway[-2], 1300.0))
-    route.set_editor_property("parcel_dropoff", inset(footway[0], footway[1], 1000.0))
+    parcel_pickup = inset(footway[-1], footway[-2], 1300.0)
+    parcel_dropoff = inset(footway[0], footway[1], 1000.0)
+    route.set_editor_property("parcel_pickup", parcel_pickup)
+    route.set_editor_property("parcel_dropoff", parcel_dropoff)
+    # Source metres use (-Godot Z, -Godot X, Godot Y). Contacts stand clear of the lane centre.
+    route.set_editor_property("parcel_pickup_contact",
+                              add_parcel_contact(actors, axes, route, "Ravi", "Iqbal", parcel_pickup, (0.828, -0.352, 0.0)))
+    route.set_editor_property("parcel_dropoff_contact",
+                              add_parcel_contact(actors, axes, route, "Kavita", "Leena", parcel_dropoff, (0.888, -0.148, 0.0)))
+    doors_by_site = {door["osm_way"]: door for door in manifest["doors"]}
+    for site, anchor, stand_in, name in (
+        (360291657, "ledger_pickup", "Farah", "Asha"),
+        (357472313, "ledger_handoff", "Nitin", "Chapel Corner Grocer"),
+    ):
+        door = doors_by_site[site]
+        x, y, z = door["inside"]
+        route.set_editor_property(anchor, unreal.Vector(*axes.position((x, y, z))))
+        dx = door["threshold"][0] - x
+        dy = door["threshold"][1] - y
+        length = math.hypot(dx, dy)
+        toward_x, toward_y = dx / length, dy / length
+        # Match the Godot contact offset beside the clear room-to-door path.
+        point = unreal.Vector(*axes.position((x - toward_x * 0.72 - toward_y * 0.76,
+                                             y - toward_y * 0.72 + toward_x * 0.76, z)))
+        direction_x, direction_y, _ = axes.position((toward_x, toward_y, 0.0))
+        position = ground_arrival_civilian(route, name, point)
+        add_arrival_prop(actors, stand_in, name, position, math.degrees(math.atan2(direction_y, direction_x)), False)
     route.set_editor_property("road_heading", heading)
     route.set_editor_property("loan_bays", [feet + forward * offset + across * 285.0 for offset in (1300.0, 2000.0, 2700.0)])
 
@@ -289,6 +317,58 @@ def add_parcel_route(actors, axes, manifest, heading):
     route.set_editor_property("yard_bays", [unreal.Vector(*axes.position((-z, -x, 0.55))) for x, z in yard_coordinates])
     yard_x, yard_y, _ = axes.position((1.0, 0.0, 0.0))
     route.set_editor_property("yard_heading", math.degrees(math.atan2(yard_y, yard_x)))
+
+
+def add_parcel_contact(actors, axes, route, name, fallback, anchor, source_offset):
+    offset = unreal.Vector(*axes.position(source_offset))
+    feet = ground_arrival_civilian(route, name, anchor + offset)
+    heading = math.degrees(math.atan2(-offset.y, -offset.x))
+    actor = spawn(actors, unreal.RanwarParcelContact, name, (feet.x, feet.y, feet.z), unreal.Rotator(yaw=heading))
+    preferred_path = f"/Game/Ranwar/Arrival/{name}.{name}"
+    fallback_path = f"/Game/Ranwar/Arrival/{fallback}.{fallback}"
+    assets = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
+    mesh = unreal.load_asset(preferred_path if assets.does_asset_exist(preferred_path) else fallback_path)
+    if not isinstance(mesh, unreal.StaticMesh):
+        raise RuntimeError(f"No standing model available for the Ranwar parcel contact {name}.")
+    actor.get_editor_property("appearance").set_static_mesh(mesh)
+    configure_parcel_contact_animation(actor, name)
+    return actor
+
+
+def configure_parcel_contact_animation(actor, name):
+    from import_omkar import CONTACT_DESTINATION
+
+    package = f"{CONTACT_DESTINATION}/{name}"
+    rig = unreal.load_asset(f"{package}/{name}.{name}")
+    breath = unreal.load_asset(f"{package}/{name}Breath.{name}Breath")
+    gesture = unreal.load_asset(f"{package}/{name}Gesture.{name}Gesture")
+    if not isinstance(rig, unreal.SkeletalMesh) or not all(
+        isinstance(clip, unreal.AnimSequence) for clip in (breath, gesture)
+    ):
+        raise RuntimeError(f"No complete skinned contact exchange for {name}.")
+    component = actor.get_editor_property("skeletal_appearance")
+    component.set_skeletal_mesh_asset(rig)
+    scale = 0.96 if name == "Kavita" else 1.0
+    component.set_relative_scale3d(unreal.Vector(scale, scale, scale))
+    actor.set_editor_property("breath_loop", breath)
+    actor.set_editor_property("contact_gesture", gesture)
+
+
+def ground_arrival_civilian(context, name, point):
+    # Arrival feet include the bus step height. The static cast stands on the actual pavement.
+    hit = unreal.SystemLibrary.line_trace_single_for_objects(
+        context, point + unreal.Vector(0.0, 0.0, 60.0), point - unreal.Vector(0.0, 0.0, 180.0),
+        [unreal.ObjectTypeQuery.ECC_WORLD_STATIC], True, [], unreal.DrawDebugTrace.NONE,
+    )
+    if hit is None:
+        raise RuntimeError(f"Could not find pavement below {name}.")
+    # Unreal's native BreakHitResult exposes these values through the Python tuple.
+    blocking, starts_overlapping, _, _, _, impact_point, _, impact_normal, *_ = hit.to_tuple()
+    if not blocking or starts_overlapping or impact_normal.z < 0.7:
+        raise RuntimeError(f"Could not place {name} on a walkable Ranwar collision surface.")
+    grounded = unreal.Vector(point.x, point.y, impact_point.z)
+    unreal.log(f"Ranwar arrival civilian {name}: feet at {grounded.z:.2f} cm.")
+    return grounded
 
 
 def add_arrival_prop(actors, package, label, position, heading, solid):
@@ -300,7 +380,7 @@ def add_arrival_prop(actors, package, label, position, heading, solid):
     component = actor.static_mesh_component
     component.set_static_mesh(mesh)
     component.set_collision_profile_name("BlockAll" if solid else "NoCollision")
-    if package == "Anjali":
+    if package == "AnjaliKurta":
         component.set_collision_response_to_channel(
             unreal.CollisionChannel.ECC_VISIBILITY, unreal.CollisionResponseType.ECR_IGNORE,
         )
@@ -317,6 +397,7 @@ def add_traffic(actors, axes, manifest):
         road.set_editor_property("directions", directions)
         roads.append(road)
     traffic.set_editor_property("roads", roads)
+    traffic.set_editor_property("map_footway", [unreal.Vector(*axes.position(point)) for point in manifest["footway"]])
 
 
 def main():
@@ -329,11 +410,14 @@ def main():
     if assets.does_asset_exist(LEVEL):
         raise RuntimeError(f"{LEVEL} already exists. Move the generated map before rebuilding it.")
     sys.path.insert(0, str(project / "Tools"))
-    from import_omkar import import_omkar
+    from import_model_library import import_model_library
+    from import_omkar import import_omkar, import_parcel_contacts
+    from import_ranwar_title import import_title_art
     from import_ranwar_arrival import import_ranwar_arrival
     from import_ranwar_vehicles import import_ranwar_vehicles
 
     import_omkar(safe_source(source, "omkar.glb"))
+    import_parcel_contacts(source / "contacts")
     import_ranwar_vehicles(source / "vehicles")
     import_ranwar_arrival(source / "arrival")
 
@@ -345,7 +429,9 @@ def main():
     asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
     materials = create_materials(source, manifest["materials"], asset_tools, assets)
     axes = add_geometry(actors, asset_tools, assets, source, manifest, materials)
-    populate(actors, axes, manifest)
+    populate(actors, axes, manifest, source)
+    import_title_art(project)
+    import_model_library(project.parent)
     if not editor.save_map(world, LEVEL):
         raise RuntimeError(f"Could not save {LEVEL}.")
     unreal.log(f"Saved {LEVEL} with {len(manifest['parts'])} FBX sections and {manifest['osm_attribution']}.")

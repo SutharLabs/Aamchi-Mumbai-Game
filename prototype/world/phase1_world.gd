@@ -6,8 +6,14 @@ const RanwarFrontage := preload("res://world/ranwar_frontage.gd")
 const RanwarMappedBuildings := preload("res://world/ranwar_mapped_buildings.gd")
 const RanwarLaneFinish := preload("res://world/ranwar_lane_finish.gd")
 const RanwarSurfaceMaterials := preload("res://world/ranwar_surface_materials.gd")
+const RanwarStreetDetail := preload("res://world/ranwar_street_detail.gd")
 const RanwarVisualChunks := preload("res://world/ranwar_visual_chunks.gd")
 const StPetersApproach := preload("res://world/st_peters_approach.gd")
+const StPetersShelter := preload("res://world/st_peters_shelter.gd")
+const RanwarStopDressing := preload("res://world/ranwar_stop_dressing.gd")
+const RanwarArrivalGreenery := preload("res://world/ranwar_arrival_greenery.gd")
+const ArrivalFrontage := preload("res://world/ranwar_arrival_frontage.gd")
+const HillRoadFrontage := preload("res://world/ranwar_hill_road_frontage.gd")
 const MeenaHillRoad := preload("res://world/meena_hill_road.gd")
 const BandraFacilities := preload("res://world/bandra_facilities.gd")
 const BandraLandmarks := preload("res://world/bandra_landmarks.gd")
@@ -16,6 +22,8 @@ const PAAN_SHOP := preload("res://world/props/indian_street_shop.glb")
 # From OSM way 511064344, with a simplified forecourt along Hill Road.
 const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
 const ST_PETERS_LOT := Rect2(22.6, -375.3, 31.0, 25.4)
+# The existing generated building at the opposite end of the shelter alley.
+const STOP_FRONTAGE_POSITION := Vector3(33.91, 0.0, -329.31)
 const SHOP_LABELS: Array[String] = [
 	"MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY",
 	"LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"
@@ -81,6 +89,7 @@ func _ready() -> void:
 		_gully.append(_project(coordinate))
 	lane_graph = RanwarLaneGraph.new(_roads, ROAD_WIDTHS, AMBIENT_DIRECTIONS)
 	_build_roads()
+	RanwarStreetDetail.add_to(self, _roads, ROAD_WIDTHS, _materials["asphalt"], _materials["frontage_kit"])
 	_build_gully()
 	_build_recovery_yard()
 	_build_st_peters()
@@ -179,7 +188,7 @@ func _build_materials() -> void:
 		"mint": Color("93aba0"), "rose": Color("b58e83"),
 		"blue": Color("879da9"), "gully": Color("8b8980"),
 		"bay": Color("344247"), "bay_cyan": Color("32d7d2"),
-		"white_paint": Color("f1ede2")
+		"white_paint": Color("f1ede2"), "stop_red": Color("823c37")
 	}
 	for key: String in colors:
 		var material := StandardMaterial3D.new()
@@ -412,7 +421,6 @@ func _build_arrival_stop() -> void:
 	_arrival_yaw = atan2(-west.x, -west.z)
 	var deck_top := SIDEWALK_HEIGHT
 	_box("StPetersStopPlatform", shelter + Vector3.UP * (deck_top * 0.5), Vector3(5.0, deck_top, 2.30), "paving", true, shelter_yaw)
-	_box("StPetersStopCanopy", shelter + Vector3.UP * 2.57, Vector3(4.85, 0.12, 2.05), "bay", false, shelter_yaw)
 	var bench := shelter + church_side * 0.49
 	for end: float in [-1.0, 1.0]:
 		var post := shelter + along * (2.08 * end) + church_side * 0.69
@@ -421,16 +429,21 @@ func _build_arrival_stop() -> void:
 		_box("StPetersStopBenchLeg", leg, Vector3(0.12, 0.42, 0.35), "dark", false, shelter_yaw)
 	_box("StPetersStopBenchSeat", bench + Vector3.UP * 0.57, Vector3(2.97, 0.12, 0.50), "curb", true, shelter_yaw)
 	_box("StPetersStopBack", shelter + church_side * 0.70 + Vector3.UP * 1.60,
-		Vector3(4.18, 1.65, 0.10), "bay", true, shelter_yaw)
-	var fascia := _box("StPetersStopFascia", shelter - church_side * 1.01 + Vector3.UP * 2.35,
-		Vector3(4.85, 0.35, 0.08), "bay", false, shelter_yaw)
-	_add_shop_label(fascia, "ST PETER'S CHURCH  /  HILL ROAD", Vector3(0.0, 0.0, 0.048), 0.0, 0.0057)
-	_box("StPetersStopTrim", shelter - church_side * 1.055 + Vector3.UP * 2.54,
-		Vector3(4.85, 0.055, 0.07), "roof", false, shelter_yaw)
+		Vector3(4.18, 1.65, 0.10), "dark", true, shelter_yaw)
+	StPetersShelter.add_kit(self, shelter, shelter_yaw, _materials["frontage_kit"])
+	StPetersShelter.add_curb_detail(self, shelter, shelter_yaw, _materials["frontage_kit"])
+	RanwarStopDressing.add_to(self, shelter, along, church_side, _materials["frontage_kit"])
+	RanwarArrivalGreenery.add_to(self, shelter, along, church_side, _materials["frontage_kit"])
+	# The existing ground plane supports this flush, visual-only apron behind the shelter.
+	_box("StPetersPavedApron", shelter + church_side * 1.69, Vector3(6.4, 0.018, 1.45),
+		"paving", false, shelter_yaw)
+	var fascia := _box("StPetersStopFascia", shelter - church_side * 1.01 + Vector3.UP * 2.34,
+		Vector3(4.85, 0.39, 0.08), "stop_red", false, shelter_yaw)
+	StPetersShelter.add_sign_face(fascia, 0.044, Vector2(4.76, 0.354), StPetersShelter.FASCIA_SIGN)
 	# A small sign on the shelter end makes the stop legible from the arrival position.
 	var end_sign := _box("StPetersStopSign", shelter + along * 2.1 + Vector3.UP * 1.88,
-		Vector3(1.45, 0.33, 0.07), "bay", false, atan2(along.x, along.z))
-	_add_shop_label(end_sign, "BUS STOP", Vector3(0.0, 0.0, 0.042), 0.0, 0.0070)
+		Vector3(1.45, 0.35, 0.07), "stop_red", false, atan2(along.x, along.z))
+	StPetersShelter.add_sign_face(end_sign, 0.039, Vector2(1.36, 0.30), StPetersShelter.END_SIGN)
 
 
 func _build_meena_hill_road() -> void:
@@ -488,7 +501,9 @@ func _build_frontages() -> void:
 						if inner_lane_sample:
 							inner_lane_count += 1
 					else:
-						_add_background_frontage(point, point - across * side * 6.15, angle, height, wall_color)
+						var near_arrival := road_index == 0 and point.distance_squared_to(_arrival_position) < 112.0 * 112.0
+						_add_background_frontage(point, -across * side, angle, height, wall_color,
+							building_count if near_arrival else -1)
 					building_count += 1
 				distance += 24.0
 
@@ -503,12 +518,24 @@ func _frontage_body(point: Vector3, angle: float, height: float) -> StaticBody3D
 	return body
 
 
-func _add_background_frontage(point: Vector3, facing: Vector3, angle: float, height: float, wall_name: String) -> void:
+func _add_background_frontage(point: Vector3, outward: Vector3, angle: float, height: float, wall_name: String,
+		arrival_variant: int) -> void:
 	# The collider remains resident in both visual modes.
-	_frontage_body(point, angle, height)
+	var body := _frontage_body(point, angle, height)
+	var beside_shelter := point.distance_squared_to(STOP_FRONTAGE_POSITION) < 0.04
+	if beside_shelter:
+		var fittings := ArrivalFrontage.create(_materials["frontage_kit"], height)
+		fittings.position.y = -height * 0.5
+		body.add_child(fittings)
 	_visual_chunks.register_box(point, "Facade", point + Vector3.UP * height * 0.5, Vector3(12, height, 13), angle, _materials[wall_name])
 	_visual_chunks.register_box(point, "RoofCap", point + Vector3.UP * (height + 0.15), Vector3(12.6, 0.3, 13.6), angle, _materials["roof"])
-	_visual_chunks.register_box(point, "Porch", facing + Vector3.UP * 2.1, Vector3(9, 0.18, 2.4), angle, _materials["dark"])
+	if arrival_variant >= 0 and not beside_shelter:
+		var front := Transform3D(Basis(Vector3.UP, atan2(outward.x, outward.z)), point + outward * 6.01)
+		var mesh := HillRoadFrontage.create(height, arrival_variant, _materials["frontage_kit"])
+		_visual_chunks.register_mesh(point, "HillRoadStreetFront", front, mesh)
+	else:
+		var canopy := point + outward * 6.52 + Vector3.UP * 2.65
+		_visual_chunks.register_box(point, "Porch", canopy, Vector3(1.2, 0.14, 8.4), angle, _materials["dark"])
 
 
 func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int, photo_gallery: bool) -> void:
@@ -591,6 +618,8 @@ func _build_boundary() -> void:
 
 
 func _label(text: String, at: Vector3) -> void:
+	if "--world-debug-labels" not in OS.get_cmdline_user_args():
+		return
 	var label := Label3D.new()
 	label.text = text
 	label.position = at

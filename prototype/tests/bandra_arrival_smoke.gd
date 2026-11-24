@@ -31,6 +31,21 @@ func _run() -> void:
 		"spawn stands above solid pavement")
 	_check(_ray(world, above_pavement, above_pavement + forward * 8.0).is_empty(),
 		"westbound pedestrian approach is clear of stop and frontage colliders")
+	var clearance := BoxShape3D.new()
+	clearance.size = Vector3(1.80, 1.75, 8.0)
+	var corridor := start + forward * 4.0
+	corridor.y = World.SIDEWALK_HEIGHT + clearance.size.y * 0.5 + 0.01
+	var sweep := PhysicsShapeQueryParameters3D.new()
+	sweep.shape = clearance
+	sweep.collision_mask = 1
+	sweep.transform = Transform3D(Basis(Vector3.UP, world.arrival_yaw()), corridor)
+	_check(world.get_world_3d().direct_space_state.intersect_shape(sweep, 1).is_empty(),
+		"arrival pavement has a clear 1.80 m by 8 m pedestrian corridor")
+	for panel: String in ["StPetersStopFascia", "StPetersStopSign"]:
+		var sign_face := world.get_node_or_null(panel + "/BilingualSignFace") as MeshInstance3D
+		var paint := sign_face.material_override as StandardMaterial3D if sign_face != null else null
+		_check(sign_face != null and sign_face.mesh is QuadMesh and paint != null and paint.albedo_texture != null,
+			"bilingual shelter lettering is visible, exchangeable geometry")
 	var post := world.get_node("StPetersStopPost") as StaticBody3D
 	var post_hit := _ray(world, post.position - forward * 0.22, post.position + forward * 0.22)
 	_check(post_hit.get("collider") == post, "shelter posts have collision")

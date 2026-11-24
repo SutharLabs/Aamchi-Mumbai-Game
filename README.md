@@ -2,12 +2,12 @@
 
 Aamchi Mumbai Game is a solo-developed, stylized open-world driving and mission game set in present-day Mumbai, India. Its original characters and vehicles draw on local references, with a compact Ranwar, Bandra West playtest built for modest hardware.
 
-## Download the 0.0.1 development playtest
+## Download the 0.1.0 development playtest
 
-- **Windows x64.** Download the Windows ZIP, extract it and launch `Aamchi Mumbai Game 0.0.1.exe`. [Windows ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Windows-x64.zip)
-- **Android ARM64.** Download the signed APK to install on your phone. The Android ZIP includes the same APK and the notices. [Android APK](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Android-arm64.apk) · [Android ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.0.1/Aamchi-Mumbai-Game-0.0.1-Android-arm64.zip)
+- **Windows x64 (Unreal).** Extract the complete ZIP and launch `AamchiMumbaiUnreal.exe`. [Windows ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.1.0/Aamchi-Mumbai-Game-0.1.0-Windows-x64.zip)
+- **Android ARM64 (Godot).** Install the signed APK. The Android ZIP contains the same APK and the project notices. [Android APK](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.1.0/Aamchi-Mumbai-Game-0.1.0-Android-arm64.apk) · [Android ZIP](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/download/v0.1.0/Aamchi-Mumbai-Game-0.1.0-Android-arm64.zip)
 
-The playtest includes walking, pedestrian conversations, driving four vehicle types and the Ranwar route. The Windows build was tested on the development PC. The user reported that 0.0.1 ran as expected on the selected Redmi Note 9 Pro Max (India). Detailed input and performance measurements are pending. [Release notes](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1) · [Phase progress](docs/PHASE_PROGRESS.md)
+Explore Ranwar, start the parcel and ledger missions, and drive four vehicle types. The Windows build adds streetlights that turn on at dusk, lighting for the BEST shelter and shops, and animated parcel handovers. [Release notes and test status](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.1.0) · [Earlier 0.0.1 playtest](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1)
 
 ## License
 
@@ -15,15 +15,14 @@ The original project is source-available. You may inspect the public code and ru
 
 ## Start here
 
-New development targets **Unreal Engine 5.8**. The Ranwar migration includes the mapped neighborhood and the original Omkar character and motions. The remote workflow and first native test are documented in [Remote Unreal development](unreal/REMOTE_DEVELOPMENT.md).
+Use **Godot 4.7.2** for rapid gameplay iteration and **Unreal Engine 5.8** for the packaged Windows playtest. Run `.\unreal\Tools\make-dev.ps1 -SmokeTest` to refresh the Windows playtest at `builds/local/unreal-windows/Windows/AamchiMumbaiUnreal.exe`. Start new work from the open-world specification and record its acceptance evidence in the phase tracker. [Unreal setup](unreal/README.md) · [Remote Unreal development](unreal/REMOTE_DEVELOPMENT.md) · [Development builds and releases](docs/BUILD_WORKFLOW.md)
 
-Open `prototype/project.godot` in Godot **4.7.2** and press **F5** to launch the title menu from source. The playtest guide covers controls and export commands. [Godot project](prototype/project.godot) · [Playtest guide](prototype/README.md)
-
-Run `.\tools\make-dev.ps1` to export and validate the local Windows build at `builds/local/Aamchi Mumbai Game.exe`. Use the same path for each playtest. [Development builds and releases](docs/BUILD_WORKFLOW.md)
+Open the Godot project for rapid source playtests or rebuilding local development packages. [Godot project](prototype/project.godot) · [Prototype guide](prototype/README.md)
 
 | Document | Purpose |
 |---|---|
 | [Project record](docs/PROJECT_RECORD.md) | User requirements, decisions versus proposals, completed evidence, open decisions and risks |
+| [Open-world specification](docs/OPEN_WORLD_GAME_SPEC.md) | Requirements, acceptance checks, engineering budgets and implementation work orders |
 | [Phase progress](docs/PHASE_PROGRESS.md) | Current status, completed evidence, remaining tasks, dependencies and exit gate for all seven phases |
 | [Roadmap](docs/ROADMAP.md) | Release envelope, phase durations, effort assumptions and performance targets |
 | [Asset production plan](docs/ASSET_PRODUCTION_PLAN.md) | Reuse/adaptation/original routes, asset priorities, provisional budgets and acceptance process |
@@ -81,7 +80,7 @@ Rebaselined on **22 November 2026** from [GitHub main at `8544233`](https://gith
 
 The game is set entirely in present-day Mumbai, starting in Ranwar, Bandra West. Use current photos, street data and vehicle references with recorded dates and provenance. The Windows playtest opens with a Marathi-branded title menu, local profiles, settings and credits. It has four drivable vehicles and uses captured locomotion for the player and two pedestrians. The release schedule will be re-estimated after both-platform testing with the provisional ten human hours per week. [Playtest guide](prototype/README.md)
 
-The current playable prototype uses **Godot 4.7.2 standard, Compatibility rendering and typed GDScript**. Development release **0.0.1** has Windows x64 and signed Android ARM64 builds. Unreal's compiled gameplay and target-device performance still need verification. [Prototype technology selection](research/TECH_STACK_SELECTION.md) · [Unreal development](unreal/README.md)
+The current Windows development builds in Godot and Unreal include the original Ranwar Parcel Run and **The Hill Road Ledger**. The new mission uses both mapped storefronts, shared dialogue and a one-time ₹400 receipt. The earlier **0.0.1** development release has Windows x64 and signed Android ARM64 builds. Current native Android gameplay and minimum-device performance still need verification. [Phase progress](docs/PHASE_PROGRESS.md) · [Unreal development](unreal/README.md)
 
 The first procedural Blender batch **completed all eleven jobs**. All **77 generated files are collected and match accepted checkpoint hashes**, recorded at **20 November 2026, 06:57:50 IST** in the [collection receipt](reports/remote/epyc24/asset-collection-2026-11-20.json). [Preliminary review](reports/ASSET_REVIEW_2026-11-20.md) selects bay/props first; local architectural, cultural, rig, collision and game checks remain open. The [handoff](docs/OVERNIGHT_HANDOFF.md) preserves earlier observations. No new batch was started.
 

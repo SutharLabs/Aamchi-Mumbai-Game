@@ -6,7 +6,7 @@ Play as **Omkar Shirodkar (ओंकार शिरोडकर)**, wearing an 
 
 Open `project.godot` in Godot 4.7.2 standard and press **F5** to open the title screen. Press **F6** from `phase1.tscn` for direct scene testing. Use the editor to try changes from the current checkout. The earlier **0.0.2** local playtest packages are retained under `../builds/dev/0.0.2/`. [Published 0.0.1 playtest](https://github.com/SutharLabs/Aamchi-Mumbai-Game/releases/tag/v0.0.1)
 
-The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profiles store a local display name and the active selection. The game stores volume, fullscreen, camera sensitivity and control bindings in `user://preferences.json`. On desktop, open **Settings → Control bindings** to remap keyboard keys or gamepad buttons and axes, or restore defaults. Open **Pause → Map** to see the Ranwar driving loop, the Nagrana Lane walking shortcut and your position on foot or in a vehicle. Open **Help → Controls** in either menu for the platform-specific guide. Gameplay shows short interaction prompts, feedback and vehicle speed when relevant. Credits in both menus cover map data, motion capture, the engine and the Marathi font. [Title and credits research](../research/STARTUP_AND_CREDITS.md)
+The title offers **Continue** when the local profile has progress, followed by **New Game**, **Profiles**, **Settings**, **Controls**, **Credits** and **Quit to Desktop** on desktop. **Pause → Map** shows the Ranwar roads, Nagrana Lane walking shortcut and your position on foot or in a vehicle. Open **Controls** for the platform-specific guide. On desktop, open **Settings → Controls → Control Bindings** to remap keyboard and gamepad inputs. Settings persist after **Apply Settings**. [Cross-engine menu and HUD research](../research/MENU_AND_HUD_RESEARCH.md)
 
 | Default input | Action |
 |---|---|
@@ -22,7 +22,7 @@ The title menu provides Play, Profiles, Settings, Help, Credits and Quit. Profil
 
 To follow the ambient traffic circuit, take western Waroda Road from the start toward Veronica. Continue on eastern Waroda to Chapel, take St Peter's Road to Hill Road, then follow Hill Road past the church back toward the start. The Nagrana shortcut has a narrow bollard gap for walking. The handling yard west of the spawn includes a raised ramp, a curb and a barrier. For the road topology and coordinates, see [layout.json](world/layout.json).
 
-Walk up to Mira or Rafiq on Hill Road and press **E** or **A** on a gamepad, or tap **Interact**, when the talk prompt appears. Each pauses to face you and offers a short route tip, then continues walking. Pedestrians yield when their route is blocked and are solid to the player and all four vehicles.
+Walk up to Mira or Rafiq on Hill Road and press **E** or **A** on a gamepad, or tap **Interact**, when the talk prompt appears. Each pauses to face you and offers a short voiced route tip, then continues walking. Omkar speaks during the arrival and Anjali introduces the job board. Hindi voices play offline with English subtitles. Adjust **Dialogue Volume**, **Subtitles**, **Speaker Names** and **Subtitle Size** in Settings. Pedestrians yield when their route is blocked and are solid to the player and all four vehicles. [Dialogue sources](shared/dialogue/SOURCES.md)
 
 To try the curb crossing, drive slowly across the raised west-side curb on Hill Road. All four can climb the curb and come down to street or yard level. The handling yard also has a 22 cm test curb and a solid impact wall. The driving camera softens changes in height as the vehicle crosses the curb. [Vehicle handling notes](vehicle/README.md)
 
@@ -34,7 +34,7 @@ Approach a vehicle and use **Interact**. The prompt shows **Unlock** for loan ve
 
 The hood, roof, lamp and tail shapes vary across four car silhouettes, an auto-rickshaw, four motorcycles and two scooters. Omkar is visible in the right-hand driver's seat of all four car types, including stopped traffic cars you take over. Rotate the camera to see him through the driver's window or windshield. [Vehicle catalogue and manufacturer references](../research/OPEN_MODEL_CATALOGUE.md) · [Vehicle notes](vehicle/README.md)
 
-The lower-right **live map** follows Omkar or the vehicle he is driving and shows nearby routes and objectives. Health, cash, police alert and vehicle condition have their own HUD readouts. Use **Settings → Live map → Apply** to turn the map off. **Pause → Map → District services** shows the real positions of mapped transport and public services beyond the playable stop. [Bandra map scope and sources](../docs/BANDRA_FACILITIES.md)
+The lower-right **live map** follows Omkar or the vehicle he is driving and shows nearby routes and objectives. The current objective sits at the upper left, and actions and subtitles have separate areas. Health, cash, police alert and vehicle condition have their own HUD readouts. Use **Settings → Live Map → Apply Settings** to turn the map off. **Pause → Map → District services** shows the real positions of mapped transport and public services beyond the playable stop. [Bandra map scope and sources](../docs/BANDRA_FACILITIES.md)
 
 Look for the wayside cross beside Waroda Road. Open **Pause → Map → Bandra landmarks** for St Peter's Church, Meena, Mount Mary Basilica, Bandra Fort and the real Sea Link route. Select **View 3D Sea Link** to inspect three views of the 600 m Bandra channel span. [Landmark placement and sources](../docs/BANDRA_LANDMARKS.md)
 
@@ -50,13 +50,19 @@ Use the handling yard’s impact wall to compare a slow tap with a faster crash 
 
 ## Ranwar Parcel Run
 
-Launch with **F5 → Play**. Walk to the orange job marker by the vehicle bays and interact. Pick up the parcel on foot at the Hill Road end of Nagrana Lane, then follow the lane to the Waroda Road end to drop it off. You can use any practice vehicle to reach the lane, then leave it to make the handoff. The HUD shows the current destination and distance. **Pause → Map** shows an orange diamond for the next stop.
+Launch with **F5 → New Game** on a fresh profile or choose **Continue**. Walk to the **Ranwar Deliveries** notice board by the vehicle bays and use **Interact**. Meet Ravi on foot at the Hill Road end of Nagrana Lane. Omkar carries the brown-paper parcel to Kavita at the Waroda Road end. You can use a vehicle to reach the area, then leave it for the exchanges. The HUD shows the next contact and distance, and **Pause → Map** marks the next stop with an orange diamond.
 
 Deliver the parcel to earn **₹500** and unlock **Mira’s lead** on Hill Road. Follow the orange marker and talk to Mira to learn about the print-shop ledger. The payout is awarded once per profile, and the cash balance and story lead appear in the pause menu. Existing completed parcel runs receive the payout when loaded.
 
-**Recover** returns you to the starting point and interrupts an active job. Interact at the job board to retry the last objective. To start over, choose **Pause → Abandon job**. Objective changes save automatically to the active profile. **Main menu → Play** reopens the saved stage at the starting point.
+**Recover** returns you to the starting point and interrupts an active job. Interact at the job board to retry the last objective. To start over, choose **Pause → Abandon job**. Objective changes save automatically to the active profile. **Main Menu → Continue** reopens the saved stage at the starting point.
 
 High-speed impacts can injure Omkar. First aid near the vehicle bays costs **₹60** and restores health. Incapacitation returns Omkar to the recovery point and charges up to **₹100**. Hard collisions with pedestrians or moving traffic can draw a marked patrol. A nearby patrol can detain you while stopped, and **Recover** during an alert also invokes detention. The fine is up to **₹150**. Returning to the title keeps health and alert state for the running session. [Gameplay research and full rules](../research/GTA_GAMEPLAY_REFERENCES.md)
+
+## The Hill Road Ledger
+
+Complete the parcel run and speak to Mira. Follow the new marker to **Hill Road Tea Room**, walk through the open doorway, and use **Interact** beside Asha to take a copy of the ledger. Her voiced line names **Chapel Corner Grocer**. Hill Road, St Peter’s Road, and the Chapel/Waroda approach connect the two shops. From Waroda Road you can use **Jump** to get onto the raised grocer-side curb. Both handoffs require Omkar to be on foot.
+
+Inside the grocer, use **Interact** at the counter to compare the ledger with Mira’s receipts and receive **₹400** once. The HUD and pause map show the current destination. Collecting the copy saves a checkpoint for that profile, so **Recover** or **Main Menu → Continue** keeps the ledger ready for handoff. While carrying the copy, **Pause → Abandon job** saves a return to Asha. Prior parcel progress and spending stay in the same profile. [Ledger playtest](tests/hill_road_ledger_playtest.gd)
 
 ## Local smoke checks
 
@@ -68,6 +74,7 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 300 --script res://tests/startup_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 6500 --script res://tests/phase1_smoke.gd -- --touch-preview
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 6200 --script res://tests/ranwar_parcel_playtest.gd -- --touch-preview
+& $editor --headless --path prototype --fixed-fps 60 --quit-after 6800 --script res://tests/hill_road_ledger_playtest.gd -- --touch-preview --voice
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1800 --script res://tests/vehicle_damage_smoke.gd
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1900 --script res://tests/pedestrian_impact_smoke.gd
 & $editor --headless --path prototype --fixed-fps 60 --quit-after 1300 --script res://tests/mocap_actions_smoke.gd -- --touch-preview
