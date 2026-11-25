@@ -17,6 +17,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "Math/RotationMatrix.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -31,6 +32,8 @@ namespace
     constexpr double StepHeight = 24.0;
     constexpr double ExitSpeed = 75.0;
     constexpr double CameraRestPitch = -12.0;
+    constexpr double VisualSteeringLimit = 25.0;
+    constexpr double MetaHumanSoleAllowance = 1.4;
 
     struct FVehicleSetup
     {
@@ -95,16 +98,382 @@ namespace
     {
         const int32 Joint = Reference.FindBoneIndex(JointName);
         const int32 Child = Reference.FindBoneIndex(ChildName);
-        if (Joint == INDEX_NONE || Child == INDEX_NONE || Reference.GetParentIndex(Child) != Joint)
+        if (Joint == INDEX_NONE || Child == INDEX_NONE)
+        {
+            return;
+        }
+        int32 Parent = Reference.GetParentIndex(Child);
+        while (Parent != INDEX_NONE && Parent != Joint)
+        {
+            Parent = Reference.GetParentIndex(Parent);
+        }
+        if (Parent == INDEX_NONE)
         {
             return;
         }
         const FTransform Component = ToComponentSpace(Reference, Pose, Joint);
-        const FVector CurrentDirection = Component.TransformVectorNoScale(Pose[Child].GetTranslation()).GetSafeNormal();
+        const FVector CurrentDirection =
+            (ToComponentSpace(Reference, Pose, Child).GetLocation() - Component.GetLocation()).GetSafeNormal();
         const FQuat ParentRotation = ToComponentSpace(Reference, Pose, Reference.GetParentIndex(Joint)).GetRotation();
         const FQuat Aim = FQuat::FindBetweenNormals(CurrentDirection, TargetDirection.GetSafeNormal());
         Pose[Joint].SetRotation((ParentRotation.Inverse() * Aim * Component.GetRotation()).GetNormalized());
     }
+
+    void TurnJoint(const FReferenceSkeleton& Reference, TArray<FTransform>& Pose, FName Joint, const FQuat& Turn)
+    {
+        const int32 Index = Reference.FindBoneIndex(Joint);
+        if (Index != INDEX_NONE)
+        {
+            const FQuat Parent = ToComponentSpace(Reference, Pose, Reference.GetParentIndex(Index)).GetRotation();
+            Pose[Index].SetRotation((Parent.Inverse() * Turn * Parent * Pose[Index].GetRotation()).GetNormalized());
+        }
+    }
+
+    void ReachContact(const FReferenceSkeleton& Reference, TArray<FTransform>& Pose,
+        FName Upper, FName Lower, FName Endpoint, const FVector& Target, const FVector& Pole,
+        FName Shoulder = NAME_None)
+    {
+        const int32 UpperIndex = Reference.FindBoneIndex(Upper);
+        const int32 LowerIndex = Reference.FindBoneIndex(Lower);
+        const int32 EndpointIndex = Reference.FindBoneIndex(Endpoint);
+        if (UpperIndex == INDEX_NONE || LowerIndex == INDEX_NONE || EndpointIndex == INDEX_NONE)
+        {
+            return;
+        }
+        FVector Start = ToComponentSpace(Reference, Pose, UpperIndex).GetLocation();
+        const FVector Middle = ToComponentSpace(Reference, Pose, LowerIndex).GetLocation();
+        const FVector End = ToComponentSpace(Reference, Pose, EndpointIndex).GetLocation();
+        const double UpperLength = FVector::Distance(Start, Middle);
+        const double LowerLength = FVector::Distance(Middle, End);
+        // Let the shoulder follow a distant grip before the arm approaches straight extension.
+        const double ExtraReach = FVector::Distance(Start, Target) - 0.92 * (UpperLength + LowerLength);
+        if (!Shoulder.IsNone() && ExtraReach > 0.0)
+        {
+            const int32 ShoulderIndex = Reference.FindBoneIndex(Shoulder);
+            if (ShoulderIndex != INDEX_NONE)
+            {
+                const FVector Base = ToComponentSpace(Reference, Pose, ShoulderIndex).GetLocation();
+                const FVector ShoulderOffset = Start - Base;
+                const FQuat Swing = FQuat::FindBetweenVectors(ShoulderOffset, Target - Base);
+                const double Limit = FMath::Min(FMath::DegreesToRadians(33.0),
+                    FMath::Atan2(ExtraReach, ShoulderOffset.Size()));
+                const double Fraction = FMath::Min(1.0, Limit / FMath::Max(0.01, Swing.GetAngle()));
+                TurnJoint(Reference, Pose, Shoulder, FQuat::Slerp(FQuat::Identity, Swing, Fraction));
+                Start = ToComponentSpace(Reference, Pose, UpperIndex).GetLocation();
+            }
+        }
+        const FVector Offset = Target - Start;
+        const FVector Axis = Offset.GetSafeNormal();
+        const FVector Bend = (Pole - Axis * FVector::DotProduct(Pole, Axis)).GetSafeNormal();
+        if (Axis.IsNearlyZero() || Bend.IsNearlyZero() || UpperLength < 0.1 || LowerLength < 0.1)
+        {
+            return;
+        }
+        const double Reach = FMath::Clamp(Offset.Size(), FMath::Abs(UpperLength - LowerLength) + 0.05,
+            UpperLength + LowerLength - 0.05);
+        const double Along = (FMath::Square(UpperLength) - FMath::Square(LowerLength) + FMath::Square(Reach)) / (2.0 * Reach);
+        const FVector JointOffset = Axis * Along + Bend * FMath::Sqrt(FMath::Max(0.0, FMath::Square(UpperLength) - FMath::Square(Along)));
+        AimJoint(Reference, Pose, Upper, Lower, JointOffset);
+        const FVector SolvedMiddle = ToComponentSpace(Reference, Pose, LowerIndex).GetLocation();
+        AimJoint(Reference, Pose, Lower, Endpoint, Start + Axis * Reach - SolvedMiddle);
+    }
+
+    void SetJointOrientation(const FReferenceSkeleton& Reference, TArray<FTransform>& Pose,
+        int32 Joint, const FQuat& Orientation)
+    {
+        const FQuat Parent = ToComponentSpace(Reference, Pose, Reference.GetParentIndex(Joint)).GetRotation();
+        Pose[Joint].SetRotation((Parent.Inverse() * Orientation).GetNormalized());
+    }
+
+    void WrapFinger(const FReferenceSkeleton& Reference, TArray<FTransform>& Pose, const FName (&Finger)[3],
+        const FVector& Center, const FVector& Axis, const FVector& CurlAxis, double Radius, int32 Side)
+    {
+        for (SIZE_T Segment = 0; Segment < UE_ARRAY_COUNT(Finger); ++Segment)
+        {
+            const int32 Joint = Reference.FindBoneIndex(Finger[Segment]);
+            if (Joint == INDEX_NONE)
+            {
+                return;
+            }
+            const FTransform Current = ToComponentSpace(Reference, Pose, Joint);
+            const FVector Offset = FVector::VectorPlaneProject(Current.GetLocation() - Center, Axis);
+            const double Distance = Offset.Size();
+            if (Distance < UE_SMALL_NUMBER)
+            {
+                return;
+            }
+            const FVector Radial = Offset / Distance;
+            const FVector Tangent = FVector::CrossProduct(CurlAxis, Radial);
+            // Aim each phalanx around the cylinder while leaving room for the finger pad.
+            const double Near = FMath::Min(1.0, Radius / Distance);
+            const FVector Direction = Near * Tangent - FMath::Sqrt(1.0 - Near * Near) * Radial;
+            if (Segment + 1 < UE_ARRAY_COUNT(Finger))
+            {
+                AimJoint(Reference, Pose, Finger[Segment], Finger[Segment + 1], Direction);
+            }
+            else
+            {
+                const FVector CurrentTip = Current.TransformVectorNoScale(-Side * FVector::ForwardVector);
+                const FQuat Aim = FQuat::FindBetweenNormals(CurrentTip, Direction.GetSafeNormal());
+                SetJointOrientation(Reference, Pose, Joint, Aim * Current.GetRotation());
+            }
+        }
+    }
+
+    bool FitMetaHumanGrip(const FReferenceSkeleton& Reference, TArray<FTransform>& Pose,
+        const FName Arm, const FName Elbow, const FName Hand, const FName Shoulder, int32 Side,
+        const FVector& Center, const FVector& KnuckleAxis, const FVector& Forward, const FVector& ElbowPole, double Radius)
+    {
+        static const FName Left[][3] = {
+            {TEXT("index_01_l"), TEXT("index_02_l"), TEXT("index_03_l")},
+            {TEXT("middle_01_l"), TEXT("middle_02_l"), TEXT("middle_03_l")},
+            {TEXT("ring_01_l"), TEXT("ring_02_l"), TEXT("ring_03_l")},
+            {TEXT("pinky_01_l"), TEXT("pinky_02_l"), TEXT("pinky_03_l")},
+            {TEXT("thumb_01_l"), TEXT("thumb_02_l"), TEXT("thumb_03_l")},
+        };
+        static const FName Right[][3] = {
+            {TEXT("index_01_r"), TEXT("index_02_r"), TEXT("index_03_r")},
+            {TEXT("middle_01_r"), TEXT("middle_02_r"), TEXT("middle_03_r")},
+            {TEXT("ring_01_r"), TEXT("ring_02_r"), TEXT("ring_03_r")},
+            {TEXT("pinky_01_r"), TEXT("pinky_02_r"), TEXT("pinky_03_r")},
+            {TEXT("thumb_01_r"), TEXT("thumb_02_r"), TEXT("thumb_03_r")},
+        };
+        const auto& Fingers = Side > 0 ? Right : Left;
+        const int32 Wrist = Reference.FindBoneIndex(Hand);
+        const int32 Middle = Reference.FindBoneIndex(Fingers[1][0]);
+        const int32 Index = Reference.FindBoneIndex(Fingers[0][0]);
+        const int32 Pinky = Reference.FindBoneIndex(Fingers[3][0]);
+        if (Wrist == INDEX_NONE || Middle == INDEX_NONE || Index == INDEX_NONE || Pinky == INDEX_NONE)
+        {
+            return false;
+        }
+        const TArray<FTransform>& Rest = Reference.GetRefBonePose();
+        const FTransform RestWrist = ToComponentSpace(Reference, Rest, Wrist);
+        const FVector RestPalm = ToComponentSpace(Reference, Rest, Middle).GetLocation() - RestWrist.GetLocation();
+        const FVector RestAcross = ToComponentSpace(Reference, Rest, Index).GetLocation()
+            - ToComponentSpace(Reference, Rest, Pinky).GetLocation();
+        const FVector PalmForward = FVector::VectorPlaneProject(Forward, KnuckleAxis).GetSafeNormal();
+        const FVector PalmDown = Side * FVector::CrossProduct(PalmForward, KnuckleAxis);
+        if (RestPalm.IsNearlyZero() || RestAcross.IsNearlyZero() || PalmDown.IsNearlyZero())
+        {
+            return false;
+        }
+
+        // Both axes come from the grip. A forward-only wrist aim leaves palm roll dependent on the elbow.
+        const FQuat RestFrame = FRotationMatrix::MakeFromXY(RestPalm, RestAcross).ToQuat();
+        const FQuat GripFrame = FRotationMatrix::MakeFromXY(PalmForward, KnuckleAxis).ToQuat();
+        const FVector WristTarget = Center - PalmForward * (0.75 * RestPalm.Size()) - PalmDown * (Radius + 1.30);
+        ReachContact(Reference, Pose, Arm, Elbow, Hand, WristTarget, ElbowPole, Shoulder);
+        const FTransform CurrentWrist = ToComponentSpace(Reference, Pose, Wrist);
+        if (const int32 ElbowIndex = Reference.FindBoneIndex(Elbow); ElbowIndex != INDEX_NONE)
+        {
+            const FVector ForearmAxis = (CurrentWrist.GetLocation()
+                - ToComponentSpace(Reference, Pose, ElbowIndex).GetLocation()).GetSafeNormal();
+            const FVector LocalPalmDown = RestWrist.GetRotation().UnrotateVector(RestFrame.RotateVector(Side * FVector::UpVector));
+            const FVector ExistingDown = FVector::VectorPlaneProject(
+                CurrentWrist.TransformVectorNoScale(LocalPalmDown), ForearmAxis).GetSafeNormal();
+            const FVector DesiredDown = FVector::VectorPlaneProject(PalmDown, ForearmAxis).GetSafeNormal();
+            if (!ForearmAxis.IsNearlyZero() && !ExistingDown.IsNearlyZero() && !DesiredDown.IsNearlyZero())
+            {
+                const double Twist = FMath::Atan2(FVector::DotProduct(ForearmAxis, FVector::CrossProduct(ExistingDown, DesiredDown)),
+                    FVector::DotProduct(ExistingDown, DesiredDown));
+                TurnJoint(Reference, Pose, Elbow, FQuat(ForearmAxis, FMath::Clamp(Twist, -1.35, 1.35)));
+            }
+        }
+        SetJointOrientation(Reference, Pose, Wrist, GripFrame * RestFrame.Inverse() * RestWrist.GetRotation());
+
+        const FVector CurlAxis = FVector::CrossProduct(PalmForward, PalmDown);
+        for (int32 Finger = 0; Finger < 4; ++Finger)
+        {
+            WrapFinger(Reference, Pose, Fingers[Finger], Center, KnuckleAxis, CurlAxis, Radius + 0.65, Side);
+        }
+        WrapFinger(Reference, Pose, Fingers[4], Center, KnuckleAxis, -CurlAxis, Radius + 0.60, Side);
+        return true;
+    }
+
+    void AlignFoot(const FReferenceSkeleton& Reference, TArray<FTransform>& Pose,
+        const FName Foot, const FName Toe, const FVector& Direction)
+    {
+        const int32 Ankle = Reference.FindBoneIndex(Foot);
+        const int32 Ball = Reference.FindBoneIndex(Toe);
+        if (Ankle == INDEX_NONE || Ball == INDEX_NONE)
+        {
+            return;
+        }
+        const TArray<FTransform>& Rest = Reference.GetRefBonePose();
+        const FTransform RestAnkle = ToComponentSpace(Reference, Rest, Ankle);
+        const FVector RestDirection = ToComponentSpace(Reference, Rest, Ball).GetLocation() - RestAnkle.GetLocation();
+        const FQuat Aim = FQuat::FindBetweenNormals(RestDirection.GetSafeNormal(), Direction.GetSafeNormal());
+        SetJointOrientation(Reference, Pose, Ankle, Aim * RestAnkle.GetRotation());
+    }
+
+    struct FDriverContacts
+    {
+        // Right-side offsets in centimeters from the ground-centered vehicle mesh origin.
+        FVector GripCenter;
+        FVector GripInward;
+        double GripRadius;
+        FVector Ankle;
+        double TorsoPitch;
+        double KneeSpread;
+        double ToeSlope;
+    };
+
+    FDriverContacts ContactsFor(ERanwarVehicleKind Kind, bool bDetailed)
+    {
+        // Grip centerlines/radii come from the visible cylinder or steering wheel mesh.
+        switch (Kind)
+        {
+        case ERanwarVehicleKind::Rickshaw:
+            return { FVector(57.5, 21.5, 86.7), FVector(0.0, -1.0, 0.0), 2.4,
+                FVector(34.0, 10.5, 55.5), 23.0, 0.25, 0.48 };
+        case ERanwarVehicleKind::Motorcycle:
+            return bDetailed
+                ? FDriverContacts{ FVector(29.55, 32.5, 106.91), FVector(0.40, -1.0, 0.025), 1.8,
+                    FVector(-27.0, 21.0, 39.5), 50.0, 0.90, 0.31 }
+                : FDriverContacts{ FVector(51.1, 30.95, 101.4), FVector(0.0, -1.0, 0.0), 1.8,
+                    FVector(-13.5, 23.0, 37.5), 41.0, 0.90, 0.31 };
+        case ERanwarVehicleKind::Scooter:
+            return bDetailed
+                ? FDriverContacts{ FVector(20.88, 28.8, 97.55), FVector(0.31, -1.0, 0.01), 1.8,
+                    FVector(-4.0, 14.8, 41.6), 44.0, 0.26, 0.50 }
+                : FDriverContacts{ FVector(33.1, 30.85, 105.8), FVector(0.0, -1.0, 0.0), 1.8,
+                    FVector(26.7, 14.1, 36.4), 33.0, 0.26, 0.50 };
+        default:
+            return { FVector(50.05, 13.2, 120.17), FVector(0.283, -0.442, 0.852), 1.8,
+                FVector(47.5, 8.5, 65.0), 35.0, 0.18, 0.31 };
+        }
+    }
+
+    void FitSeatedPose(UPoseableMeshComponent& Rider, const USkeletalMesh& Rig, ERanwarVehicleKind Kind,
+        bool bMetaHuman, const URanwarVehicleVisualProfile* Profile, const USceneComponent* Fork, double SteerAngle)
+    {
+        const FReferenceSkeleton& Reference = Rig.GetRefSkeleton();
+        TArray<FTransform>& Pose = Rider.BoneSpaceTransforms;
+        Pose = Reference.GetRefBonePose();
+        const FDriverContacts Contacts = ContactsFor(Kind, Profile != nullptr);
+        const FTransform& RiderTransform = Rider.GetRelativeTransform();
+        const FVector Right = RiderTransform.InverseTransformVectorNoScale(FVector::RightVector);
+        const FVector Up = RiderTransform.InverseTransformVectorNoScale(FVector::UpVector);
+        const FQuat Lean(Right, FMath::DegreesToRadians(Contacts.TorsoPitch + FMath::Abs(SteerAngle) * 0.28));
+        const FQuat Twist(Up, FMath::DegreesToRadians(SteerAngle * 0.8));
+        const FQuat Torso = Twist * Lean;
+        const FQuat CounterTurn = Torso.Inverse();
+        if (bMetaHuman)
+        {
+            // Spread the lean through the clothed spine and keep the gaze forward without a sharp bend at the collar.
+            static const FName Spine[] = {TEXT("spine_01"), TEXT("spine_02"), TEXT("spine_03"), TEXT("spine_04"), TEXT("spine_05")};
+            static constexpr double SpineWeights[] = {0.52, 0.25, 0.14, 0.07, 0.02};
+            for (SIZE_T Index = 0; Index < UE_ARRAY_COUNT(Spine); ++Index)
+            {
+                TurnJoint(Reference, Pose, Spine[Index], FQuat::Slerp(FQuat::Identity, Torso, SpineWeights[Index]));
+            }
+            TurnJoint(Reference, Pose, TEXT("neck_01"), FQuat::Slerp(FQuat::Identity, CounterTurn, 0.28));
+            TurnJoint(Reference, Pose, TEXT("neck_02"), FQuat::Slerp(FQuat::Identity, CounterTurn, 0.32));
+            TurnJoint(Reference, Pose, TEXT("head"), FQuat::Slerp(FQuat::Identity, CounterTurn, 0.22));
+        }
+        else
+        {
+            TurnJoint(Reference, Pose, TEXT("Spine"), Torso);
+            TurnJoint(Reference, Pose, TEXT("Neck"), CounterTurn);
+        }
+
+        // The hatchback has right-hand drive. The other cockpits are centered.
+        const double CenterY = SetupFor(Kind).DriverHip.Y;
+        for (int32 Side = -1; Side <= 1; Side += 2)
+        {
+            const bool bRight = Side > 0;
+            const auto Bone = [bMetaHuman, bRight](const TCHAR* LeftBone, const TCHAR* RightBone,
+                const TCHAR* MetaHumanLeft, const TCHAR* MetaHumanRight)
+            {
+                return FName(bMetaHuman ? (bRight ? MetaHumanRight : MetaHumanLeft) : (bRight ? RightBone : LeftBone));
+            };
+            FVector GripCenter(Contacts.GripCenter.X, CenterY + Side * Contacts.GripCenter.Y, Contacts.GripCenter.Z);
+            FVector GripInward(Contacts.GripInward.X, Side * Contacts.GripInward.Y, Contacts.GripInward.Z);
+            const FVector Ankle(Contacts.Ankle.X, CenterY + Side * Contacts.Ankle.Y,
+                Contacts.Ankle.Z + (bMetaHuman ? MetaHumanSoleAllowance : 0.0));
+            FVector HandDirection = FVector::ForwardVector;
+            FVector LegacyWrist = GripCenter - FVector(4.0, 0.0, -0.6);
+            if (Profile && Fork)
+            {
+                const FTransform& ForkTransform = Fork->GetRelativeTransform();
+                GripCenter = ForkTransform.TransformPosition(GripCenter - Profile->ForkPivot);
+                LegacyWrist = ForkTransform.TransformPosition(LegacyWrist - Profile->ForkPivot);
+                GripInward = ForkTransform.TransformVectorNoScale(GripInward);
+                HandDirection = ForkTransform.TransformVectorNoScale(HandDirection);
+            }
+            const FName Arm = Bone(TEXT("LeftUpperArm"), TEXT("RightUpperArm"), TEXT("upperarm_l"), TEXT("upperarm_r"));
+            const FName Shoulder = Bone(TEXT("LeftShoulder"), TEXT("RightShoulder"), TEXT("clavicle_l"), TEXT("clavicle_r"));
+            const FName Elbow = Bone(TEXT("LeftLowerArm"), TEXT("RightLowerArm"), TEXT("lowerarm_l"), TEXT("lowerarm_r"));
+            const FName Hand = Bone(TEXT("LeftHand"), TEXT("RightHand"), TEXT("hand_l"), TEXT("hand_r"));
+            const FVector ElbowPole = RiderTransform.InverseTransformVectorNoScale(FVector(-0.20, Side * 0.65, -1.0));
+            const FVector HandForward = RiderTransform.InverseTransformVectorNoScale(HandDirection);
+            const bool bFitGrip = bMetaHuman && FitMetaHumanGrip(Reference, Pose, Arm, Elbow, Hand, Shoulder, Side,
+                RiderTransform.InverseTransformPosition(GripCenter),
+                RiderTransform.InverseTransformVectorNoScale(GripInward).GetSafeNormal(), HandForward, ElbowPole,
+                Contacts.GripRadius / RiderTransform.GetScale3D().X);
+            if (const int32 HandIndex = Reference.FindBoneIndex(Hand); !bFitGrip && HandIndex != INDEX_NONE)
+            {
+                ReachContact(Reference, Pose, Arm, Elbow, Hand, RiderTransform.InverseTransformPosition(LegacyWrist),
+                    ElbowPole, Shoulder);
+                const FQuat Facing = FQuat::FindBetweenNormals(Side * Right, HandForward);
+                const FQuat Rest = ToComponentSpace(Reference, Reference.GetRefBonePose(), HandIndex).GetRotation();
+                const FQuat Current = ToComponentSpace(Reference, Pose, HandIndex).GetRotation();
+                TurnJoint(Reference, Pose, Hand, Facing * Rest * Current.Inverse());
+            }
+
+            const FName Leg = Bone(TEXT("LeftUpperLeg"), TEXT("RightUpperLeg"), TEXT("thigh_l"), TEXT("thigh_r"));
+            const FName Knee = Bone(TEXT("LeftLowerLeg"), TEXT("RightLowerLeg"), TEXT("calf_l"), TEXT("calf_r"));
+            const FName Foot = Bone(TEXT("LeftFoot"), TEXT("RightFoot"), TEXT("foot_l"), TEXT("foot_r"));
+            const FName Toe = Bone(TEXT("LeftToes"), TEXT("RightToes"), TEXT("ball_l"), TEXT("ball_r"));
+            ReachContact(Reference, Pose, Leg, Knee, Foot, RiderTransform.InverseTransformPosition(Ankle),
+                RiderTransform.InverseTransformVectorNoScale(FVector(1.0, Side * Contacts.KneeSpread, 0.28)));
+            const FVector ToeDirection = RiderTransform.InverseTransformVectorNoScale(
+                FVector(1.0, Side * 0.12, -Contacts.ToeSlope));
+            AlignFoot(Reference, Pose, Foot, Toe, ToeDirection);
+        }
+        Rider.MarkRefreshTransformDirty();
+        Rider.RefreshBoneTransforms();
+    }
+}
+
+bool RanwarDriverPose::FitAmbient(UPoseableMeshComponent& Rider, USkeletalMesh& Mesh, ERanwarVehicleKind Kind)
+{
+    const FReferenceSkeleton& Reference = Mesh.GetRefSkeleton();
+    const TArray<FTransform>& Pose = Reference.GetRefBonePose();
+    const bool bMetaHuman = Reference.FindBoneIndex(TEXT("pelvis")) != INDEX_NONE;
+    const int32 Hip = Reference.FindBoneIndex(bMetaHuman ? TEXT("pelvis") : TEXT("Hips"));
+    const int32 Foot = Reference.FindBoneIndex(bMetaHuman ? TEXT("foot_l") : TEXT("LeftFoot"));
+    const int32 Toe = Reference.FindBoneIndex(bMetaHuman ? TEXT("ball_l") : TEXT("LeftToes"));
+    if (Hip == INDEX_NONE || Foot == INDEX_NONE || Toe == INDEX_NONE)
+    {
+        return false;
+    }
+    const FVector Forward = (ToComponentSpace(Reference, Pose, Toe).GetLocation()
+        - ToComponentSpace(Reference, Pose, Foot).GetLocation()).GetSafeNormal2D();
+    if (Forward.IsNearlyZero())
+    {
+        return false;
+    }
+    const FVehicleSetup& Spec = SetupFor(Kind);
+    const FQuat Facing(FVector::UpVector, -FMath::Atan2(Forward.Y, Forward.X));
+    Rider.SetSkinnedAssetAndUpdate(&Mesh, true);
+    Rider.SetRelativeScale3D(FVector(Spec.DriverScale));
+    Rider.SetRelativeRotation(Facing);
+    Rider.SetRelativeLocation(Spec.DriverHip
+        - Facing.RotateVector(ToComponentSpace(Reference, Pose, Hip).GetLocation() * Spec.DriverScale));
+    FitSeatedPose(Rider, Mesh, Kind, bMetaHuman, nullptr, nullptr, 0.0);
+    Rider.SetVisibility(true);
+    return true;
+}
+
+bool URanwarVehicleVisualProfile::HasValidGeometry() const
+{
+    return Body && Fork && FrontWheel && RearWheel
+        && !ForkPivot.ContainsNaN() && !FrontWheelPivot.ContainsNaN() && !RearWheelPivot.ContainsNaN()
+        && !SteeringAxis.ContainsNaN() && SteeringAxis.IsNormalized() && !DriverHip.ContainsNaN()
+        && FrontWheelRadius >= 10.0 && FrontWheelRadius <= 60.0
+        && RearWheelRadius >= 10.0 && RearWheelRadius <= 60.0;
 }
 
 ARanwarVehicle::ARanwarVehicle()
@@ -122,6 +491,19 @@ ARanwarVehicle::ARanwarVehicle()
     VehicleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VehicleMesh"));
     VehicleMesh->SetupAttachment(Chassis);
     VehicleMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    VisualFork = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualFork"));
+    VisualFork->SetupAttachment(VehicleMesh);
+    VisualFrontWheel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualFrontWheel"));
+    VisualFrontWheel->SetupAttachment(VisualFork);
+    VisualRearWheel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRearWheel"));
+    VisualRearWheel->SetupAttachment(VehicleMesh);
+    for (UStaticMeshComponent* Visual : {VisualFork.Get(), VisualFrontWheel.Get(), VisualRearWheel.Get()})
+    {
+        Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Visual->SetGenerateOverlapEvents(false);
+        Visual->SetCanEverAffectNavigation(false);
+    }
 
     StandInBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StandInBody"));
     StandInBody->SetupAttachment(VehicleMesh);
@@ -203,9 +585,18 @@ void ARanwarVehicle::SetVehicleKind(ERanwarVehicleKind Kind)
     if (!bKeepAssignedMesh)
     {
         const FString Package = FString(TEXT("/Game/Ranwar/Vehicles/")) + Spec.AssetName;
-        UStaticMesh* Asset = FPackageName::DoesPackageExist(Package, nullptr, false)
-            ? LoadObject<UStaticMesh>(nullptr, *(Package + TEXT(".") + Spec.AssetName)) : nullptr;
-        VehicleMesh->SetStaticMesh(Asset);
+        const FString ProfileName = FString(Spec.AssetName) + TEXT("VinishProfile");
+        const FString ProfilePackage = FString(TEXT("/Game/Ranwar/Vehicles/")) + ProfileName;
+        URanwarVehicleVisualProfile* Detailed = Spec.WheelCount == 2
+            && FPackageName::DoesPackageExist(ProfilePackage, nullptr, false)
+            ? LoadObject<URanwarVehicleVisualProfile>(nullptr, *(ProfilePackage + TEXT(".") + ProfileName)) : nullptr;
+        SetDetailedVisual(Detailed && Detailed->HasValidGeometry() ? Detailed : nullptr);
+        if (!VisualProfile)
+        {
+            UStaticMesh* Asset = FPackageName::DoesPackageExist(Package, nullptr, false)
+                ? LoadObject<UStaticMesh>(nullptr, *(Package + TEXT(".") + Spec.AssetName)) : nullptr;
+            VehicleMesh->SetStaticMesh(Asset);
+        }
     }
     const bool bShowStandIn = VehicleMesh->GetStaticMesh() == nullptr;
     StandInBody->SetVisibility(bShowStandIn);
@@ -224,6 +615,59 @@ void ARanwarVehicle::SetVehicleKind(ERanwarVehicleKind Kind)
         const double DiameterScale = Spec.WheelRadius * 0.02;
         Part->SetRelativeScale3D(FVector(DiameterScale, DiameterScale, bCentered ? 0.12 : 0.18));
         Part->SetVisibility(bShowStandIn && Index < Spec.WheelCount);
+    }
+}
+
+void ARanwarVehicle::SetDetailedVisual(URanwarVehicleVisualProfile* Profile)
+{
+    VisualProfile = Profile;
+    VisualFork->SetStaticMesh(Profile ? Profile->Fork.Get() : nullptr);
+    VisualFrontWheel->SetStaticMesh(Profile ? Profile->FrontWheel.Get() : nullptr);
+    VisualRearWheel->SetStaticMesh(Profile ? Profile->RearWheel.Get() : nullptr);
+    if (Profile)
+    {
+        VehicleMesh->SetStaticMesh(Profile->Body.Get());
+        VisualFork->SetRelativeLocationAndRotation(Profile->ForkPivot, FRotator::ZeroRotator);
+        VisualFrontWheel->SetRelativeLocationAndRotation(
+            Profile->FrontWheelPivot - Profile->ForkPivot, FRotator::ZeroRotator);
+        VisualRearWheel->SetRelativeLocationAndRotation(Profile->RearWheelPivot, FRotator::ZeroRotator);
+    }
+    VisualSteerAngle = 0.0;
+    FrontWheelRoll = 0.0;
+    RearWheelRoll = 0.0;
+}
+
+void ARanwarVehicle::UpdateDetailedVisual(double Travel, double DeltaSeconds)
+{
+    if (!VisualProfile)
+    {
+        return;
+    }
+    const double TargetAngle = Steering * VisualSteeringLimit;
+    const double Angle = FMath::FInterpConstantTo(VisualSteerAngle, TargetAngle, DeltaSeconds, 120.0);
+    if (!FMath::IsNearlyEqual(VisualSteerAngle, Angle))
+    {
+        VisualSteerAngle = Angle;
+        VisualFork->SetRelativeRotation(FQuat(VisualProfile->SteeringAxis, FMath::DegreesToRadians(Angle)));
+        if (ARanwarCharacter* Character = Driver.Get())
+        {
+            if (const USkeletalMesh* Rig = Cast<USkeletalMesh>(SeatedDriver->GetSkinnedAsset()))
+            {
+                const bool bMetaHuman = IsValid(Character->GetMetaHumanVisual());
+                FitSeatedPose(*SeatedDriver, *Rig, VehicleKind, bMetaHuman, VisualProfile.Get(), VisualFork.Get(), Angle);
+                if (bMetaHuman)
+                {
+                    Character->RefreshMetaHumanRiderPose(*SeatedDriver);
+                }
+            }
+        }
+    }
+    if (!FMath::IsNearlyZero(Travel))
+    {
+        FrontWheelRoll = FMath::UnwindRadians(FrontWheelRoll + Travel / VisualProfile->FrontWheelRadius);
+        RearWheelRoll = FMath::UnwindRadians(RearWheelRoll + Travel / VisualProfile->RearWheelRadius);
+        VisualFrontWheel->SetRelativeRotation(FQuat(FVector::RightVector, FrontWheelRoll));
+        VisualRearWheel->SetRelativeRotation(FQuat(FVector::RightVector, RearWheelRoll));
     }
 }
 
@@ -292,7 +736,13 @@ bool ARanwarVehicle::TryEnter(ARanwarCharacter* Character)
     CameraPitch = CameraRestPitch;
     CameraLookTime = 0.0;
     Arm->SetRelativeRotation(FRotator(CameraPitch, CameraYaw, 0.0));
-    ShowDriver(*Character);
+    if (!ShowDriver(*Character))
+    {
+        Driver.Reset();
+        RestoreDriver(*Character, nullptr);
+        Player->Possess(Character);
+        return false;
+    }
     EngineAudio = RanwarAudio::StartVehicleEngine(*this, VehicleKind);
     SetActorTickEnabled(true);
     return true;
@@ -386,6 +836,7 @@ void ARanwarVehicle::Tick(float DeltaSeconds)
     {
         return;
     }
+    const FVector Start = GetActorLocation();
     double Remaining = FMath::Min(static_cast<double>(DeltaSeconds), 0.10);
     while (Remaining > UE_SMALL_NUMBER)
     {
@@ -393,6 +844,7 @@ void ARanwarVehicle::Tick(float DeltaSeconds)
         Advance(Step);
         Remaining -= Step;
     }
+    UpdateDetailedVisual(FVector::DotProduct(GetActorLocation() - Start, GetActorForwardVector()), DeltaSeconds);
     UpdateVehicleLook(DeltaSeconds);
     RanwarAudio::UpdateVehicleEngine(EngineAudio, static_cast<float>(GetSpeedKph()), static_cast<float>(Throttle));
 }
@@ -536,48 +988,38 @@ void ARanwarVehicle::UpdateVehicleLook(double DeltaSeconds)
     Arm->SetRelativeRotation(FRotator(CameraPitch, CameraYaw, 0.0));
 }
 
-void ARanwarVehicle::ShowDriver(const ARanwarCharacter& Character)
+bool ARanwarVehicle::ShowDriver(ARanwarCharacter& Character)
 {
-    const USkeletalMeshComponent* OnFoot = Character.GetMesh();
+    const bool bMetaHuman = IsValid(Character.GetMetaHumanVisual());
+    const USkeletalMeshComponent* OnFoot = Character.GetAvatarBody();
     USkeletalMesh* Rig = OnFoot->GetSkeletalMeshAsset();
     if (!Rig)
     {
-        return;
+        return !bMetaHuman;
     }
     const FReferenceSkeleton& Reference = Rig->GetRefSkeleton();
-    const int32 HipIndex = Reference.FindBoneIndex(TEXT("Hips"));
+    const int32 HipIndex = Reference.FindBoneIndex(bMetaHuman ? TEXT("pelvis") : TEXT("Hips"));
     if (HipIndex == INDEX_NONE)
     {
-        return;
+        return !bMetaHuman;
     }
     SeatedDriver->SetSkinnedAssetAndUpdate(Rig, true);
-    TArray<FTransform>& Pose = SeatedDriver->BoneSpaceTransforms;
-    Pose = Reference.GetRefBonePose();
     const FVehicleSetup& Spec = SetupFor(VehicleKind);
-    const FQuat Orientation = OnFoot->GetRelativeRotation().Quaternion();
-    const FVector Hip = ToComponentSpace(Reference, Pose, HipIndex).GetLocation();
+    const FQuat Orientation = Character.GetAvatarFacing();
+    const FVector Hip = ToComponentSpace(Reference, Reference.GetRefBonePose(), HipIndex).GetLocation();
     SeatedDriver->SetRelativeScale3D(FVector(Spec.DriverScale));
     SeatedDriver->SetRelativeRotation(Orientation);
-    SeatedDriver->SetRelativeLocation(Spec.DriverHip - Orientation.RotateVector(Hip * Spec.DriverScale));
-
-    const bool bMotorcycle = VehicleKind == ERanwarVehicleKind::Motorcycle;
-    const bool bCar = VehicleKind == ERanwarVehicleKind::Hatchback;
-    const auto Aim = [&Reference, &Pose, &Orientation](const TCHAR* Joint, const TCHAR* Child, const FVector& Direction)
+    FVector DriverHip = VisualProfile ? VisualProfile->DriverHip : Spec.DriverHip;
+    if (VisualProfile && VehicleKind == ERanwarVehicleKind::Motorcycle)
     {
-        AimJoint(Reference, Pose, FName(Joint), FName(Child), Orientation.UnrotateVector(Direction));
-    };
-    Aim(TEXT("LeftUpperLeg"), TEXT("LeftLowerLeg"), FVector(1.0, -0.28, bMotorcycle ? -0.46 : -0.14));
-    Aim(TEXT("RightUpperLeg"), TEXT("RightLowerLeg"), FVector(1.0, 0.28, bMotorcycle ? -0.46 : -0.14));
-    Aim(TEXT("LeftLowerLeg"), TEXT("LeftFoot"), FVector(bMotorcycle ? -0.78 : 0.20, 0.04, -1.0));
-    Aim(TEXT("RightLowerLeg"), TEXT("RightFoot"), FVector(bMotorcycle ? -0.78 : 0.20, -0.04, -1.0));
-    Aim(TEXT("LeftFoot"), TEXT("LeftToes"), FVector(1.0, -0.08, -0.12));
-    Aim(TEXT("RightFoot"), TEXT("RightToes"), FVector(1.0, 0.08, -0.12));
-    Aim(TEXT("LeftUpperArm"), TEXT("LeftLowerArm"), FVector(0.63, -0.38, -0.80));
-    Aim(TEXT("RightUpperArm"), TEXT("RightLowerArm"), FVector(0.63, 0.38, -0.80));
-    Aim(TEXT("LeftLowerArm"), TEXT("LeftHand"), FVector(1.0, 0.42, bCar ? 0.40 : 0.19));
-    Aim(TEXT("RightLowerArm"), TEXT("RightHand"), FVector(1.0, -0.42, bCar ? 0.40 : 0.19));
-    SeatedDriver->MarkRefreshTransformDirty();
-    SeatedDriver->SetVisibility(true);
+        // Sit on the front half of the detailed saddle so the outer grip stays within reach at full steering lock.
+        DriverHip.X += 5.0;
+    }
+    SeatedDriver->SetRelativeLocation(DriverHip - Orientation.RotateVector(Hip * Spec.DriverScale));
+
+    FitSeatedPose(*SeatedDriver, *Rig, VehicleKind, bMetaHuman, VisualProfile.Get(), VisualFork.Get(), VisualSteerAngle);
+    SeatedDriver->SetVisibility(!bMetaHuman);
+    return !bMetaHuman || Character.AttachMetaHumanRider(*VehicleMesh, *SeatedDriver);
 }
 
 void ARanwarVehicle::RestoreDriver(ARanwarCharacter& Character, const FVector* ExitLocation)
@@ -588,6 +1030,7 @@ void ARanwarVehicle::RestoreDriver(ARanwarCharacter& Character, const FVector* E
         Character.SetActorLocationAndRotation(*ExitLocation, Heading, false, nullptr, ETeleportType::TeleportPhysics);
     }
     Character.SetActorHiddenInGame(false);
+    Character.RestoreMetaHumanVisual();
     Character.SetActorEnableCollision(true);
     Character.GetCharacterMovement()->SetMovementMode(MOVE_Walking);
     SeatedDriver->SetVisibility(false);

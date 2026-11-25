@@ -63,5 +63,7 @@ func advance(delta: float, camera: Camera3D) -> bool:
 
 func subtitle() -> String:
 	if elapsed < STEP_OUT:
+		if _player != null and _player.avatar_options.get("gender") == "woman":
+			return "Bandra West, Mumbai\n%s arrives for her first day in the city." % _player.display_name
 		return "Bandra West, Mumbai\nOmkar Shirodkar steps into a city he barely knows."
 	return ""

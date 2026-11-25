@@ -38,6 +38,11 @@ func _build_body() -> void:
 	var glass := _finish(Color("98acb2"), 0.25, 0.40)
 	var front := _visual_wheel(Vector3(0, -0.255, -0.63), rubber, alloy, true, 0.108)
 	var rear := _visual_wheel(Vector3(0, -0.255, 0.63), rubber, alloy, false, 0.114)
+	if _electric:
+		Geometry.brake_rotor(front, wheel_radius, 0.108, alloy, plastic)
+	else:
+		Geometry.brake_drum(front, wheel_radius, 0.108, alloy, plastic)
+	Geometry.brake_drum(rear, wheel_radius, 0.114, alloy, plastic)
 	_fender(front, 0.269, 0.147, paint, 1.30)
 	_fender(rear, 0.268, 0.143, plastic, 1.02)
 
@@ -66,6 +71,32 @@ func _build_body() -> void:
 	_build_front_apron(front, paint, plastic, alloy)
 	_build_cockpit(paint, plastic, alloy, rubber, glass)
 	_build_rear_trim(plastic, alloy)
+	_build_scooter_details(rubber, plastic, alloy)
+
+
+func _build_scooter_details(rubber: Material, plastic: Material, alloy: Material) -> void:
+	var floor_tread: Array[Array] = []
+	for side: float in [-1.0, 1.0]:
+		for rib in range(7):
+			var z := -0.451 + float(rib) * 0.059
+			floor_tread.append([Vector3(side * 0.111, -0.214, z), Vector3(0.106, 0.009, 0.015)])
+		Geometry.bar(lean_visual, "FloorEdgeMoulding", Vector3(side * 0.167, -0.231, -0.49),
+			Vector3(side * 0.212, -0.231, -0.118), 0.008, plastic)
+	Geometry.detail_boxes(lean_visual, "FloorboardGripRibs", floor_tread, rubber)
+	Geometry.detail_boxes(lean_visual, "RearPlateCarrier", [
+		[Vector3(0.0, -0.079, 0.846), Vector3(0.151, 0.184, 0.025)],
+		[Vector3(0.0, -0.101, 0.863), Vector3(0.176, 0.080, 0.010)],
+	], plastic)
+	Geometry.detail_boxes(lean_visual, "RearRegistrationPanel", [
+		[Vector3(0.0, -0.097, 0.870), Vector3(0.151, 0.058, 0.006)],
+	], _finish(Color("b7ccab") if _electric else Color("d7dbce"), 0.68))
+	Geometry.registration_text(lean_visual, Vector3(0, -0.096, 0.874), false, true, plastic)
+	if not _electric:
+		var suspension_bottom := Vector3(-0.150, -0.206, 0.576)
+		var suspension_top := Vector3(-0.174, 0.045, 0.437)
+		Geometry.bar(lean_visual, "RearSwingarmDamper", suspension_bottom, suspension_top, 0.014, plastic)
+		Geometry.spring(lean_visual, "RearSpring", suspension_bottom.lerp(suspension_top, 0.17),
+			suspension_top.lerp(suspension_bottom, 0.18), 0.026, 0.0043, alloy)
 
 
 func _build_front_apron(front: Node3D, paint: Material, plastic: Material, alloy: Material) -> void:

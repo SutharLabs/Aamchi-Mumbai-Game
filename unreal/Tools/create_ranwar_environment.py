@@ -151,6 +151,15 @@ def add_distant_dressing(actors, spawn, environment, axes, manifest, cube):
                                                    -220.0 + height * 50.0)
             transform.scale3d = unreal.Vector(generator.uniform(12.0, 35.0), generator.uniform(13.0, 32.0), height)
             skyline.add_instance(transform, world_space=True)
+            if height > 23.0:
+                roof = unreal.Transform()
+                roof_height = 2.7 if index % 3 else 4.8
+                roof.translation = transform.translation + unreal.Vector(
+                    transform.scale3d.x * 16.0, transform.scale3d.y * -13.0,
+                    (height + roof_height) * 50.0 - 10.0
+                )
+                roof.scale3d = unreal.Vector(transform.scale3d.x * 0.55, transform.scale3d.y * 0.62, roof_height)
+                skyline.add_instance(roof, world_space=True)
     return x, y
 
 
@@ -167,7 +176,7 @@ def sample_road(road, axes, fraction):
     raise RuntimeError("Street light could not find a usable Ranwar road segment.")
 
 
-def practical_light(actors, spawn, cls, label, tag, position, intensity, radius, color):
+def practical_light(actors, spawn, cls, label, tag, position, intensity, radius, color, cast_shadows=False):
     light = spawn(actors, cls, label, position, unreal.Rotator(pitch=-90.0))
     light.set_editor_property("tags", [tag])
     component = light.light_component
@@ -178,7 +187,10 @@ def practical_light(actors, spawn, cls, label, tag, position, intensity, radius,
     component.set_editor_property("attenuation_radius", radius)
     component.set_editor_property("max_draw_distance", 8000.0)
     component.set_editor_property("max_distance_fade_range", 1400.0)
-    component.set_editor_property("cast_shadows", False)
+    component.set_editor_property("cast_shadows", cast_shadows)
+    if cast_shadows:
+        component.set_editor_property("source_radius", 5.0)
+        component.set_editor_property("shadow_bias", 0.32)
     if cls == unreal.SpotLight:
         component.set_editor_property("inner_cone_angle", 33.0)
         component.set_editor_property("outer_cone_angle", 69.0)
@@ -232,7 +244,7 @@ def add_practicals(actors, spawn, axes, manifest, cube):
     for door in manifest["doors"]:
         x, y, z = axes.position(door["inside"])
         interiors.append(practical_light(actors, spawn, unreal.SpotLight, f"{door['name']} ceiling", SHOP_TAG,
-                                         (x, y, z + 261.0), 7600.0, 545.0, (255, 232, 200)))
+                                         (x, y, z + 261.0), 7600.0, 545.0, (255, 232, 200), cast_shadows=True))
         threshold_x, threshold_y, _ = axes.position(door["threshold"])
         near_x, near_y = (x + threshold_x) * 0.5, (y + threshold_y) * 0.5
         interiors.append(practical_light(actors, spawn, unreal.PointLight, f"{door['name']} entrance fill", SHOP_TAG,
@@ -252,6 +264,10 @@ def add_environment(actors, spawn, axes, manifest, source, import_task, imported
     directional.set_editor_property("temperature", 5950.0)
     directional.set_editor_property("dynamic_shadow_distance_movable_light", 9200.0)
     directional.set_editor_property("dynamic_shadow_cascades", 2)
+    directional.set_editor_property("cascade_distribution_exponent", 2.2)
+    directional.set_editor_property("shadow_bias", 0.40)
+    directional.set_editor_property("contact_shadow_length", 24.0)
+    directional.set_editor_property("contact_shadow_length_in_ws", True)
     moon = spawn(actors, unreal.DirectionalLight, "Bandra cool night fill", rotation=unreal.Rotator(pitch=-35, yaw=128))
     moon.set_editor_property("tags", [MOON_TAG])
     moon.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
@@ -264,17 +280,17 @@ def add_environment(actors, spawn, axes, manifest, source, import_task, imported
     sky.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
     sky.light_component.set_editor_property("real_time_capture", True)
     sky.light_component.set_editor_property("cubemap_resolution", 64)
-    sky.light_component.set_editor_property("intensity", 1.64)
+    sky.light_component.set_editor_property("intensity", 1.16)
     atmosphere = spawn(actors, unreal.SkyAtmosphere, "Bandra coastal air")
     scattering = atmosphere.get_editor_property("sky_atmosphere_component")
     scattering.set_editor_property("mie_scattering_scale", 0.68)
     scattering.set_editor_property("mie_anisotropy", 0.80)
-    scattering.set_editor_property("sky_and_aerial_perspective_luminance_factor", unreal.LinearColor(0.63, 0.86, 1.21, 1.0))
+    scattering.set_editor_property("sky_and_aerial_perspective_luminance_factor", unreal.LinearColor(0.78, 0.94, 1.09, 1.0))
     fog = spawn(actors, unreal.ExponentialHeightFog, "Bandra distance haze")
     haze = fog.component
     haze.set_editor_property("enable_volumetric_fog", False)
     haze.set_editor_property("start_distance", 4400.0)
-    haze.set_editor_property("fog_density", 0.024)
+    haze.set_editor_property("fog_density", 0.019)
     haze.set_editor_property("fog_height_falloff", 0.088)
     haze.set_editor_property("fog_max_opacity", 0.49)
     haze.set_editor_property("fog_inscattering_luminance", unreal.LinearColor(0.36, 0.49, 0.56, 1.0))

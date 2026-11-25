@@ -14,6 +14,9 @@ const RanwarStopDressing := preload("res://world/ranwar_stop_dressing.gd")
 const RanwarArrivalGreenery := preload("res://world/ranwar_arrival_greenery.gd")
 const ArrivalFrontage := preload("res://world/ranwar_arrival_frontage.gd")
 const HillRoadFrontage := preload("res://world/ranwar_hill_road_frontage.gd")
+const BackgroundFacade := preload("res://world/ranwar_background_facade.gd")
+const RoofProps := preload("res://world/ranwar_roof_props.gd")
+const HillRoadGround := preload("res://world/ranwar_hill_road_ground.gd")
 const MeenaHillRoad := preload("res://world/meena_hill_road.gd")
 const BandraFacilities := preload("res://world/bandra_facilities.gd")
 const BandraLandmarks := preload("res://world/bandra_landmarks.gd")
@@ -24,6 +27,7 @@ const ST_PETERS_FRONT := Vector3(27.5, 0.0, -362.6)
 const ST_PETERS_LOT := Rect2(22.6, -375.3, 31.0, 25.4)
 # The existing generated building at the opposite end of the shelter alley.
 const STOP_FRONTAGE_POSITION := Vector3(33.91, 0.0, -329.31)
+const HILL_ROAD_SHUTTER_LOT := Vector3(-13.35, 0.0, -414.37)
 const SHOP_LABELS: Array[String] = [
 	"MOBILE REPAIRS", "PARCEL DESK", "GROCERY & DAILY NEEDS", "PRINT & COPY",
 	"LOCAL CAFE", "CYCLE SERVICE", "FRESH PRODUCE", "LAUNDRY"
@@ -101,6 +105,7 @@ func _ready() -> void:
 	mapped_buildings.name = "MappedBuildings"
 	mapped_buildings.configure(_materials["frontage_kit"])
 	add_child(mapped_buildings)
+	RoofProps.add_to(self)
 	_build_frontages()
 	var visual_focus := _arrival_position if spawn_at_arrival else PLAYER_START
 	_visual_chunks.start("--stream-visual-chunks" in OS.get_cmdline_user_args(), visual_focus)
@@ -404,13 +409,16 @@ func _build_arrival_stop() -> void:
 	var hill_road := _roads[0]
 	var center := hill_road[0]
 	var along := Vector3.FORWARD
+	var segment := 0
 	for index in range(hill_road.size() - 1):
 		var nearest := Geometry3D.get_closest_point_to_segment(anchor, hill_road[index], hill_road[index + 1])
 		if nearest.distance_squared_to(anchor) < center.distance_squared_to(anchor):
 			center = nearest
 			along = (hill_road[index + 1] - hill_road[index]).normalized()
+			segment = index
 	var church_side := Vector3(-along.z, 0.0, along.x)
 	var curb_edge := ROAD_WIDTHS[0] * 0.5
+	HillRoadGround.add_to(self, hill_road[segment], hill_road[segment + 1], center, curb_edge, _materials)
 	# Set the curbside structure west of the bend to meet the continuous pavement.
 	var shelter := center + church_side * (curb_edge + SIDEWALK_WIDTH + 1.05) - along * 3.9
 	var shelter_yaw := atan2(-church_side.x, -church_side.z)
@@ -523,19 +531,29 @@ func _add_background_frontage(point: Vector3, outward: Vector3, angle: float, he
 	# The collider remains resident in both visual modes.
 	var body := _frontage_body(point, angle, height)
 	var beside_shelter := point.distance_squared_to(STOP_FRONTAGE_POSITION) < 0.04
+	if not beside_shelter:
+		body.set_meta(&"ranwar_background_lot", {"point": point, "height": height, "yaw": angle,
+			"adapted_front": arrival_variant >= 0})
 	if beside_shelter:
 		var fittings := ArrivalFrontage.create(_materials["frontage_kit"], height)
 		fittings.position.y = -height * 0.5
 		body.add_child(fittings)
-	_visual_chunks.register_box(point, "Facade", point + Vector3.UP * height * 0.5, Vector3(12, height, 13), angle, _materials[wall_name])
-	_visual_chunks.register_box(point, "RoofCap", point + Vector3.UP * (height + 0.15), Vector3(12.6, 0.3, 13.6), angle, _materials["roof"])
-	if arrival_variant >= 0 and not beside_shelter:
-		var front := Transform3D(Basis(Vector3.UP, atan2(outward.x, outward.z)), point + outward * 6.01)
-		var mesh := HillRoadFrontage.create(height, arrival_variant, _materials["frontage_kit"])
-		_visual_chunks.register_mesh(point, "HillRoadStreetFront", front, mesh)
-	else:
+		_visual_chunks.register_box(point, "Facade", point + Vector3.UP * height * 0.5, Vector3(12, height, 13), angle, _materials[wall_name])
+		_visual_chunks.register_box(point, "RoofCap", point + Vector3.UP * (height + 0.15), Vector3(12.6, 0.3, 13.6), angle, _materials["roof"])
 		var canopy := point + outward * 6.52 + Vector3.UP * 2.65
 		_visual_chunks.register_box(point, "Porch", canopy, Vector3(1.2, 0.14, 8.4), angle, _materials["dark"])
+	else:
+		var basis := Basis(Vector3.UP, angle)
+		var paint := (_materials[wall_name] as StandardMaterial3D).albedo_color
+		var seed_value := absi(roundi(point.x * 7.0) + roundi(point.z * 11.0))
+		var factory := BackgroundFacade.create.bind(height, paint, _materials["frontage_kit"], basis.inverse() * outward,
+			seed_value, arrival_variant >= 0)
+		_visual_chunks.register_generated_mesh(point, "Facade", Transform3D(basis, body.position), factory)
+	if arrival_variant >= 0 and not beside_shelter:
+		var front := Transform3D(Basis(Vector3.UP, atan2(outward.x, outward.z)), point + outward * 6.01)
+		var use_textured_shutter := point.distance_squared_to(HILL_ROAD_SHUTTER_LOT) < 0.04
+		var mesh := HillRoadFrontage.create(height, arrival_variant, _materials["frontage_kit"], use_textured_shutter)
+		_visual_chunks.register_mesh(point, "HillRoadStreetFront", front, mesh)
 
 
 func _add_ranwar_frontage(point: Vector3, side: float, angle: float, height: float, wall_name: String, storefront: bool, variant: int, photo_gallery: bool) -> void:

@@ -1,4 +1,5 @@
 #include "RanwarParcelContact.h"
+#include "RanwarStrideAnimation.h"
 
 #include "Animation/AnimSequence.h"
 #include "AnimationRuntime.h"
@@ -10,11 +11,13 @@
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "RanwarAmbientPedestrian.h"
 #include "RanwarGame.h"
 
 namespace
 {
     constexpr double AttentionRange = 250.0;
+    constexpr float IdleTickInterval = 0.05f;
 
     FRotator FaceVisitor(const AActor& Contact, const APawn& Visitor)
     {
@@ -26,7 +29,7 @@ namespace
 ARanwarParcelContact::ARanwarParcelContact()
 {
     PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.TickInterval = 0.05f;
+    PrimaryActorTick.TickInterval = IdleTickInterval;
 
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Feet"));
     RootComponent->SetMobility(EComponentMobility::Movable);
@@ -42,6 +45,7 @@ ARanwarParcelContact::ARanwarParcelContact()
     SkeletalAppearance->SetVisibility(false);
     SkeletalAppearance->bEnableUpdateRateOptimizations = true;
     SkeletalAppearance->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+    SkeletalAppearance->PrimaryComponentTick.AddPrerequisite(this, PrimaryActorTick);
 
     UCapsuleComponent* Body = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Body"));
     Body->SetupAttachment(RootComponent);
@@ -63,40 +67,81 @@ void ARanwarParcelContact::BeginPlay()
     if (bHasAnimatedAppearance)
     {
         Appearance->SetVisibility(false);
-        SkeletalAppearance->SetVisibility(true);
+        AnimationBody->SetVisibility(true);
         UE_LOG(LogTemp, Display, TEXT("Ranwar contact %s using grounded skeletal idle"),
-            *GetNameSafe(SkeletalAppearance->GetSkeletalMeshAsset()));
+            *GetNameSafe(AnimationBody->GetSkeletalMeshAsset()));
     }
+}
+
+void ARanwarParcelContact::EndPlay(EEndPlayReason::Type EndPlayReason)
+{
+    if (EndPlayReason == EEndPlayReason::Destroyed && IsValid(MetaHumanVisual))
+    {
+        MetaHumanVisual->Destroy();
+    }
+    Super::EndPlay(EndPlayReason);
 }
 
 bool ARanwarParcelContact::StartBreathing()
 {
-    const USkeletalMesh* Rig = SkeletalAppearance->GetSkeletalMeshAsset();
-    if (!Rig || !BreathLoop || !ContactGesture || BreathLoop->GetSkeleton() != Rig->GetSkeleton()
-        || ContactGesture->GetSkeleton() != Rig->GetSkeleton())
+    if (!BreathLoop || !(BreathLoop->GetPlayLength() > UE_SMALL_NUMBER))
     {
         return false;
     }
 
-    const FReferenceSkeleton& Skeleton = Rig->GetRefSkeleton();
-    const int32 Ankle = Skeleton.FindBoneIndex(TEXT("LeftFoot"));
-    const int32 Toes = Skeleton.FindBoneIndex(TEXT("LeftToes"));
-    if (Ankle == INDEX_NONE || Toes == INDEX_NONE)
+    AnimationBody = MetaHumanClass ? RanwarCast::SpawnGroundedMetaHuman(*this, MetaHumanClass, 1)
+        : SkeletalAppearance.Get();
+    const USkeletalMesh* Rig = AnimationBody ? AnimationBody->GetSkeletalMeshAsset() : nullptr;
+    const bool bGestureValid = ContactGesture && Rig && ContactGesture->GetSkeleton() == Rig->GetSkeleton()
+        && ContactGesture->GetPlayLength() > UE_SMALL_NUMBER;
+    if (!Rig || BreathLoop->GetSkeleton() != Rig->GetSkeleton() || ((!MetaHumanClass || ContactGesture) && !bGestureValid))
     {
+        if (MetaHumanClass && AnimationBody)
+        {
+            AnimationBody->GetOwner()->Destroy();
+            AnimationBody = nullptr;
+        }
         return false;
     }
-    const FVector Forward = FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, Toes).GetLocation()
-        - FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, Ankle).GetLocation();
-    if (Forward.SizeSquared2D() < 1.0)
+    if (MetaHumanClass)
     {
+        MetaHumanVisual = AnimationBody->GetOwner();
+        AnimationBody->AddTickPrerequisiteActor(this);
+        AnimationBody->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+    }
+    else
+    {
+        const FReferenceSkeleton& Skeleton = Rig->GetRefSkeleton();
+        const int32 Ankle = Skeleton.FindBoneIndex(TEXT("LeftFoot"));
+        const int32 Toes = Skeleton.FindBoneIndex(TEXT("LeftToes"));
+        if (Ankle == INDEX_NONE || Toes == INDEX_NONE)
+        {
+            return false;
+        }
+        const FVector Forward = FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, Toes).GetLocation()
+            - FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, Ankle).GetLocation();
+        if (Forward.SizeSquared2D() < 1.0)
+        {
+            return false;
+        }
+        // The legacy clips already plant the skinned shoe surface at the root origin.
+        AnimationBody->SetRelativeRotation(FRotator(0.0, -Forward.Rotation().Yaw, 0.0));
+    }
+    AnimationBody->SetAnimInstanceClass(URanwarStrideAnimation::StaticClass());
+    auto* Sampler = Cast<URanwarStrideAnimation>(AnimationBody->GetAnimInstance());
+    if (!Sampler)
+    {
+        if (IsValid(MetaHumanVisual))
+        {
+            MetaHumanVisual->Destroy();
+            MetaHumanVisual = nullptr;
+            AnimationBody = nullptr;
+        }
         return false;
     }
-
-    // Both exported clips already plant the skinned shoe surface at the root origin.
-    SkeletalAppearance->SetRelativeRotation(FRotator(0.0, -Forward.Rotation().Yaw, 0.0));
-    SkeletalAppearance->PlayAnimation(BreathLoop, true);
-    SkeletalAppearance->TickAnimation(0.0f, false);
-    SkeletalAppearance->RefreshBoneTransforms();
+    Sampler->Present(BreathLoop, BreathPosition, 0.0f);
+    AnimationBody->TickAnimation(0.0f, false);
+    AnimationBody->RefreshBoneTransforms();
     return true;
 }
 
@@ -126,10 +171,26 @@ void ARanwarParcelContact::Tick(float DeltaSeconds)
     SetActorRotation(FMath::RInterpTo(GetActorRotation(), Desired, DeltaSeconds, 6.0f));
     if (bHasAnimatedAppearance)
     {
-        if (bPlayingGesture && Remaining <= 0.0)
+        if (auto* Sampler = Cast<URanwarStrideAnimation>(AnimationBody->GetAnimInstance()))
         {
-            SkeletalAppearance->PlayAnimation(BreathLoop, true);
-            bPlayingGesture = false;
+            if (bPlayingGesture && Remaining > 0.0)
+            {
+                Sampler->Present(ContactGesture, FMath::Max(0.0, ContactGesture->GetPlayLength() - Remaining), DeltaSeconds);
+            }
+            else
+            {
+                if (bPlayingGesture)
+                {
+                    bPlayingGesture = false;
+                    BreathPosition = 0.0;
+                    SetActorTickInterval(IdleTickInterval);
+                }
+                else
+                {
+                    BreathPosition = FMath::Fmod(BreathPosition + DeltaSeconds, BreathLoop->GetPlayLength());
+                }
+                Sampler->Present(BreathLoop, BreathPosition, DeltaSeconds);
+            }
         }
         return;
     }
@@ -140,12 +201,17 @@ void ARanwarParcelContact::Tick(float DeltaSeconds)
 void ARanwarParcelContact::RespondTo(const APawn& Visitor)
 {
     ResponseFacing = FaceVisitor(*this, Visitor);
-    ResponseUntil = GetWorld()->GetTimeSeconds() + (bHasAnimatedAppearance ? ContactGesture->GetPlayLength() : 0.55);
-    if (bHasAnimatedAppearance)
+    const bool bPlaysGesture = bHasAnimatedAppearance && ContactGesture;
+    ResponseUntil = GetWorld()->GetTimeSeconds() + (bPlaysGesture ? ContactGesture->GetPlayLength() : 0.55);
+    if (bPlaysGesture)
     {
-        SkeletalAppearance->PlayAnimation(ContactGesture, false);
-        bPlayingGesture = true;
-        UE_LOG(LogTemp, Verbose, TEXT("Ranwar contact %s playing handover motion"),
-            *GetNameSafe(SkeletalAppearance->GetSkeletalMeshAsset()));
+        if (auto* Sampler = Cast<URanwarStrideAnimation>(AnimationBody->GetAnimInstance()))
+        {
+            Sampler->Present(ContactGesture, 0.0, 0.0f, bPlayingGesture);
+            bPlayingGesture = true;
+            SetActorTickInterval(0.0f);
+            UE_LOG(LogTemp, Verbose, TEXT("Ranwar contact %s playing handover motion"),
+                *GetNameSafe(AnimationBody->GetSkeletalMeshAsset()));
+        }
     }
 }

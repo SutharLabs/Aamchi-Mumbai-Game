@@ -169,5 +169,77 @@
     "voice": "hf_alpha",
     "speed": 1.02,
     "duration": 5.275
+  },
+  {
+    "id": "omkar-arrival-ira",
+    "speaker": "Ira",
+    "text": "First day in Mumbai. Mira said the print shop was hiring.",
+    "spoken": "मुंबई में पहला दिन। मीरा ने कहा था कि प्रिंट की दुकान में काम मिल सकता है।",
+    "voice": "hf_alpha",
+    "speed": 1.07,
+    "duration": 5.291
+  },
+  {
+    "id": "rafiq-lane-ira",
+    "speaker": "Rafiq",
+    "text": "Nagrana Lane is easier on foot. Take Waroda Road if you're driving.",
+    "spoken": "नागराना गली में पैदल जाना आसान है। गाड़ी से जाना हो, तो वरोडा रोड लो।",
+    "voice": "hm_psi",
+    "speed": 0.97,
+    "duration": 5.925
+  },
+  {
+    "id": "farah-directions-ira",
+    "speaker": "Farah",
+    "text": "The Hill Road job board is west of here.",
+    "spoken": "जॉब बोर्ड चाहिए? हिल रोड पर पश्चिम की तरफ़ है।",
+    "voice": "hf_beta",
+    "speed": 1.11,
+    "duration": 3.101
+  },
+  {
+    "id": "prakash-dabba-ira",
+    "speaker": "Prakash",
+    "text": "Thanks, Ira. I owe Anjali a favour.",
+    "spoken": "शुक्रिया, इरा। अंजलि ने बड़ी मदद की।",
+    "voice": "hm_omega",
+    "speed": 0.94,
+    "duration": 2.983
+  },
+  {
+    "id": "nandini-dabba-ira",
+    "speaker": "Nandini",
+    "text": "Thanks, Ira. Just in time for lunch!",
+    "spoken": "शुक्रिया, इरा। डब्बा ठीक खाने के वक़्त मिल गया!",
+    "voice": "hf_beta",
+    "speed": 1.09,
+    "duration": 2.91
+  },
+  {
+    "id": "grocer-ledger-handoff-ira",
+    "speaker": "Grocer",
+    "text": "Thanks, Ira. These entries match Mira’s receipts. Here’s your four hundred rupees.",
+    "spoken": "शुक्रिया, इरा। ये हिसाब मीरा की रसीदों से मिलते हैं। ये रहे तुम्हारे चार सौ रुपये।",
+    "voice": "hm_psi",
+    "speed": 0.98,
+    "duration": 6.359
+  },
+  {
+    "id": "ranwar-parcel-pickup-ira",
+    "speaker": "Ravi",
+    "text": "You’re Ira? Here’s the parcel. Kavita is waiting at the Waroda end of the lane.",
+    "spoken": "तुम इरा हो? यह पार्सल लो। कविता गली के वरोडा रोड वाले छोर पर इंतज़ार कर रही है।",
+    "voice": "hm_psi",
+    "speed": 1.06,
+    "duration": 6.439
+  },
+  {
+    "id": "ranwar-parcel-handoff-ira",
+    "speaker": "Kavita",
+    "text": "Thanks, Ira. That’s the one. I’ll let Mira know it arrived.",
+    "spoken": "शुक्रिया, इरा। हाँ, यही पार्सल है। मैं मीरा को बता दूँगी कि यह पहुँच गया।",
+    "voice": "hf_alpha",
+    "speed": 1.02,
+    "duration": 5.252
   }
 ]

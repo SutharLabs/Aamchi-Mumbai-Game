@@ -3,33 +3,43 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Algo/AllOf.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 #include "CollisionQueryParams.h"
 #include "CollisionShape.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/InputComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/LightComponent.h"
+#include "Components/PoseableMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/Light.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerStart.h"
 #include "HAL/PlatformTime.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/App.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/CommandLine.h"
+#include "Misc/PackageName.h"
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
+#include "RanwarBus.h"
 #include "RanwarGame.h"
 #include "RanwarEnvironment.h"
 #include "RanwarMap.h"
 #include "RanwarParcelContact.h"
 #include "RanwarRoute.h"
+#include "RanwarStrideAnimation.h"
 #include "RanwarTraffic.h"
 #include "RanwarVehicle.h"
 #include "UnrealClient.h"
@@ -190,8 +200,10 @@ namespace
         }
         const UStaticMeshComponent* Visual = Contact->FindComponentByClass<UStaticMeshComponent>();
         const UStaticMesh* Mesh = Visual ? Visual->GetStaticMesh() : nullptr;
+        const AActor* MetaHuman = Contact->GetMetaHumanVisual();
         Test.TestTrue(TEXT("The contact has a deliberate standing appearance"),
-            Mesh && (Mesh->GetFName() == FName(MeshName) || Mesh->GetFName() == FName(Fallback)));
+            (IsValid(MetaHuman) && MetaHuman->GetAttachParentActor() == Contact && !MetaHuman->IsHidden())
+            || (Mesh && (Mesh->GetFName() == FName(MeshName) || Mesh->GetFName() == FName(Fallback))));
         const UCapsuleComponent* Body = Contact->FindComponentByClass<UCapsuleComponent>();
         Test.TestTrue(FString::Printf(TEXT("%s blocks walkers and vehicle sweeps"), MeshName),
             Body && Body->GetCollisionEnabled() == ECollisionEnabled::QueryOnly
@@ -338,6 +350,167 @@ namespace
         Test.TestEqual(TEXT("Default-profile legacy slots still hold completed payouts"), Route.GetCash(), DefaultCash);
     }
 
+    void CheckSeatedContacts(FAutomationTestBase& Test, ARanwarVehicle& Vehicle, FName Mesh,
+        const USkeletalMeshComponent& AvatarBody, bool bMetaHuman)
+    {
+        struct FContactFixture
+        {
+            FName Mesh;
+            FVector RightGrip;
+            FVector RightGripInward;
+            double GripRadius;
+            FVector RightAnkle;
+            double CenterY;
+            bool bMovingFork = false;
+        };
+        static const FContactFixture Fixtures[] = {
+            { TEXT("Hatchback"), FVector(50.05, 13.2, 120.17), FVector(0.283, -0.442, 0.852), 1.8,
+                FVector(47.5, 8.5, 65.0), 35.0 },
+            { TEXT("Rickshaw"), FVector(57.5, 21.5, 86.7), FVector(0.0, -1.0, 0.0), 2.4,
+                FVector(34.0, 10.5, 55.5), 0.0 },
+            { TEXT("Motorcycle"), FVector(51.1, 30.95, 101.4), FVector(0.0, -1.0, 0.0), 1.8,
+                FVector(-13.5, 23.0, 37.5), 0.0 },
+            { TEXT("Scooter"), FVector(33.1, 30.85, 105.8), FVector(0.0, -1.0, 0.0), 1.8,
+                FVector(26.7, 14.1, 36.4), 0.0 },
+            { TEXT("MotorcycleVinishBody"), FVector(29.55, 32.5, 106.91), FVector(0.40, -1.0, 0.025), 1.8,
+                FVector(-27.0, 21.0, 39.5), 0.0, true },
+            { TEXT("ScooterVinishBody"), FVector(20.88, 28.8, 97.55), FVector(0.31, -1.0, 0.01), 1.8,
+                FVector(-4.0, 14.8, 41.6), 0.0, true }
+        };
+        const FContactFixture* Fixture = nullptr;
+        for (const FContactFixture& Candidate : Fixtures)
+        {
+            if (Candidate.Mesh == Mesh)
+            {
+                Fixture = &Candidate;
+                break;
+            }
+        }
+        const USkinnedMeshComponent* Rider = bMetaHuman
+            ? static_cast<const USkinnedMeshComponent*>(&AvatarBody) : Vehicle.FindComponentByClass<UPoseableMeshComponent>();
+        if (!Test.TestNotNull(TEXT("The parked mesh has a measured cockpit"), Fixture)
+            || !Test.TestNotNull(TEXT("The occupied vehicle has an evaluated rider"), Rider))
+        {
+            return;
+        }
+        const auto* Fork = Cast<UStaticMeshComponent>(Vehicle.GetDefaultSubobjectByName(TEXT("VisualFork")));
+        if (Fixture->bMovingFork && !Test.TestNotNull(TEXT("The detailed bike has its steering fork"), Fork))
+        {
+            return;
+        }
+        const auto CheckPose = [&](const TCHAR* Position)
+        {
+            const FTransform& Chassis = Vehicle.GetVehicleMesh()->GetComponentTransform();
+            const FTransform& GripTransform = Fixture->bMovingFork ? Fork->GetComponentTransform() : Chassis;
+            const FVector GripPivot = Fixture->bMovingFork ? Fork->GetRelativeLocation() : FVector::ZeroVector;
+            const TArray<FTransform>& Pose = Rider->GetComponentSpaceTransforms();
+            const FTransform& RiderTransform = Rider->GetComponentTransform();
+            const auto ReadBone = [&](FName Bone, FVector& Point)
+            {
+                const int32 Index = Rider->GetBoneIndex(Bone);
+                if (!Test.TestTrue(FString::Printf(TEXT("Seated driver evaluates %s"), *Bone.ToString()), Pose.IsValidIndex(Index)))
+                {
+                    return false;
+                }
+                Point = RiderTransform.TransformPosition(Pose[Index].GetLocation());
+                return true;
+            };
+            for (int32 Side : {-1, 1})
+            {
+                const bool bRight = Side > 0;
+                const FString Label = FString::Printf(TEXT("%s %s %s"), *Mesh.ToString(), Position,
+                    bRight ? TEXT("right") : TEXT("left"));
+                FVector LocalGrip = Fixture->RightGrip;
+                LocalGrip.Y = Fixture->CenterY + Side * LocalGrip.Y;
+                const FVector Grip = GripTransform.TransformPosition(LocalGrip - GripPivot);
+                FVector LocalAnkle = Fixture->RightAnkle;
+                LocalAnkle.Y = Fixture->CenterY + Side * LocalAnkle.Y;
+                LocalAnkle.Z += bMetaHuman ? 1.4 : 0.0;
+                FVector Ankle;
+                const FName AnkleBone(bMetaHuman ? (bRight ? TEXT("foot_r") : TEXT("foot_l"))
+                                                 : (bRight ? TEXT("RightFoot") : TEXT("LeftFoot")));
+                if (ReadBone(AnkleBone, Ankle))
+                {
+                    const double Error = FVector::Distance(Ankle, Chassis.TransformPosition(LocalAnkle));
+                    Test.TestTrue(FString::Printf(TEXT("%s ankle stays at its support (%.2f cm)"), *Label, Error), Error <= 6.0);
+                }
+
+                FVector Wrist;
+                const FName WristBone(bMetaHuman ? (bRight ? TEXT("hand_r") : TEXT("hand_l"))
+                                                 : (bRight ? TEXT("RightHand") : TEXT("LeftHand")));
+                if (!ReadBone(WristBone, Wrist))
+                {
+                    continue;
+                }
+                if (!bMetaHuman)
+                {
+                    const FVector Offset = GripTransform.TransformVectorNoScale(FVector(4.0, 0.0, -0.6));
+                    const double Error = FVector::Distance(Wrist, Grip - Offset);
+                    Test.TestTrue(FString::Printf(TEXT("%s legacy wrist stays by the grip (%.2f cm)"), *Label, Error), Error <= 10.0);
+                    continue;
+                }
+
+                FVector Knuckle, Thumb, Fingertip, Index, Pinky;
+                if (!ReadBone(bRight ? TEXT("middle_01_r") : TEXT("middle_01_l"), Knuckle)
+                    || !ReadBone(bRight ? TEXT("middle_03_r") : TEXT("middle_03_l"), Fingertip)
+                    || !ReadBone(bRight ? TEXT("thumb_03_r") : TEXT("thumb_03_l"), Thumb)
+                    || !ReadBone(bRight ? TEXT("index_01_r") : TEXT("index_01_l"), Index)
+                    || !ReadBone(bRight ? TEXT("pinky_01_r") : TEXT("pinky_01_l"), Pinky))
+                {
+                    continue;
+                }
+
+                FVector LocalAxis = Fixture->RightGripInward;
+                LocalAxis.Y *= Side;
+                const FVector Axis = GripTransform.TransformVectorNoScale(LocalAxis).GetSafeNormal();
+                const FVector Forward = FVector::VectorPlaneProject(
+                    GripTransform.TransformVectorNoScale(FVector::ForwardVector), Axis).GetSafeNormal();
+                const FVector Down = Side * FVector::CrossProduct(Forward, Axis);
+                const FVector Palm = FMath::Lerp(Wrist, Knuckle, 0.75);
+                const FVector Desired = Grip - Down * (Fixture->GripRadius + 1.3 * RiderTransform.GetScale3D().X);
+                const double Error = FVector::Distance(Palm, Desired);
+                Test.TestTrue(FString::Printf(TEXT("%s palm locks onto the grip (%.2f cm)"), *Label, Error), Error <= 1.5);
+                Test.TestTrue(Label + TEXT(" knuckles follow the grip axis"),
+                    FVector::DotProduct((Index - Pinky).GetSafeNormal(), Axis) >= 0.90);
+                const FVector FingerOffset = Fingertip - Grip;
+                Test.TestTrue(Label + TEXT(" fingers wrap under the grip with the thumb opposed"),
+                    FVector::DotProduct(FingerOffset, Down) > 0.7
+                    && FVector::DotProduct(Thumb - Grip, Down) > 0.7
+                    && FVector::VectorPlaneProject(FingerOffset, Axis).Size() <= Fixture->GripRadius + 2.2);
+            }
+        };
+        CheckPose(TEXT("centered"));
+        if (Fixture->bMovingFork)
+        {
+            const FInputAxisBinding* Steering = Vehicle.InputComponent
+                ? Vehicle.InputComponent->AxisBindings.FindByPredicate([](const FInputAxisBinding& Binding)
+                    { return Binding.AxisName == TEXT("MoveRight"); })
+                : nullptr;
+            if (!Test.TestNotNull(TEXT("The detailed bike has its normal steering input"), Steering))
+            {
+                return;
+            }
+            const auto Steer = [&](float Axis)
+            {
+                Steering->AxisDelegate.Execute(Axis);
+                static_cast<AActor&>(Vehicle).Tick(0.24f);
+            };
+            const FQuat Center = Fork->GetRelativeRotation().Quaternion();
+            Steer(0.5f);
+            CheckPose(TEXT("mid-turn"));
+            Steer(1.0f);
+            const FQuat Right = Fork->GetRelativeRotation().Quaternion();
+            Test.TestTrue(TEXT("Steering input turns the detailed fork right"), Center.AngularDistance(Right) > 0.3);
+            CheckPose(TEXT("right lock"));
+            Steer(-1.0f);
+            Steer(-1.0f);
+            Test.TestTrue(TEXT("Steering input turns the detailed fork across to left lock"),
+                Right.AngularDistance(Fork->GetRelativeRotation().Quaternion()) > 0.7);
+            CheckPose(TEXT("left lock"));
+            Steer(0.0f);
+        }
+    }
+
     void CheckVehicleTransfer(FAutomationTestBase& Test, UWorld& World, APlayerController& Player, ARanwarCharacter& Walker)
     {
         const FVector Original = Walker.GetActorLocation();
@@ -360,18 +533,37 @@ namespace
                 {
                     continue;
                 }
+                const USkeletalMeshComponent* AvatarBody = Walker.GetAvatarBody();
+                const bool bBodyTickEnabledOnFoot = AvatarBody->IsComponentTickEnabled();
                 if (!Test.TestTrue(TEXT("Parked vehicle accepts Omkar"), Vehicle->TryEnter(&Walker)))
                 {
                     break;
                 }
                 Test.TestTrue(TEXT("Local controller possesses occupied vehicle"),
                     Player.GetPawn() == Vehicle && Vehicle->HasDriver());
+                if (const AActor* MetaHuman = Walker.GetMetaHumanVisual())
+                {
+                    Test.TestTrue(TEXT("The same visible MetaHuman follows the seated driver pose"),
+                        MetaHuman->GetAttachParentActor() == Vehicle && !MetaHuman->IsHidden()
+                            && !AvatarBody->LeaderPoseComponent.IsValid()
+                            && !AvatarBody->IsComponentTickEnabled()
+                            && AvatarBody->GetAnimationMode() == EAnimationMode::AnimationCustomMode);
+                }
+                CheckSeatedContacts(Test, *Vehicle, Mesh->GetFName(), *AvatarBody, IsValid(Walker.GetMetaHumanVisual()));
                 if (!Test.TestTrue(TEXT("Omkar exits the stationary vehicle into clear space"), Vehicle->ExitDriver()))
                 {
                     return;
                 }
                 Test.TestTrue(TEXT("Exit returns a visible, solid Omkar to the local controller"),
                     Player.GetPawn() == &Walker && !Vehicle->HasDriver() && !Walker.IsHidden() && Walker.GetActorEnableCollision());
+                if (const AActor* MetaHuman = Walker.GetMetaHumanVisual())
+                {
+                    Test.TestTrue(TEXT("The same visible MetaHuman returns to the walking capsule"),
+                        MetaHuman->GetAttachParentActor() == &Walker && !MetaHuman->IsHidden()
+                            && !AvatarBody->LeaderPoseComponent.IsValid()
+                            && AvatarBody->IsComponentTickEnabled() == bBodyTickEnabledOnFoot
+                            && Cast<URanwarStrideAnimation>(AvatarBody->GetAnimInstance()) != nullptr);
+                }
                 CheckedFamilies.Add(Mesh->GetFName());
                 break;
             }
@@ -379,6 +571,113 @@ namespace
         Walker.SetActorLocation(Original, false, nullptr, ETeleportType::TeleportPhysics);
         Test.TestEqual(TEXT("Omkar boards and exits all four vehicle families"), CheckedFamilies.Num(), 4);
     }
+
+    class FCheckRanwarRiderPhoto final : public IAutomationLatentCommand
+    {
+    public:
+        FCheckRanwarRiderPhoto(FAutomationTestBase& InTest, FName InBike)
+            : Test(InTest), Bike(InBike), Deadline(FPlatformTime::Seconds() + 12.0)
+        {
+        }
+
+        bool Update() override
+        {
+            const double Now = FPlatformTime::Seconds();
+            if (ARanwarVehicle* Vehicle = Mounted.Get())
+            {
+                if (bRequested)
+                {
+                    if (FScreenshotRequest::IsScreenshotRequested() && Now < FrameAt + 5.0)
+                    {
+                        return false;
+                    }
+                    Test.TestFalse(TEXT("The mounted screenshot was rendered"), FScreenshotRequest::IsScreenshotRequested());
+                    Test.TestTrue(TEXT("Omkar dismounts safely after the photo"), Vehicle->ExitDriver());
+                    if (ACameraActor* View = Camera.Get())
+                    {
+                        View->Destroy();
+                    }
+                    return true;
+                }
+
+                if (const FInputAxisBinding* Steer = Vehicle->InputComponent
+                    ? Vehicle->InputComponent->AxisBindings.FindByPredicate([](const FInputAxisBinding& Binding)
+                        { return Binding.AxisName == TEXT("MoveRight"); }) : nullptr)
+                {
+                    Steer->AxisDelegate.Execute(-0.72f);
+                    static_cast<AActor&>(*Vehicle).Tick(0.24f);
+                }
+                if (Now >= FrameAt)
+                {
+                    FScreenshotRequest::RequestScreenshot(false);
+                    bRequested = true;
+                }
+                return false;
+            }
+
+            UWorld* World = GetRanwarGameWorld();
+            APlayerController* Player = World ? World->GetFirstPlayerController() : nullptr;
+            ARanwarCharacter* Walker = Player ? Cast<ARanwarCharacter>(Player->GetPawn()) : nullptr;
+            if (!World || !Walker)
+            {
+                if (Now < Deadline)
+                {
+                    return false;
+                }
+                Test.AddError(TEXT("Ranwar did not start for the mounted screenshot."));
+                return true;
+            }
+            if (!Test.TestNotNull(TEXT("The current MetaHuman Omkar is available for the mounted photo"),
+                Walker->GetMetaHumanVisual()))
+            {
+                return true;
+            }
+
+            for (TActorIterator<ARanwarVehicle> It(World); It; ++It)
+            {
+                ARanwarVehicle* Vehicle = *It;
+                const UStaticMesh* Mesh = Vehicle->GetVehicleMesh()->GetStaticMesh();
+                const UBoxComponent* Chassis = Cast<UBoxComponent>(Vehicle->GetRootComponent());
+                if (!Mesh || Mesh->GetFName() != Bike || !Chassis)
+                {
+                    continue;
+                }
+                const double Clearance = Chassis->GetScaledBoxExtent().Y
+                    + Walker->GetCapsuleComponent()->GetScaledCapsuleRadius() + 45.0;
+                const FVector Stand = Vehicle->GetActorLocation() - Vehicle->GetActorRightVector() * Clearance;
+                if (!PlaceWalkerOnClearGround(*World, *Walker, Stand) || !Vehicle->TryEnter(Walker))
+                {
+                    continue;
+                }
+                const FTransform& Rig = Vehicle->GetVehicleMesh()->GetComponentTransform();
+                const FVector Eye = Rig.TransformPosition(FVector(160.0, -247.0, 164.0));
+                const FVector Focus = Rig.TransformPosition(FVector(0.0, 0.0, 85.0));
+                ACameraActor* View = World->SpawnActor<ACameraActor>(Eye, (Focus - Eye).Rotation());
+                if (!Test.TestNotNull(TEXT("The rider verification camera spawns"), View))
+                {
+                    Vehicle->ExitDriver();
+                    return true;
+                }
+                View->GetCameraComponent()->SetFieldOfView(51.0f);
+                Player->SetViewTargetWithBlend(View, 0.0f);
+                Camera = View;
+                Mounted = Vehicle;
+                FrameAt = Now + 1.0;
+                return false;
+            }
+            Test.AddError(TEXT("No detailed parked bike had a clear boarding side for the screenshot."));
+            return true;
+        }
+
+    private:
+        FAutomationTestBase& Test;
+        FName Bike;
+        const double Deadline;
+        double FrameAt = 0.0;
+        bool bRequested = false;
+        TWeakObjectPtr<ACameraActor> Camera;
+        TWeakObjectPtr<ARanwarVehicle> Mounted;
+    };
 
     void CheckEnvironmentClock(FAutomationTestBase& Test, UWorld& World, ARanwarEnvironment& Environment)
     {
@@ -459,6 +758,40 @@ namespace
             ARanwarRoute* Route = Mode ? Mode->GetRoute() : nullptr;
             if (MiraDeadline > 0.0)
             {
+                if (MotionDeadline > 0.0)
+                {
+                    USkeletalMeshComponent* Avatar = Walker->GetAvatarBody();
+                    const double ToeHeight = Avatar->GetBoneLocation(TEXT("ball_l"), EBoneSpaces::ComponentSpace).Z;
+                    const double HandPosition = Avatar->GetBoneLocation(TEXT("hand_l"), EBoneSpaces::ComponentSpace).Y;
+                    MinToe = FMath::Min(MinToe, ToeHeight);
+                    MaxToe = FMath::Max(MaxToe, ToeHeight);
+                    MinHand = FMath::Min(MinHand, HandPosition);
+                    MaxHand = FMath::Max(MaxHand, HandPosition);
+                    if (!bMotionPhotoRequested && FApp::CanEverRender()
+                        && FPlatformTime::Seconds() >= MotionDeadline - 0.65
+                        && FParse::Param(FCommandLine::Get(), TEXT("RanwarWalkPhoto")))
+                    {
+                        bMotionPhotoRequested = true;
+                        FScreenshotRequest::RequestScreenshot(true);
+                    }
+                    if (FPlatformTime::Seconds() < MotionDeadline)
+                    {
+                        Walker->AddMovementInput(MotionDirection, 1.0f);
+                        return false;
+                    }
+                    Test.TestTrue(TEXT("On-foot movement evaluates a real Omkar toe lift and hand swing"),
+                        FVector::DistSquared2D(MotionStart.GetLocation(), Walker->GetActorLocation()) > FMath::Square(35.0)
+                        && MaxToe - MinToe > 5.0 && MaxHand - MinHand > 6.0);
+                    Avatar->VisibilityBasedAnimTickOption = MotionVisibility;
+                    Walker->GetCharacterMovement()->StopMovementImmediately();
+                    Walker->SetActorTransform(MotionStart, false, nullptr, ETeleportType::TeleportPhysics);
+                    CheckVehicleTransfer(Test, *World, *Player, *Walker);
+                    if (Route && FParse::Param(FCommandLine::Get(), TEXT("RanwarProfileSmoke")))
+                    {
+                        CheckSeparateProfile(Test, *World, *Route, *Walker);
+                    }
+                    return true;
+                }
                 const FString Speaker = Route ? Route->GetDialogueSpeaker().ToString() : FString();
                 if (Route && Speaker != TEXT("Mira") && FPlatformTime::Seconds() < MiraDeadline)
                 {
@@ -473,6 +806,28 @@ namespace
                 if (Route)
                 {
                     CheckDabbaAndLedger(Test, *World, *Route, *Walker, GuideStop);
+                }
+                if (Walker->GetMetaHumanVisual())
+                {
+                    MotionStart = Walker->GetActorTransform();
+                    const FVector Origin = MotionStart.GetLocation() + FVector(0.0, 0.0, 4.0);
+                    const UCapsuleComponent* Capsule = Walker->GetCapsuleComponent();
+                    const FCollisionQueryParams Query(SCENE_QUERY_STAT(RanwarPlayableGait), false, Walker);
+                    for (const FVector& Direction : {FVector::ForwardVector, -FVector::ForwardVector,
+                        FVector::RightVector, -FVector::RightVector})
+                    {
+                        if (!World->SweepTestByChannel(Origin, Origin + Direction * 160.0, FQuat::Identity,
+                            Capsule->GetCollisionObjectType(), Capsule->GetCollisionShape(-2.0f), Query))
+                        {
+                            USkeletalMeshComponent* Avatar = Walker->GetAvatarBody();
+                            MotionVisibility = Avatar->VisibilityBasedAnimTickOption;
+                            Avatar->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+                            MotionDirection = Direction;
+                            MotionDeadline = FPlatformTime::Seconds() + 1.5;
+                            return false;
+                        }
+                    }
+                    Test.AddError(TEXT("Could not find a clear stretch for the Omkar walking test."));
                 }
                 CheckVehicleTransfer(Test, *World, *Player, *Walker);
                 if (Route && FParse::Param(FCommandLine::Get(), TEXT("RanwarProfileSmoke")))
@@ -500,7 +855,24 @@ namespace
                 return false;
             }
 
-            Test.TestNotNull(TEXT("Ranwar uses the imported Omkar skeletal mesh"), Walker->GetMesh()->GetSkeletalMeshAsset());
+            Test.TestNotNull(TEXT("Ranwar uses Omkar's active skeletal body"), Walker->GetAvatarBody()->GetSkeletalMeshAsset());
+            if (FPackageName::DoesPackageExist(TEXT("/Game/OmkarAssembled/r004/Omkar/BP_Omkar"), nullptr, false))
+            {
+                const AActor* OmkarVisual = Walker->GetMetaHumanVisual();
+                Test.TestTrue(TEXT("Cooked MetaHuman Omkar is active, visible, and collision-free"),
+                    IsValid(OmkarVisual) && !OmkarVisual->IsHidden()
+                        && !OmkarVisual->GetActorEnableCollision() && OmkarVisual->GetAttachParentActor() == Walker);
+                if (IsValid(OmkarVisual))
+                {
+                    const TInlineComponentArray<USkeletalMeshComponent*> Parts(OmkarVisual);
+                    Test.TestTrue(TEXT("MetaHuman Omkar has a visible skinned outfit"),
+                        Parts.ContainsByPredicate([](const USkeletalMeshComponent* Part)
+                        {
+                            const USkeletalMesh* Garment = Part->GetSkeletalMeshAsset();
+                            return Garment && Part->IsVisible() && Garment->GetPathName().Contains(TEXT("/Omkar/Clothing/"));
+                        }));
+                }
+            }
             TActorIterator<APlayerStart> Arrival(World);
             Test.TestTrue(TEXT("Omkar spawns by the map's BEST arrival start"),
                 Arrival && FVector::DistSquared2D(Arrival->GetActorLocation(), Walker->GetActorLocation())
@@ -527,25 +899,117 @@ namespace
                     ArrivalAssets.Add(Asset->GetFName());
                 }
             }
-            for (const TCHAR* Name : {TEXT("BestBus"), TEXT("AnjaliKurta"), TEXT("Pedestrian"),
-                TEXT("Farah"), TEXT("Nitin"), TEXT("Leena"), TEXT("Iqbal")})
+            Test.TestTrue(TEXT("The map contains the imported BEST coach"), ArrivalAssets.Contains(TEXT("BestBus")));
+            if (FPackageName::DoesPackageExist(TEXT("/Game/OmkarAssembled/r005/Omkar/BP_Omkar")))
             {
-                Test.TestTrue(FString::Printf(TEXT("The map contains the imported %s arrival mesh"), Name),
-                    ArrivalAssets.Contains(FName(Name)));
+                TSet<FName> NativeCast;
+                int32 NativeWalkers = 0;
+                for (TActorIterator<AActor> It(World); It; ++It)
+                {
+                    const AActor* CastAnchor = *It;
+                    const bool bNamed = CastAnchor->ActorHasTag(TEXT("RanwarMetaHumanCast"));
+                    const bool bWalker = CastAnchor->ActorHasTag(TEXT("RanwarMetaHumanWalker"));
+                    if (!bNamed && !bWalker)
+                    {
+                        continue;
+                    }
+                    TArray<AActor*> Attached;
+                    CastAnchor->GetAttachedActors(Attached);
+                    const AActor* NativeVisual = Attached.IsEmpty() ? nullptr : Attached[0];
+                    if (!Test.TestTrue(TEXT("A cast member spawns its visible, attached MetaHuman"),
+                        IsValid(NativeVisual) && !NativeVisual->IsHidden()
+                        && NativeVisual->GetClass()->GetPathName().StartsWith(TEXT("/Game/OmkarAssembled/"))))
+                    {
+                        continue;
+                    }
+                    if (CastAnchor->ActorHasTag(TEXT("RanwarRivalCourier")))
+                    {
+                        Test.TestTrue(TEXT("Vikram uses the previous Omkar design"),
+                            NativeVisual->GetClass()->GetPathName().StartsWith(TEXT("/Game/OmkarAssembled/r004/")));
+                    }
+                    NativeWalkers += bWalker ? 1 : 0;
+                    for (const FName Tag : CastAnchor->Tags)
+                    {
+                        NativeCast.Add(Tag);
+                    }
+                }
+                for (const TCHAR* Name : {TEXT("Anjali"), TEXT("Vikram"), TEXT("Farah"), TEXT("Nitin"), TEXT("Leena"),
+                    TEXT("Iqbal"), TEXT("Asha"), TEXT("ChapelCornerGrocer"), TEXT("Ravi"), TEXT("Kavita")})
+                {
+                    const FName Tag(*FString::Printf(TEXT("RanwarNPC.%s"), Name));
+                    Test.TestTrue(FString::Printf(TEXT("Ranwar contains the native %s"), Name), NativeCast.Contains(Tag));
+                }
+                Test.TestEqual(TEXT("The three pavement routes use native MetaHumans"), NativeWalkers, 3);
+                Test.TestEqual(TEXT("The native cast replaces legacy arrival meshes in the level"), ArrivalAssets.Num(), 1);
+            }
+            else
+            {
+                for (const TCHAR* Name : {TEXT("AnjaliKurta"), TEXT("Pedestrian"), TEXT("Farah"), TEXT("Nitin"),
+                    TEXT("Leena"), TEXT("Iqbal")})
+                {
+                    Test.TestTrue(FString::Printf(TEXT("The public map contains the imported %s arrival mesh"), Name),
+                        ArrivalAssets.Contains(FName(Name)));
+                }
             }
 
-            TSet<FName> VehicleAssets;
+            TActorIterator<ARanwarBus> StopBus(World);
+            if (Test.TestTrue(TEXT("St Peter's has an interactive BEST bus"), static_cast<bool>(StopBus)) && Route)
+            {
+                const FTransform BeforeBus = Walker->GetActorTransform();
+                const FVector Door = StopBus->GetBoardingPoint();
+                if (Test.TestTrue(TEXT("A player capsule fits on the curb beside the BEST door"),
+                    PlaceWalkerOnClearGround(*World, *Walker, Door)))
+                {
+                    Test.TestFalse(TEXT("Boarding offers an interaction prompt"), Route->GetPrompt(*Walker).IsEmpty());
+                    if (Test.TestTrue(TEXT("The curb-side interaction boards the bus"), Route->Interact(*Walker)))
+                    {
+                        Test.TestTrue(TEXT("Boarding keeps Omkar's controls and activates the passenger camera"),
+                            StopBus->IsPassenger(*Walker) && Player->GetPawn() == Walker && Player->GetViewTarget() == *StopBus
+                                && Walker->GetCharacterMovement()->MovementMode == MOVE_None);
+                        Test.TestTrue(TEXT("The player can use the same interaction to step off"), Route->Interact(*Walker));
+                        Test.TestTrue(TEXT("Alighting restores the player camera and collision safely on the curb"),
+                            !StopBus->IsPassenger(*Walker) && Player->GetViewTarget() == Walker
+                                && Walker->GetActorEnableCollision() && !Walker->IsHidden()
+                                && FVector::DistSquared2D(Walker->GetActorLocation(), Door) < FMath::Square(100.0));
+                    }
+                }
+                Walker->SetActorTransform(BeforeBus, false, nullptr, ETeleportType::TeleportPhysics);
+            }
+
+            TMap<FName, ARanwarVehicle*> ParkedMeshes;
             for (TActorIterator<ARanwarVehicle> It(World); It; ++It)
             {
                 if (const UStaticMesh* Asset = It->GetVehicleMesh()->GetStaticMesh())
                 {
-                    VehicleAssets.Add(Asset->GetFName());
+                    ParkedMeshes.Add(Asset->GetFName(), *It);
                 }
             }
             for (const TCHAR* Family : {TEXT("Hatchback"), TEXT("Rickshaw"), TEXT("Motorcycle"), TEXT("Scooter")})
             {
+                const FString DetailPrefix = FString(Family) + TEXT("Vinish");
+                const FString ProfilePath = TEXT("/Game/Ranwar/Vehicles/") + DetailPrefix + TEXT("Profile");
+                const bool bHasDetailProfile = FPackageName::DoesPackageExist(ProfilePath, nullptr, false);
+                const FName ExpectedMesh = bHasDetailProfile ? FName(DetailPrefix + TEXT("Body")) : FName(Family);
+                ARanwarVehicle* Parked = ParkedMeshes.FindRef(ExpectedMesh);
                 Test.TestTrue(FString::Printf(TEXT("A parked %s uses its imported mesh"), Family),
-                    VehicleAssets.Contains(FName(Family)));
+                    Parked != nullptr);
+                if (bHasDetailProfile && Parked)
+                {
+                    if (FApp::CanEverRender())
+                    {
+                        const UStaticMesh* Body = Parked->GetVehicleMesh()->GetStaticMesh();
+                        Test.TestTrue(FString::Printf(TEXT("The %s body keeps close-range geometry and distance LODs"), Family),
+                            Body->GetNumTriangles(0) > 20000 && Body->GetNumLODs() >= 2);
+                    }
+                    for (const TCHAR* Part : {TEXT("Fork"), TEXT("FrontWheel"), TEXT("RearWheel")})
+                    {
+                        const auto* Component = Cast<UStaticMeshComponent>(
+                            Parked->GetDefaultSubobjectByName(FName(FString(TEXT("Visual")) + Part)));
+                        const UStaticMesh* Mesh = Component ? Component->GetStaticMesh() : nullptr;
+                        Test.TestTrue(FString::Printf(TEXT("The %s has its separate %s geometry"), Family, Part),
+                            Mesh && Mesh->GetFName() == FName(DetailPrefix + Part));
+                    }
+                }
             }
             const TActorIterator<ARanwarTraffic> Traffic(World);
             Test.TestTrue(TEXT("Map contains its native traffic system"), static_cast<bool>(Traffic));
@@ -586,6 +1050,15 @@ namespace
         FAutomationTestBase& Test;
         const double Deadline;
         double MiraDeadline = 0.0;
+        double MotionDeadline = 0.0;
+        bool bMotionPhotoRequested = false;
+        EVisibilityBasedAnimTickOption MotionVisibility = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+        FTransform MotionStart;
+        FVector MotionDirection = FVector::ZeroVector;
+        double MinToe = TNumericLimits<double>::Max();
+        double MaxToe = TNumericLimits<double>::Lowest();
+        double MinHand = TNumericLimits<double>::Max();
+        double MaxHand = TNumericLimits<double>::Lowest();
         FVector GuideStop = FVector::ZeroVector;
         TWeakObjectPtr<ARanwarTrafficCar> TrackedCar;
         TWeakObjectPtr<ARanwarEnvironment> ClockProbe;
@@ -665,6 +1138,22 @@ bool FRanwarPlayableSmoke::RunTest(const FString&)
         return false;
     }
     ADD_LATENT_AUTOMATION_COMMAND(FCheckRanwarPlayable(*this));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FRanwarRiderPhoto, "AamchiMumbai.Ranwar.RiderPhoto",
+    EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
+
+bool FRanwarRiderPhoto::RunTest(const FString&)
+{
+    FString Selection;
+    FParse::Value(FCommandLine::Get(), TEXT("RanwarRiderPhoto="), Selection);
+    if (!IsFreshSmokeProfile() || !FApp::CanEverRender() || (Selection != TEXT("Motorcycle") && Selection != TEXT("Scooter")))
+    {
+        AddError(TEXT("Use a rendered launch with a fresh -UserDir and -RanwarRiderPhoto=Motorcycle or Scooter."));
+        return false;
+    }
+    ADD_LATENT_AUTOMATION_COMMAND(FCheckRanwarRiderPhoto(*this, FName(Selection + TEXT("VinishBody"))));
     return true;
 }
 

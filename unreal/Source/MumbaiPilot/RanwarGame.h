@@ -9,6 +9,8 @@
 #include "RanwarGame.generated.h"
 
 class USceneComponent;
+class USkeletalMeshComponent;
+class USkinnedMeshComponent;
 class UAnimSequence;
 class ARanwarRoute;
 class ARanwarVehicle;
@@ -42,6 +44,12 @@ public:
     FText GetInteractionPrompt() const;
     FText GetInteractionDetails() const;
     float GetHealth() const { return Health; }
+    USkeletalMeshComponent* GetAvatarBody() const;
+    AActor* GetMetaHumanVisual() const { return MetaHumanVisual.Get(); }
+    FQuat GetAvatarFacing() const;
+    bool AttachMetaHumanRider(USceneComponent& VehicleParent, USkinnedMeshComponent& DriverPose);
+    void RefreshMetaHumanRiderPose(const USkinnedMeshComponent& DriverPose);
+    void RestoreMetaHumanVisual();
     float TakeDamage(float DamageAmount, const FDamageEvent& DamageEvent, AController* EventInstigator,
         AActor* DamageCauser) override;
 
@@ -62,7 +70,10 @@ private:
     void StartRunning();
     void StopRunning();
     void LoadOmkarAppearance();
-    void UpdateLocomotion();
+    bool LoadMetaHumanAppearance();
+    bool TryLoadMetaHumanAppearance(const TCHAR* Folder);
+    void ResetLocomotion();
+    double UpdateLocomotion(float DeltaSeconds);
     void UpdateLandmarkFocus();
     void Interact();
     void RecoverAtStop();
@@ -82,6 +93,18 @@ private:
     UPROPERTY()
     TObjectPtr<UAnimSequence> ActiveLoop;
 
+    UPROPERTY(Transient)
+    TObjectPtr<AActor> MetaHumanVisual;
+
+    UPROPERTY(Transient)
+    TObjectPtr<USkeletalMeshComponent> MetaHumanBody;
+
+    FTransform BodyRelativeToVisual = FTransform::Identity;
+    FTransform MetaHumanOnFootTransform = FTransform::Identity;
+    FQuat MetaHumanFacing = FQuat::Identity;
+    bool bMetaHumanSeated = false;
+    bool bMetaHumanBodyTickEnabledOnFoot = false;
+
     TWeakObjectPtr<ARanwarLandmark> NearbyLandmark;
     TWeakObjectPtr<ARanwarVehicle> NearbyVehicle;
     FTimerHandle LandmarkScanTimer;
@@ -91,6 +114,13 @@ private:
     double LastDamageTime = 0.0;
     double DistanceSinceStep = 0.0;
     double LastRunStepPosition = -1.0;
+    double LocomotionPosition = 0.0;
+    FVector PreviousLocomotionLocation = FVector::ZeroVector;
+    FVector2D NativeStanceSpeeds = FVector2D::ZeroVector;
+    bool bNativeLocomotion = false;
+    bool bFootContactsInitialized = false;
+    bool bLeftFootPlanted = false;
+    bool bRightFootPlanted = false;
     float Health = 100.0f;
     bool bRightFootNext = false;
     FTransform StartTransform;

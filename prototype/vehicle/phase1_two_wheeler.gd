@@ -10,6 +10,10 @@ var rider := Node3D.new()
 var lean_visual := Node3D.new()
 var max_lean_radians := deg_to_rad(22.0)
 var lean_response := 8.0
+var avatar_options: Dictionary = {}:
+	set(options):
+		avatar_options = options
+		_rider_model.avatar_options = options
 
 var _cockpit := Node3D.new()
 var _rider_model := Character.new()
@@ -166,17 +170,27 @@ func _visual_wheel(at: Vector3, tire: Material, rim: Material, front: bool, widt
 func _build_handlebars(half_width: float, metal: Material, rubber: Material, glass: Material, sweep := 0.0) -> void:
 	_grip_half_width = half_width
 	_grip_sweep = sweep
+	var switches: Array[Array] = []
 	for side: float in [-1.0, 1.0]:
 		var inside := Vector3(side * 0.088, -0.032, -0.04)
 		var outside := Vector3(side * (half_width - 0.045), 0.0, sweep)
 		Geometry.bar(_cockpit, "Handlebar", inside, outside, 0.013, metal)
 		Geometry.bar(_cockpit, "RubberGrip", outside, Vector3(side * (half_width + 0.042), 0.0, sweep), 0.018, rubber)
+		Geometry.bar(_cockpit, "GripEndCap", Vector3(side * (half_width + 0.031), 0.0, sweep),
+			Vector3(side * (half_width + 0.042), 0.0, sweep), 0.0185, metal)
+		var control := outside - Vector3(side * 0.019, 0.0, 0.003)
+		switches.append([control, Vector3(0.038, 0.039, 0.048)])
+		var strain_relief := control + Vector3(-side * 0.043, -0.030, -0.006)
+		Geometry.bar(_cockpit, "ControlCable", control - Vector3(0, 0.019, 0), strain_relief, 0.0048, rubber)
+		Geometry.bar(_cockpit, "ControlCableReturn", strain_relief,
+			Vector3(side * 0.106, -0.089, sweep - 0.087), 0.0048, rubber)
 		Geometry.bar(_cockpit, "BrakeLever", outside + Vector3(0, 0.0, -0.025),
 			Vector3(side * (half_width + 0.006), 0.003, sweep - 0.047), 0.005, metal)
 		var mirror := Vector3(side * (half_width + 0.017), 0.178, -0.047)
 		Geometry.bar(_cockpit, "MirrorStem", outside, mirror, 0.0065, metal)
 		_round_part(_cockpit, "MirrorHousing", Vector3(0.067, 0.035, 0.018), mirror, rubber)
 		_round_part(_cockpit, "MirrorGlass", Vector3(0.060, 0.028, 0.007), mirror + Vector3(0, 0, 0.014), glass)
+	Geometry.detail_boxes(_cockpit, "HandlebarSwitchPods", switches, rubber)
 
 
 func _round_part(parent: Node3D, label: String, radii: Vector3, at: Vector3, material: Material) -> void:

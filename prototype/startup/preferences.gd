@@ -3,6 +3,7 @@ extends Node
 signal changed
 
 const Controls := preload("res://startup/control_bindings.gd")
+const AvatarStyle := preload("res://startup/avatar_style.gd")
 const MAX_PROFILE_NAME_LENGTH := 32
 const MAX_PROFILES := 12
 const MIN_LOOK_SENSITIVITY := 0.25
@@ -25,6 +26,9 @@ var active_profile_name: String:
 			if profile["id"] == active_profile_id:
 				return profile["name"]
 		return "Player"
+var active_avatar_options: Dictionary:
+	get:
+		return _state["profile_appearances"].get(active_profile_id, {}).duplicate()
 var master_volume: float:
 	get:
 		return _state["settings"]["master_volume"]
@@ -140,6 +144,16 @@ func start_new_campaign(generation: int) -> Error:
 	return _commit(next_state)
 
 
+func set_avatar_options(options: Dictionary) -> Error:
+	if not AvatarStyle.is_valid(options):
+		return ERR_INVALID_PARAMETER
+	if options == active_avatar_options:
+		return OK
+	var next_state := _state.duplicate(true)
+	next_state["profile_appearances"][active_profile_id] = options.duplicate()
+	return _commit(next_state)
+
+
 func set_settings(volume: float, use_fullscreen: bool, sensitivity: float, show_live_map: Variant = null) -> Error:
 	return update_settings({
 		"master_volume": volume,
@@ -211,6 +225,7 @@ func _default_state() -> Dictionary:
 		"profiles": entries,
 		"active_profile_id": "1",
 		"campaign_generations": {},
+		"profile_appearances": {},
 		"settings": {
 			"master_volume": 1.0,
 			"dialogue_volume": 1.0,
@@ -263,6 +278,12 @@ func _normalize(raw: Dictionary) -> Dictionary:
 			var generation: Variant = generations.get(entry["id"])
 			if _number_in_range(generation, 1, _MAX_PROFILE_ID) and generation == int(generation):
 				normalized["campaign_generations"][entry["id"]] = int(generation)
+	var appearances: Variant = raw.get("profile_appearances")
+	if appearances is Dictionary:
+		for entry: Dictionary in normalized["profiles"]:
+			var options: Variant = appearances.get(entry["id"])
+			if AvatarStyle.is_valid(options):
+				normalized["profile_appearances"][entry["id"]] = options.duplicate()
 	var settings: Dictionary = normalized["settings"]
 	settings["master_volume"] = _bounded_number(saved_settings.get("master_volume"), 1.0, 0.0, 1.0)
 	settings["dialogue_volume"] = _bounded_number(saved_settings.get("dialogue_volume"), 1.0, 0.0, 1.0)

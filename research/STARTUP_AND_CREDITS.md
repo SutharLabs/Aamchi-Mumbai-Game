@@ -1,6 +1,6 @@
 # Startup identity and credits
 
-The title introduces a stylized present-day Ranwar, Bandra West, Mumbai. The opening screen uses one neighborhood-scale image to connect the game name to the streets players can explore. The title, navigation and credits stay in the game UI so their text remains readable at different screen sizes.
+The title introduces present-day Ranwar, Bandra West, Mumbai. The opening uses one neighborhood-scale image to connect the game name to the streets players can explore. The Windows splash identifies the game while Unreal initializes. The title menu uses native text and controls, with a dedicated Credits page.
 
 ## Aamchi Mumbai
 
@@ -13,6 +13,12 @@ The municipal corporation has used the exact Devanagari phrase in its own portal
 The Mumbai Metropolitan Region Heritage Conservation Society’s surveyed Bandra precinct study describes Ranwar’s close-set buildings, narrow street frontages, pitched Mangalore-tile roofs and street-facing verandahs. BMC’s heritage material locates the Bandra Village precinct along Hill Road, Waroda Road and Chapel Road. The state tourism department describes the wider suburban setting through its fishing villages, sea link, sunsets, street food and transport. These sources support a human-scale neighborhood composition inside a contemporary coastal metropolis. [MMR-HCS Bandra precinct study](https://mmrhcs.org.in/images/documents/projects/precinct-studies/Study_of_Bandra_Precinct/Bandra%20vol%20I.pdf) · [BMC heritage list, Bandra Village entry](https://portal.mcgm.gov.in/irj/go/km/docs/documents/MCGM%20Department%20List/Chief%20Engineer%20%28Development%20Plan%29/Docs/HERITAGE/Heritage%20List%20%26%20Govt.%20Notifications/Heritage%20List.pdf) · [Maharashtra Tourism, Mumbai Suburban](https://maharashtratourism.gov.in/districts/mumbai-suburban/)
 
 For the title art, use blue-hour light, a narrow lane, verandahs and warm windows, with a black-and-yellow auto-rickshaw as a contemporary street cue. Put the strongest visual detail on the right and leave the left quiet for the menu. Rain sheen and the exact view are art direction. The underlying street layout and its source date are documented in the Ranwar map reference. [Ranwar map and acquisition](BANDRA_REFERENCE_AREA_AND_MAP.md)
+
+## Windows splash and title menu
+
+- Naughty Dog designed *The Last of Us Part II* main menu around a scene that reflects the story. Aamchi Mumbai uses its rainy Ranwar-inspired lane to establish place from the first screen. [Naughty Dog on the menu](https://blog.playstation.com/2020/09/25/the-last-of-us-day-2020-preview-celebrate-with-new-posters-collectibles-and-more/)
+- Supergiant revised the artwork, animations and logo of *Hades* together. Aamchi Mumbai repeats its rickshaw mark, title typography and warm accent across the Windows splash, title menu and Settings. [Supergiant patch notes](https://www.supergiantgames.com/blog/hades-updates/)
+- The native Windows splash is the original rainy backdrop with the game name, **Our Mumbai**, and the SutharLabs copyright baked into the BMP. Unreal displays it during startup with no added movie or fixed delay. The title menu keeps Credits reachable and the packaged Notices folder carries the longer attribution. [Unreal Windows splash settings](https://dev.epicgames.com/documentation/unreal-engine/windows-settings-in-the-unreal-engine-project-settings?application_version=5.8) · [Splash generator](../unreal/Tools/build_ranwar_splash.py) · [Project license](../LICENSE)
 
 ## Credits patterns in open-source games
 

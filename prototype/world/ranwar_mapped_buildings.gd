@@ -2,7 +2,10 @@ extends Node3D
 ## Original frontage and shop interiors positioned with the saved OSM footprints.
 
 const Footprints := preload("res://world/ranwar_building_footprints.gd")
+const FacadeKit := preload("res://world/ranwar_facade_kit.gd")
 const Surfaces := preload("res://world/ranwar_surface_materials.gd")
+const TeaRoomFrontage := preload("res://world/ranwar_tea_room_frontage.gd")
+const TEA_ROOM_WAY := 360291657
 const DOOR_WIDTH := 2.14
 const DOOR_HEIGHT := 2.62
 const ROOM_HEIGHT := 3.18
@@ -18,7 +21,7 @@ const PALETTE: Array[Color] = [
 ]
 # Edge indices refer to the source's vertex order. Shop names and interiors are fictional.
 const OPEN_SHOPS := {
-	360291657: [3, "HILL ROAD TEA ROOM", 5.12, Color("883f31")],
+	TEA_ROOM_WAY: [3, "HILL ROAD TEA ROOM", 5.12, Color("883f31")],
 	357472313: [1, "CHAPEL CORNER GROCER", 1.22, Color("446a62")],
 }
 
@@ -86,6 +89,17 @@ func _add_building(way: int, polygon: PackedVector2Array, height: float, paint: 
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_smooth_group(-1)
 	var is_enterable := not shop.is_empty()
+	var updated_exterior := surface
+	if is_enterable:
+		# Keep render refinements out of the authored shop collision mesh.
+		updated_exterior = SurfaceTool.new()
+		updated_exterior.begin(Mesh.PRIMITIVE_TRIANGLES)
+		updated_exterior.set_smooth_group(-1)
+	var legacy_exterior := surface
+	if way == TEA_ROOM_WAY:
+		legacy_exterior = SurfaceTool.new()
+		legacy_exterior.begin(Mesh.PRIMITIVE_TRIANGLES)
+		legacy_exterior.set_smooth_group(-1)
 	for index in polygon.size():
 		var p := polygon[index]
 		var q := polygon[(index + 1) % polygon.size()]
@@ -93,17 +107,26 @@ func _add_building(way: int, polygon: PackedVector2Array, height: float, paint: 
 		var end := Vector3(q.x, 0, q.y)
 		var tangent := (end - start).normalized()
 		var outward := Vector3.UP.cross(tangent)
-		if is_enterable and p.lerp(q, 0.5).is_equal_approx(door):
+		var has_opening := is_enterable and p.lerp(q, 0.5).is_equal_approx(door)
+		if has_opening:
 			var center := start.lerp(end, 0.5)
 			var half_opening := tangent * (DOOR_WIDTH * 0.5)
 			_wall(surface, start, center - half_opening, 0.0, height, paint, true)
 			_wall(surface, center + half_opening, end, 0.0, height, paint, true)
 			_wall(surface, center - half_opening, center + half_opening, DOOR_HEIGHT, height, paint, true)
-			_add_room(body, surface, center, tangent, outward, shop, way)
+			var frame := Transform3D(Basis(tangent, Vector3.UP, -outward), center)
+			_add_room(body, surface, legacy_exterior, frame, shop, way)
+			if way == TEA_ROOM_WAY:
+				TeaRoomFrontage.add_to(body, frame, material, start.distance_to(end), height, paint)
 		else:
 			_wall(surface, start, end, 0.0, height, paint, is_enterable)
-		var panel_offset := outward * (0.102 if is_enterable else 0.027)
-		_add_windows(surface, start + panel_offset, end + panel_offset, height, paint, is_enterable)
+		if is_enterable:
+			var panel_offset := outward * 0.102
+			_add_windows(legacy_exterior if has_opening else surface, start + panel_offset, end + panel_offset,
+				height, paint, true)
+		if not has_opening:
+			FacadeKit.add_face(updated_exterior, start, end, height, paint, way,
+				1 if is_enterable else 0, 0.115 if is_enterable else 0.0)
 
 	var roof := Geometry2D.triangulate_polygon(polygon)
 	for index in range(0, roof.size(), 3):
@@ -112,6 +135,7 @@ func _add_building(way: int, polygon: PackedVector2Array, height: float, paint: 
 		var c := polygon[roof[index + 2]]
 		Surfaces.add_triangle(surface, Vector3(a.x, height, a.y), Vector3(b.x, height, b.y),
 			Vector3(c.x, height, c.y), paint.darkened(0.23), Surfaces.CONCRETE)
+	FacadeKit.add_roof(updated_exterior, polygon, height, paint)
 	surface.generate_normals()
 	surface.index()
 	var visual := MeshInstance3D.new()
@@ -122,9 +146,21 @@ func _add_building(way: int, polygon: PackedVector2Array, height: float, paint: 
 	if is_enterable:
 		var collision := CollisionShape3D.new()
 		var shape := visual.mesh.create_trimesh_shape()
+		if legacy_exterior != surface:
+			# Preserve the original shop collisions while exporting the new street-facing trim separately.
+			var faces := shape.get_faces()
+			faces.append_array(legacy_exterior.commit().get_faces())
+			shape.set_faces(faces)
 		shape.backface_collision = true
 		collision.shape = shape
 		body.add_child(collision)
+		updated_exterior.generate_normals()
+		updated_exterior.index()
+		var refinement := MeshInstance3D.new()
+		refinement.name = "SideAndRearFinishes"
+		refinement.mesh = updated_exterior.commit()
+		refinement.material_override = material
+		body.add_child(refinement)
 	else:
 		var collision := CollisionPolygon3D.new()
 		collision.polygon = polygon
@@ -135,12 +171,13 @@ func _add_building(way: int, polygon: PackedVector2Array, height: float, paint: 
 	add_child(body)
 
 
-func _add_room(body: StaticBody3D, surface: SurfaceTool, center: Vector3, tangent: Vector3, outward: Vector3,
+func _add_room(body: StaticBody3D, surface: SurfaceTool, exterior: SurfaceTool, frame: Transform3D,
 		shop: Array, way: int) -> void:
-	var frame := Transform3D(Basis(tangent, Vector3.UP, -outward), center)
+	var center := frame.origin
+	var outward := -frame.basis.z
 	var accent: Color = shop[3]
 	var approach: float = shop[2]
-	var tea_room := way == 360291657
+	var tea_room := way == TEA_ROOM_WAY
 	_add_threshold_ramp(surface, frame, approach)
 	_piece(surface, frame, Vector3(0, 0.015, ROOM_DEPTH * 0.5), Vector3(ROOM_WIDTH, 0.025, ROOM_DEPTH), TILE, Surfaces.CONCRETE)
 	_piece(surface, frame, Vector3(0, ROOM_HEIGHT, ROOM_DEPTH * 0.5), Vector3(ROOM_WIDTH, 0.13, ROOM_DEPTH), INSIDE_WALL)
@@ -148,21 +185,21 @@ func _add_room(body: StaticBody3D, surface: SurfaceTool, center: Vector3, tangen
 	_piece(surface, frame, Vector3(0, 0.63, ROOM_DEPTH - 0.087), Vector3(ROOM_WIDTH, 1.17, 0.02), accent.lightened(0.22))
 	_piece(surface, frame, Vector3(0, 0.47, 4.78), Vector3(2.30, 0.89, 0.76), accent.darkened(0.15))
 	_piece(surface, frame, Vector3(0, 0.96, 4.78), Vector3(2.43, 0.10, 0.86), TILE, Surfaces.CONCRETE)
-	_piece(surface, frame, Vector3(0, 2.87, -0.18), Vector3(6.34, 0.42, 0.17), accent)
-	_piece(surface, frame, Vector3(0, 2.69, -0.76), Vector3(6.50, 0.09, 1.00), accent.darkened(0.15))
-	_piece(surface, frame, Vector3(0, 2.60, -1.22), Vector3(6.50, 0.14, 0.08), accent)
+	_piece(exterior, frame, Vector3(0, 2.87, -0.18), Vector3(6.34, 0.42, 0.17), accent)
+	_piece(exterior, frame, Vector3(0, 2.69, -0.76), Vector3(6.50, 0.09, 1.00), accent.darkened(0.15))
+	_piece(exterior, frame, Vector3(0, 2.60, -1.22), Vector3(6.50, 0.14, 0.08), accent)
 	for side: float in [-1.0, 1.0]:
 		_piece(surface, frame, Vector3(side * ROOM_WIDTH * 0.5, ROOM_HEIGHT * 0.5, ROOM_DEPTH * 0.5),
 			Vector3(0.16, ROOM_HEIGHT, ROOM_DEPTH), INSIDE_WALL)
 		_piece(surface, frame, Vector3(side * (ROOM_WIDTH * 0.5 - 0.09), 0.63, ROOM_DEPTH * 0.5),
 			Vector3(0.02, 1.17, ROOM_DEPTH), accent.lightened(0.22))
-		_piece(surface, frame, Vector3(side * 1.19, DOOR_HEIGHT * 0.5, -0.09),
+		_piece(exterior, frame, Vector3(side * 1.19, DOOR_HEIGHT * 0.5, -0.09),
 			Vector3(0.16, DOOR_HEIGHT, 0.20), accent)
-		_piece(surface, frame, Vector3(side * 2.27, 1.28, -0.108), Vector3(1.82, 2.23, 0.09), TRIM)
-		_piece(surface, frame, Vector3(side * 2.27, 1.31, -0.167), Vector3(1.60, 1.92, 0.06), GLASS)
-		_piece(surface, frame, Vector3(side * 2.27, 1.31, -0.216), Vector3(0.07, 1.94, 0.04), accent)
-		_piece(surface, frame, Vector3(side * 2.27, 1.39, -0.214), Vector3(1.60, 0.07, 0.04), accent)
-		_piece(surface, frame, Vector3(side * 2.27, 0.31, -0.245), Vector3(1.90, 0.12, 0.24), TILE, Surfaces.CONCRETE)
+		_piece(exterior, frame, Vector3(side * 2.27, 1.28, -0.108), Vector3(1.82, 2.23, 0.09), TRIM)
+		_piece(exterior, frame, Vector3(side * 2.27, 1.31, -0.167), Vector3(1.60, 1.92, 0.06), GLASS)
+		_piece(exterior, frame, Vector3(side * 2.27, 1.31, -0.216), Vector3(0.07, 1.94, 0.04), accent)
+		_piece(exterior, frame, Vector3(side * 2.27, 1.39, -0.214), Vector3(1.60, 0.07, 0.04), accent)
+		_piece(exterior, frame, Vector3(side * 2.27, 0.31, -0.245), Vector3(1.90, 0.12, 0.24), TILE, Surfaces.CONCRETE)
 		_piece(surface, frame, Vector3(side * 2.51, 0.41, 2.16), Vector3(0.72, 0.82, 1.72),
 			accent.darkened(0.14), Surfaces.TIMBER)
 		_piece(surface, frame, Vector3(side * 2.51, 0.85, 2.16), Vector3(0.81, 0.10, 1.84), TILE, Surfaces.CONCRETE)
@@ -184,14 +221,15 @@ func _add_room(body: StaticBody3D, surface: SurfaceTool, center: Vector3, tangen
 	board.pixel_size = 0.0039
 	board.outline_size = 0
 	body.add_child(board)
-	var nameplate := Label3D.new()
-	nameplate.text = shop[1]
-	nameplate.position = center + outward * 0.276 + Vector3.UP * 2.87
-	nameplate.rotation.y = atan2(outward.x, outward.z)
-	nameplate.font_size = 42
-	nameplate.pixel_size = 0.0046
-	nameplate.outline_size = 1
-	body.add_child(nameplate)
+	if not tea_room:
+		var nameplate := Label3D.new()
+		nameplate.text = shop[1]
+		nameplate.position = center + outward * 0.276 + Vector3.UP * 2.87
+		nameplate.rotation.y = atan2(outward.x, outward.z)
+		nameplate.font_size = 42
+		nameplate.pixel_size = 0.0046
+		nameplate.outline_size = 1
+		body.add_child(nameplate)
 
 	var lamp := OmniLight3D.new()
 	lamp.position = frame * Vector3(0, 2.90, ROOM_DEPTH * 0.62)

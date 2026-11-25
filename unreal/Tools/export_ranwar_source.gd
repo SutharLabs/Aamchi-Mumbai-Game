@@ -2,6 +2,7 @@ extends SceneTree
 ## Headless exchange of the actual Ranwar world scene and its static collision.
 
 const World := preload("res://world/phase1_world.gd")
+const Footprints := preload("res://world/ranwar_building_footprints.gd")
 
 var _visuals: Array[Dictionary] = []
 var _collision := PackedVector3Array()
@@ -53,6 +54,7 @@ func _export() -> void:
 	var data := {"schema": 1, "basis": "Godot x-right, y-up, -z-forward, metres",
 		"render_meshes": _visuals, "collision_triangles": _vectors(_collision), "materials": _materials,
 		"player_start": launch, "doors": entries, "markers": markers, "roads": routes,
+		"building_sites": _building_sites(world),
 		"footway": _vectors(world._gully), "osm_attribution": "© OpenStreetMap contributors, ODbL 1.0"}
 	var output := ProjectSettings.globalize_path(args[0])
 	var directory_error := DirAccess.make_dir_recursive_absolute(output.get_base_dir())
@@ -74,6 +76,38 @@ func _export() -> void:
 	print("Ranwar source exported: %d mesh surfaces, %d collision triangles, %d landmarks, %d doors." %
 		[_visuals.size(), _collision.size() / 3, markers.size(), entries.size()])
 	quit()
+
+
+func _building_sites(world: Node3D) -> Array[Dictionary]:
+	var buildings: Array[Dictionary] = []
+	for site: Array in Footprints.SITES:
+		var way: int = site[0]
+		var offset: Vector2 = Footprints.SETBACKS.get(way, Vector2.ZERO)
+		var polygon: Array = []
+		for point: Vector2 in site[3]:
+			polygon.append([point.x + offset.x, point.y + offset.y])
+		var roof_prop := world.get_node_or_null("RanwarRoofProp_%d" % way) as Node3D
+		var reserved: Array = []
+		if roof_prop:
+			reserved.append([roof_prop.position.x, roof_prop.position.z, 2.5])
+		buildings.append({"id": "mapped-%d" % way, "height": site[1], "polygon": polygon,
+			"reserved": reserved, "adapted_front": way in [360291657, 357472313]})
+	for child: Node in world.get_children():
+		if not child.has_meta(&"ranwar_background_lot"):
+			continue
+		var lot: Dictionary = child.get_meta(&"ranwar_background_lot")
+		var center: Vector3 = lot["point"]
+		var turn := Basis(Vector3.UP, lot["yaw"])
+		var polygon: Array = []
+		for corner: Vector3 in [Vector3(-6, 0, -6.5), Vector3(6, 0, -6.5),
+				Vector3(6, 0, 6.5), Vector3(-6, 0, 6.5)]:
+			var point := center + turn * corner
+			polygon.append([point.x, point.z])
+		var headhouse_side := -1.0 if absi(roundi(center.x * 7.0) + roundi(center.z * 11.0)) % 2 == 0 else 1.0
+		var headhouse := center + turn * Vector3(headhouse_side * 2.8, 0, -1.8)
+		buildings.append({"id": "street-%d" % buildings.size(), "height": lot["height"], "polygon": polygon,
+			"reserved": [[headhouse.x, headhouse.z, 2.1]], "adapted_front": lot["adapted_front"]})
+	return buildings
 
 
 func _roadside_position(world: Node3D, position: Vector3) -> Vector3:
@@ -131,6 +165,7 @@ func _capture_mesh(instance: MeshInstance3D) -> void:
 			uv_scale = Vector2(material.uv1_scale.x, material.uv1_scale.y)
 		_visuals.append({
 			"name": str(instance.get_parent().name), "center": _vector(transform.origin),
+			"label": str(instance.get_meta(&"export_label", instance.name)),
 			"vertices": _vectors(points), "normals": _vectors(normal_data),
 			"indices": [] if arrays[Mesh.ARRAY_INDEX] == null else Array(arrays[Mesh.ARRAY_INDEX]),
 			"uv": _uvs(arrays[Mesh.ARRAY_TEX_UV]), "uv2": _uvs(arrays[Mesh.ARRAY_TEX_UV2]),

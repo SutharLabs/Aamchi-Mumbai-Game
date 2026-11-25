@@ -2,6 +2,7 @@ extends Control
 
 signal play_requested
 signal new_game_requested
+signal appearance_requested
 signal resume_requested
 signal main_menu_requested
 signal quit_requested
@@ -220,6 +221,7 @@ func _show_top() -> void:
 		_route_button("PlayButton", "New Game", &"new_game")
 	else:
 		_focus.call_deferred(_button(_content, "PlayButton", "New Game", func(): new_game_requested.emit(), true))
+	_button(_content, "AppearanceButton", "Character Creator", func(): appearance_requested.emit())
 	_route_button("ProfilesButton", "Profiles", &"profiles")
 	_route_button("SettingsButton", "Settings", &"settings")
 	_route_button("HelpButton", "Controls", &"help")
@@ -230,7 +232,7 @@ func _show_top() -> void:
 
 func _show_new_game_confirmation() -> void:
 	_page_header("Start a New Game?")
-	var detail := _label(_content, "Begin Omkar’s story again on this profile. Continue will use the new game once it is saved.", 19, CREAM)
+	var detail := _label(_content, "Begin the story again on this profile. Continue will use the new game once it is saved.", 19, CREAM)
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_focus.call_deferred(_button(_content, "CancelNewGameButton", "Cancel", _show_page.bind(&"top"), true))
 	_button(_content, "ConfirmNewGameButton", "Start New Game", func(): new_game_requested.emit())

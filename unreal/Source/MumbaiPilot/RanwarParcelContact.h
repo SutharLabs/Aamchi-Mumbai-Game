@@ -17,9 +17,11 @@ class MUMBAIPILOT_API ARanwarParcelContact : public AActor
 public:
     ARanwarParcelContact();
     void RespondTo(const APawn& Visitor);
+    const AActor* GetMetaHumanVisual() const { return MetaHumanVisual.Get(); }
 
 protected:
     void BeginPlay() override;
+    void EndPlay(EEndPlayReason::Type EndPlayReason) override;
     void Tick(float DeltaSeconds) override;
 
 private:
@@ -33,14 +35,24 @@ private:
     TObjectPtr<USkeletalMeshComponent> SkeletalAppearance;
 
     UPROPERTY(EditAnywhere, Category = "Parcel contact")
+    TSubclassOf<AActor> MetaHumanClass;
+
+    UPROPERTY(EditAnywhere, Category = "Parcel contact")
     TObjectPtr<UAnimSequence> BreathLoop;
 
     UPROPERTY(EditAnywhere, Category = "Parcel contact")
     TObjectPtr<UAnimSequence> ContactGesture;
 
+    UPROPERTY(Transient)
+    TObjectPtr<USkeletalMeshComponent> AnimationBody;
+
+    UPROPERTY(Transient)
+    TObjectPtr<AActor> MetaHumanVisual;
+
     FRotator RestRotation = FRotator::ZeroRotator;
     FRotator ResponseFacing = FRotator::ZeroRotator;
     double ResponseUntil = 0.0;
+    double BreathPosition = 0.0;
     bool bHasAnimatedAppearance = false;
     bool bPlayingGesture = false;
 };

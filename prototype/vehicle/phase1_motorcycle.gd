@@ -46,6 +46,11 @@ func _build_body(paint_color: Color) -> void:
 	var mirror := _finish(Color("9aabaf"), 0.22, 0.45)
 	var front := _visual_wheel(Vector3(0, -0.19, -0.618), rubber, alloy, true, 0.091)
 	var rear := _visual_wheel(Vector3(0, -0.19, 0.618), rubber, alloy, false, 0.098)
+	if _body_style == BodyStyle.COMMUTER:
+		Geometry.brake_drum(front, wheel_radius, 0.091, alloy, satin)
+		Geometry.brake_drum(rear, wheel_radius, 0.098, alloy, satin)
+	else:
+		Geometry.brake_rotor(front, wheel_radius, 0.091, alloy, satin)
 	if _body_style == BodyStyle.SCRAMBLER:
 		var high_guard := Node3D.new()
 		high_guard.position.y = 0.098
@@ -95,9 +100,29 @@ func _build_body(paint_color: Color) -> void:
 			saddle[index].y += 0.034
 			saddle[index].z *= 0.86
 	_profile(lean_visual, "SteppedSaddle", saddle, upholstery, 0.65)
+	_build_frame_details(saddle, satin, alloy)
 	_build_running_gear(front, satin, alloy, rubber)
 	_build_cockpit(paint, satin, alloy, rubber, mirror)
 	_build_rear_lamps(satin, alloy)
+
+
+func _build_frame_details(saddle: Array[Vector4], steel: Material, alloy: Material) -> void:
+	var riser := Color("585550")
+	var stitch := _finish(riser, 0.80)
+	for side: float in [-1.0, 1.0]:
+		var lower := Vector3(side * 0.124, -0.166, 0.573)
+		var upper := Vector3(side * 0.142, 0.119, 0.385)
+		Geometry.bar(lean_visual, "RearDamperBody", lower, upper, 0.013, steel)
+		Geometry.spring(lean_visual, "RearDamperCoils", lower.lerp(upper, 0.20), upper.lerp(lower, 0.16),
+			0.025, 0.0042, alloy)
+		var seams: Array[Array] = []
+		for index in range(1, saddle.size() - 1):
+			var section := saddle[index]
+			seams.append([Vector3(side * section.z * 0.989, section.y + section.w * 0.086, section.x),
+				Vector3(0.005, 0.004, 0.030)])
+		Geometry.detail_boxes(lean_visual, "SeatPanelStitches", seams, stitch)
+	var side_rail := Vector3(-0.125, -0.133, 0.280)
+	Geometry.bar(lean_visual, "ChainGuardFlange", side_rail, Vector3(-0.134, -0.116, 0.668), 0.018, steel)
 
 
 func _build_running_gear(front: Node3D, satin: Material, alloy: Material, rubber: Material) -> void:
@@ -183,3 +208,10 @@ func _build_rear_lamps(satin: Material, alloy: Material) -> void:
 			Vector3(side * 0.128, 0.269, 0.748), 0.014, alloy)
 	Geometry.bar(lean_visual, "PassengerGrip", Vector3(-0.128, 0.269, 0.748),
 		Vector3(0.128, 0.269, 0.748), 0.014, alloy)
+	Geometry.detail_boxes(lean_visual, "RearPlateCarrier", [
+		[Vector3(0, -0.011, 0.835), Vector3(0.158, 0.135, 0.024)],
+	], satin)
+	Geometry.detail_boxes(lean_visual, "RearRegistrationPanel", [
+		[Vector3(0, -0.017, 0.852), Vector3(0.146, 0.065, 0.006)],
+	], _finish(Color("d7dbce"), 0.68))
+	Geometry.registration_text(lean_visual, Vector3(0, -0.017, 0.856), false, true, satin)

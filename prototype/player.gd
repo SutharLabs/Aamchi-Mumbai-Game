@@ -2,6 +2,7 @@ extends CharacterBody3D
 
 const Visual := preload("res://character/locomotion_visual.gd")
 const ImpactReaction := preload("res://character/vehicle_impact_reaction.gd")
+const AvatarStyle := preload("res://startup/avatar_style.gd")
 const WALK_SPEED := 1.12
 const RUN_SPEED := 3.05
 const BODY_HEIGHT := 1.68
@@ -31,6 +32,7 @@ enum { GROUNDED, TAKEOFF, AIRBORNE, LANDING }
 var body_shape := CapsuleShape3D.new()
 var visual := Visual.new()
 var display_name := "Omkar Shirodkar"
+var avatar_options: Dictionary = {}
 var active := true
 var running := false
 var direction := Vector3.ZERO
@@ -58,6 +60,8 @@ func _ready() -> void:
 	add_child(_collider)
 	visual.name = "CharacterVisual"
 	visual.wears_dhotar = true
+	visual.avatar_options = avatar_options
+	display_name = AvatarStyle.character_name(avatar_options)
 	add_child(visual)
 	_walk_steps = _step_bank(WALK_STEPS)
 	_run_steps = _step_bank(RUN_STEPS)

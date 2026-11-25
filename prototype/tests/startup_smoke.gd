@@ -34,7 +34,7 @@ func _run() -> void:
 	await _settle()
 	var touch_preview := Controls.uses_touch_ui()
 	_expect(is_equal_approx(app.preferences.master_volume, 0.8) and Controls.label("interact", Controls.KEYBOARD) == "E", "existing saves keep settings and receive default controls")
-	var title_options := ["New Game", "Profiles", "Settings", "Controls", "Credits"]
+	var title_options := ["New Game", "Character Creator", "Profiles", "Settings", "Controls", "Credits"]
 	if not touch_preview:
 		title_options.append("Quit to Desktop")
 	_expect(_top_actions() == title_options, "title offers the shared actions in order and treats desktop Quit as platform-specific")
@@ -155,8 +155,15 @@ func _run() -> void:
 	else:
 		_joy_menu(JOY_BUTTON_DPAD_DOWN)
 		await _settle()
-		_expect(root.gui_get_focus_owner() == _button("ProfilesButton"), "gamepad navigates the title menu")
-		_joy_menu(JOY_BUTTON_DPAD_UP)
+		_expect(root.gui_get_focus_owner() == _button("AppearanceButton"), "gamepad navigates to Character Creator")
+		_joy_menu(JOY_BUTTON_A)
+		await _settle()
+		_expect(app._avatar_creator != null and root.gui_get_focus_owner().name == &"GenderChoice",
+			"gamepad opens Character Creator and focuses Gender")
+		_joy_menu(JOY_BUTTON_B)
+		await _settle()
+		_expect(app._avatar_creator == null and root.gui_get_focus_owner() == _button("PlayButton"),
+			"gamepad returns from Character Creator to the title")
 		_joy_menu(JOY_BUTTON_A)
 	await _settle()
 	_expect(app.gameplay != null and not app.menu.visible, "keyboard activates Play" if touch_preview else "gamepad activates Play")

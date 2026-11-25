@@ -10,6 +10,7 @@ const CarDriver := preload("res://vehicle/phase1_car_driver.gd")
 const Rickshaw := preload("res://vehicle/phase1_rickshaw.gd")
 const Motorcycle := preload("res://vehicle/phase1_motorcycle.gd")
 const Scooter := preload("res://vehicle/phase1_scooter.gd")
+const TwoWheeler := preload("res://vehicle/phase1_two_wheeler.gd")
 const Fleet := preload("res://vehicle/ranwar_fleet.gd")
 const Walker := preload("res://player.gd")
 const Pedestrian := preload("res://character/practice_pedestrian.gd")
@@ -50,6 +51,7 @@ var camera := Camera3D.new()
 var hud := Hud.new()
 var dialogue := Dialogue.new()
 var dialogue_preferences: Node
+var avatar_options: Dictionary = {}
 var pedestrians: Array[Pedestrian] = []
 var active_vehicle: Vehicle
 var startup_pause_enabled := false
@@ -97,6 +99,7 @@ func _ready() -> void:
 	world.name = "RanwarPracticeArea"
 	add_child(world)
 	player.name = "Walker"
+	player.avatar_options = avatar_options
 	player.position = world.arrival_position() if _first_arrival else PLAYER_START
 	if _first_arrival:
 		_yaw = world.arrival_yaw()
@@ -139,6 +142,7 @@ func _ready() -> void:
 		_add_first_aid_sign()
 	hud.pause_enabled = startup_pause_enabled
 	add_child(hud)
+	dialogue.use_ira = avatar_options.get("gender") == "woman"
 	hud.add_child(dialogue)
 	if dialogue_preferences != null:
 		dialogue_preferences.changed.connect(_apply_dialogue_preferences)
@@ -168,6 +172,8 @@ func _ready() -> void:
 func _add_practice_vehicle(vehicle: Vehicle, node_name: String, pose: Transform3D, with_key := true) -> void:
 	vehicle.name = node_name
 	vehicle.transform = pose
+	if vehicle is Rickshaw or vehicle is TwoWheeler:
+		vehicle.avatar_options = avatar_options
 	add_child(vehicle)
 	vehicle.reset_to(pose)
 	_parking_poses[vehicle] = pose
@@ -671,6 +677,7 @@ func _seat_player_in_car(vehicle: Car) -> void:
 		_player_car_driver = CarDriver.new()
 		_player_car_driver.name = "OmkarInDriverSeat"
 		_player_car_driver.wears_dhotar = player.visual.wears_dhotar
+		_player_car_driver.avatar_options = avatar_options
 		vehicle.add_child(_player_car_driver)
 	else:
 		_player_car_driver.reparent(vehicle, false)

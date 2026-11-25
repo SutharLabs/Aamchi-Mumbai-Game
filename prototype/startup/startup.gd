@@ -2,6 +2,7 @@ extends Node
 
 const Preferences := preload("res://startup/preferences.gd")
 const Menu := preload("res://startup/menu.gd")
+const AvatarCreator := preload("res://startup/avatar_creator.gd")
 const Ranwar := preload("res://phase1.tscn")
 const MissionProgress := preload("res://mission/mission_progress.gd")
 const Career := preload("res://mission/ranwar_career.gd")
@@ -11,6 +12,7 @@ var menu := Menu.new()
 var gameplay: Node3D
 var mission_progress_directory := "user://"
 var _session_careers: Dictionary[String, Career] = {}
+var _avatar_creator: AvatarCreator
 
 
 func _ready() -> void:
@@ -25,6 +27,7 @@ func _ready() -> void:
 	menu_layer.add_child(menu)
 	menu.play_requested.connect(_start_game)
 	menu.new_game_requested.connect(_start_new_game)
+	menu.appearance_requested.connect(_open_avatar_creator)
 	menu.resume_requested.connect(_resume_game)
 	menu.main_menu_requested.connect(_return_to_title)
 	menu.abandon_job_requested.connect(_abandon_job)
@@ -36,7 +39,7 @@ func _input(event: InputEvent) -> void:
 	if menu.capture_control_input(event):
 		get_viewport().set_input_as_handled()
 		return
-	var menu_back := menu.visible and event.is_action_pressed(&"ui_cancel")
+	var menu_back := (menu.visible or _avatar_creator != null) and event.is_action_pressed(&"ui_cancel")
 	var game_pause := gameplay != null and not get_tree().paused and event.is_action_pressed(&"pause_game", false, true)
 	var gamepad_start: bool = (
 		gameplay != null and get_tree().paused
@@ -55,6 +58,10 @@ func _notification(what: int) -> void:
 
 
 func _go_back() -> bool:
+	if _avatar_creator != null:
+		if not _avatar_creator.dismiss_popup():
+			_close_avatar_creator()
+		return true
 	if menu.visible and menu.back_requested():
 		return true
 	if gameplay == null:
@@ -64,6 +71,32 @@ func _go_back() -> bool:
 	else:
 		_pause_game()
 	return true
+
+
+func _open_avatar_creator() -> void:
+	if gameplay != null or _avatar_creator != null:
+		return
+	_avatar_creator = AvatarCreator.new()
+	_avatar_creator.configure(preferences.active_avatar_options)
+	_avatar_creator.applied.connect(_apply_avatar_options)
+	_avatar_creator.closed.connect(_close_avatar_creator)
+	menu.hide()
+	menu.get_parent().add_child(_avatar_creator)
+
+
+func _apply_avatar_options(options: Dictionary) -> void:
+	if preferences.set_avatar_options(options) != OK:
+		_avatar_creator.show_error("Could not save your character. Try again.")
+		return
+	_close_avatar_creator()
+
+
+func _close_avatar_creator() -> void:
+	if _avatar_creator != null:
+		_avatar_creator.hide()
+		_avatar_creator.queue_free()
+		_avatar_creator = null
+	_show_title()
 
 
 func _start_game() -> void:
@@ -76,6 +109,7 @@ func _start_game() -> void:
 	gameplay.delivery_progress = _active_profile_progress()
 	gameplay.career = _session_careers.get(profile_id)
 	gameplay.dialogue_preferences = preferences
+	gameplay.avatar_options = preferences.active_avatar_options
 	_apply_gameplay_preferences()
 	gameplay.pause_requested.connect(_pause_game)
 	add_child(gameplay)

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Templates/SubclassOf.h"
 #include "RanwarTraffic.generated.h"
 
 class APlayerController;
@@ -10,6 +11,7 @@ class UPoseableMeshComponent;
 class USkeletalMesh;
 class UStaticMesh;
 class UStaticMeshComponent;
+enum class ERanwarVehicleKind : uint8;
 
 USTRUCT(BlueprintType)
 struct MUMBAIPILOT_API FRanwarTrafficRoad
@@ -34,10 +36,17 @@ class MUMBAIPILOT_API ARanwarTrafficCar : public AActor
 
 public:
     ARanwarTrafficCar();
-    void Configure(UStaticMesh* Vehicle, USkeletalMesh* Driver, bool bRickshaw);
+    void Configure(UStaticMesh* Vehicle, TSubclassOf<AActor> NativeDriverClass, USkeletalMesh* FallbackDriver,
+        bool bRickshaw);
     double GetRideHeight() const;
+    const AActor* GetNativeDriverVisual() const { return NativeDriverVisual.Get(); }
+
+protected:
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+    bool InstallNativeDriver(TSubclassOf<AActor> DriverClass, ERanwarVehicleKind Kind);
+
     UPROPERTY()
     TObjectPtr<UBoxComponent> Chassis;
 
@@ -46,6 +55,9 @@ private:
 
     UPROPERTY()
     TObjectPtr<UPoseableMeshComponent> SeatedDriver;
+
+    UPROPERTY(Transient)
+    TObjectPtr<AActor> NativeDriverVisual;
 };
 
 UCLASS()
@@ -97,7 +109,10 @@ private:
     TObjectPtr<UStaticMesh> RickshawMesh;
 
     UPROPERTY(Transient)
-    TObjectPtr<USkeletalMesh> DriverMesh;
+    TSubclassOf<AActor> NativeDriverClass;
+
+    UPROPERTY(Transient)
+    TObjectPtr<USkeletalMesh> FallbackDriverMesh;
 
     TArray<FVector> Route;
     TArray<double> Distances;

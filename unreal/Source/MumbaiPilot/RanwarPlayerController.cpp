@@ -112,12 +112,15 @@ namespace
             .AutoWrapText(bWrap);
     }
 
+    constexpr int32 MaxGraphicsQuality = 3;
+
     FText QualityName(int32 Quality)
     {
         switch (Quality)
         {
         case 1: return LOCTEXT("Medium", "Medium");
         case 2: return LOCTEXT("High", "High");
+        case 3: return LOCTEXT("Epic", "Epic");
         default: return LOCTEXT("Low", "Low");
         }
     }
@@ -237,7 +240,7 @@ void ARanwarPlayerController::LoadPreferences()
     {
         Settings.bFullscreen = Video->GetFullscreenMode() != EWindowMode::Windowed;
         Settings.bVSync = Video->IsVSyncEnabled();
-        Settings.GraphicsQuality = FMath::Clamp(Video->GetOverallScalabilityLevel(), 0, 2);
+        Settings.GraphicsQuality = FMath::Clamp(Video->GetOverallScalabilityLevel(), 0, MaxGraphicsQuality);
     }
     const auto ReadFloat = [](float Value, float Minimum, float Maximum)
     {
@@ -352,6 +355,7 @@ FReply ARanwarPlayerController::ShowMenu(EMenuPage Page)
     TSharedRef<SVerticalBox> Content = SNew(SVerticalBox);
     TSharedPtr<SWidget> FirstFocus;
     TArray<TPair<FText, TSharedRef<SWidget>>> SettingsSections;
+    const FText GameCopyright = LOCTEXT("GameCopyright", "© 2026 SutharLabs");
     const auto MakeButton = [](TAttribute<FText> Text, FOnClicked Action, bool bPrimary)
     {
         return SNew(SButton)
@@ -447,6 +451,7 @@ FReply ARanwarPlayerController::ShowMenu(EMenuPage Page)
         AddButton(*Content, LOCTEXT("QuitButton", "Quit to Desktop"),
             FOnClicked::CreateUObject(this, &ARanwarPlayerController::QuitGame));
 #endif
+        Content->AddSlot().AutoHeight().Padding(1, 9, 0, 0)[MenuText(GameCopyright, 14, Muted)];
     }
     else if (Page == EMenuPage::Profiles)
     {
@@ -561,7 +566,7 @@ FReply ARanwarPlayerController::ShowMenu(EMenuPage Page)
             return FText::Format(LOCTEXT("GraphicsQuality", "Graphics Quality   ·   {0}"), QualityName(PendingSettings.GraphicsQuality));
         }), FOnClicked::CreateLambda([this]()
         {
-            PendingSettings.GraphicsQuality = (PendingSettings.GraphicsQuality + 1) % 3;
+            PendingSettings.GraphicsQuality = (PendingSettings.GraphicsQuality + 1) % (MaxGraphicsQuality + 1);
             MenuNotice = FText::GetEmpty();
             return FReply::Handled();
         }));
@@ -605,6 +610,7 @@ FReply ARanwarPlayerController::ShowMenu(EMenuPage Page)
     {
         AddText(LOCTEXT("CreditsTitle", "Credits"), 34, Ivory);
         AddText(LOCTEXT("CreditsDeveloper", "Aamchi Mumbai Game\nSutharLabs"), 21, Gold);
+        AddText(GameCopyright, 15, Muted);
         AddText(LOCTEXT("CreditsUnrealTrademark", "Aamchi Mumbai Game uses Unreal® Engine. Unreal® is a trademark or registered trademark of Epic Games, Inc. in the United States of America and elsewhere."), 16, Ivory);
         AddText(LOCTEXT("CreditsUnrealCopyright", "Unreal® Engine, Copyright 1998 – 2026, Epic Games, Inc. All rights reserved."), 16, Ivory);
         AddText(LOCTEXT("CreditsMap", "Map data: OpenStreetMap contributors, ODbL 1.0."), 17, Ivory);
@@ -638,6 +644,17 @@ FReply ARanwarPlayerController::ShowMenu(EMenuPage Page)
     TSharedRef<SWidget> Panel = Scroll;
     if (Page == EMenuPage::Settings)
     {
+        TSharedRef<SHorizontalBox> SettingsIdentity = SNew(SHorizontalBox);
+        if (TitleMark)
+        {
+            SettingsIdentity->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)
+            [
+                SNew(SBox).WidthOverride(28.0f).HeightOverride(28.0f)
+                [SNew(SImage).Image(&TitleMarkBrush).Visibility(EVisibility::HitTestInvisible)]
+            ];
+        }
+        SettingsIdentity->AddSlot().AutoWidth().VAlign(VAlign_Center)
+        [MenuText(LOCTEXT("SettingsGameName", "AAMCHI MUMBAI GAME"), 15, Gold, false)];
         const TSharedRef<SWrapBox> Shortcuts = SNew(SWrapBox)
             .PreferredSize(660.0f)
             .UseAllottedSize(true)
@@ -661,10 +678,7 @@ FReply ARanwarPlayerController::ShowMenu(EMenuPage Page)
             ];
         }
         Panel = SNew(SVerticalBox)
-            + SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 5)
-            [
-                MenuText(LOCTEXT("SettingsGameName", "AAMCHI MUMBAI GAME"), 15, Gold)
-            ]
+            + SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 5)[SettingsIdentity]
             + SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 13)[MenuText(LOCTEXT("SettingsTitle", "Settings"), 40, Ivory)]
             + SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 9)[Shortcuts]
             + SVerticalBox::Slot().FillHeight(1.0f)[Scroll]

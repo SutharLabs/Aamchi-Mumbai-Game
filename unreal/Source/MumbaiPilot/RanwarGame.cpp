@@ -1,4 +1,5 @@
 #include "RanwarGame.h"
+#include "RanwarStrideAnimation.h"
 
 #include "Animation/AnimSequence.h"
 #include "ReferenceSkeleton.h"
@@ -19,6 +20,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GroomComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
 #include "RanwarAudio.h"
@@ -35,10 +37,15 @@
 
 namespace
 {
-    constexpr float WalkSpeed = 112.0f;
-    constexpr float RunSpeed = 305.0f;
+    constexpr TCHAR MetaHumanFolder[] = TEXT("/Game/OmkarAssembled/r005/Omkar/");
+    constexpr TCHAR PreviousMetaHumanFolder[] = TEXT("/Game/OmkarAssembled/r004/Omkar/");
+
+    constexpr float WalkSpeed = 154.0f;
+    constexpr float RunSpeed = 360.0f;
     constexpr double WalkClipSpeed = 89.3;
     constexpr double RunClipSpeed = 293.7;
+    constexpr double NativeWalkStrideScale = 0.76;
+    constexpr double NativeRunStrideScale = 0.72;
     // Each animation loop contains two footfalls at the retargeted clip speed.
     constexpr double WalkStepDistance = 59.5;
     constexpr double RunRightContact = 5.0 / 30.0;
@@ -64,6 +71,14 @@ namespace
         }
         return LoadObject<AssetType>(nullptr, *(Package + TEXT(".") + AssetName));
     }
+
+    UAnimSequence* LoadMetaHumanClip(const TCHAR* Folder, const TCHAR* Name)
+    {
+        const FString Package = FString(Folder) + TEXT("Animations/") + Name;
+        return FPackageName::DoesPackageExist(Package, nullptr, false)
+            ? LoadObject<UAnimSequence>(nullptr, *(Package + TEXT(".") + Name))
+            : nullptr;
+    }
 }
 
 ARanwarLandmark::ARanwarLandmark()
@@ -81,8 +96,10 @@ ARanwarCharacter::ARanwarCharacter()
 
     UCharacterMovementComponent* Movement = GetCharacterMovement();
     Movement->bOrientRotationToMovement = true;
-    Movement->RotationRate = FRotator(0.0, 600.0, 0.0);
+    Movement->RotationRate = FRotator(0.0, 420.0, 0.0);
     Movement->MaxWalkSpeed = WalkSpeed;
+    Movement->MaxAcceleration = 960.0f;
+    Movement->BrakingDecelerationWalking = 1200.0f;
     Movement->JumpZVelocity = 325.0f;
     Movement->MaxStepHeight = 36.0f;
 
@@ -124,7 +141,7 @@ void ARanwarCharacter::BeginPlay()
     StartTransform = GetActorTransform();
     SafeGroundTransform = StartTransform;
     LoadOmkarAppearance();
-    WalkTestMarker->SetVisibility(GetMesh()->GetSkeletalMeshAsset() == nullptr, true);
+    WalkTestMarker->SetVisibility(GetAvatarBody()->GetSkeletalMeshAsset() == nullptr, true);
     GetWorldTimerManager().SetTimer(
         LandmarkScanTimer, this, &ARanwarCharacter::UpdateLandmarkFocus, LandmarkScanInterval, true);
 }
@@ -140,17 +157,35 @@ void ARanwarCharacter::Tick(float DeltaSeconds)
             Health = FMath::Min(Health + DeltaSeconds * 4.0f, 50.0f);
         }
     }
-    if (ActiveLoop)
-    {
-        UpdateLocomotion();
-    }
+    const double Traveled = ActiveLoop && !bMetaHumanSeated ? UpdateLocomotion(DeltaSeconds) : 0.0;
     const double Speed = GetVelocity().Size2D();
     if (Health > 0.0f && IsLocallyControlled() && GetCharacterMovement()->IsMovingOnGround() && Speed > 20.0)
     {
+        if (bNativeLocomotion)
+        {
+            const USkeletalMeshComponent* Avatar = GetAvatarBody();
+            const bool bLeftPlanted = Avatar->GetBoneLocation(TEXT("ball_l"), EBoneSpaces::ComponentSpace).Z < 4.5;
+            const bool bRightPlanted = Avatar->GetBoneLocation(TEXT("ball_r"), EBoneSpaces::ComponentSpace).Z < 4.5;
+            if (bFootContactsInitialized && Traveled > 0.0)
+            {
+                if (bLeftPlanted && !bLeftFootPlanted)
+                {
+                    RanwarAudio::PlayFootstep(*this, ActiveLoop == RunLoop, false);
+                }
+                if (bRightPlanted && !bRightFootPlanted)
+                {
+                    RanwarAudio::PlayFootstep(*this, ActiveLoop == RunLoop, true);
+                }
+            }
+            bFootContactsInitialized = true;
+            bLeftFootPlanted = bLeftPlanted;
+            bRightFootPlanted = bRightPlanted;
+            return;
+        }
         if (RunLoop && ActiveLoop == RunLoop)
         {
             DistanceSinceStep = 0.0;
-            const double Current = GetMesh()->GetPosition();
+            const double Current = LocomotionPosition;
             double Previous = LastRunStepPosition;
             LastRunStepPosition = Current;
             if (Previous < 0.0 || Previous == Current)
@@ -172,7 +207,7 @@ void ARanwarCharacter::Tick(float DeltaSeconds)
             return;
         }
         LastRunStepPosition = -1.0;
-        DistanceSinceStep += Speed * DeltaSeconds;
+        DistanceSinceStep += Traveled;
         if (DistanceSinceStep >= WalkStepDistance)
         {
             RanwarAudio::PlayFootstep(*this, false, bRightFootNext);
@@ -184,6 +219,7 @@ void ARanwarCharacter::Tick(float DeltaSeconds)
     {
         DistanceSinceStep = 0.0;
         LastRunStepPosition = -1.0;
+        bFootContactsInitialized = false;
     }
 }
 
@@ -249,8 +285,201 @@ void ARanwarCharacter::RecoverAtStop()
     DetailsUntil = GetWorld()->GetTimeSeconds() + LandmarkReadTime;
 }
 
+USkeletalMeshComponent* ARanwarCharacter::GetAvatarBody() const
+{
+    return IsValid(MetaHumanBody) ? MetaHumanBody.Get() : GetMesh();
+}
+
+FQuat ARanwarCharacter::GetAvatarFacing() const
+{
+    return IsValid(MetaHumanBody) ? MetaHumanFacing : GetMesh()->GetRelativeRotation().Quaternion();
+}
+
+bool ARanwarCharacter::LoadMetaHumanAppearance()
+{
+    return TryLoadMetaHumanAppearance(MetaHumanFolder) || TryLoadMetaHumanAppearance(PreviousMetaHumanFolder);
+}
+
+bool ARanwarCharacter::TryLoadMetaHumanAppearance(const TCHAR* Folder)
+{
+    const FString Package = FString(Folder) + TEXT("BP_Omkar");
+    if (!FPackageName::DoesPackageExist(Package, nullptr, false))
+    {
+        return false;
+    }
+
+    UClass* VisualClass = LoadClass<AActor>(nullptr, *(Package + TEXT(".BP_Omkar_C")));
+    UAnimSequence* Idle = LoadMetaHumanClip(Folder, TEXT("OmkarIdle_MH"));
+    UAnimSequence* Walk = LoadMetaHumanClip(Folder, TEXT("OmkarWalk_MH"));
+    UAnimSequence* Run = LoadMetaHumanClip(Folder, TEXT("OmkarRun_MH"));
+    if (!VisualClass || !Idle || !Walk || !Run)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ranwar: the Omkar assembly and all three baked locomotion clips are required."));
+        return false;
+    }
+
+    FActorSpawnParameters Spawn;
+    Spawn.Owner = this;
+    Spawn.Instigator = this;
+    Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    AActor* Visual = GetWorld()->SpawnActor<AActor>(VisualClass, GetActorTransform(), Spawn);
+    if (!Visual)
+    {
+        return false;
+    }
+    Visual->SetActorEnableCollision(false);
+
+    USkeletalMeshComponent* Body = nullptr;
+    USkeletalMeshComponent* Face = nullptr;
+    TInlineComponentArray<USkeletalMeshComponent*> Meshes(Visual);
+    for (USkeletalMeshComponent* Component : Meshes)
+    {
+        if (Component->GetFName() == TEXT("Body"))
+        {
+            Body = Component;
+        }
+        else if (Component->GetFName() == TEXT("Face"))
+        {
+            Face = Component;
+        }
+    }
+
+    const USkeletalMesh* SkeletonMesh = Body ? Body->GetSkeletalMeshAsset() : nullptr;
+    const USkeleton* Skeleton = SkeletonMesh ? SkeletonMesh->GetSkeleton() : nullptr;
+    if (!Visual->GetRootComponent() || !Skeleton || !Face || !Face->GetSkeletalMeshAsset()
+        || Idle->GetSkeleton() != Skeleton || Walk->GetSkeleton() != Skeleton || Run->GetSkeleton() != Skeleton)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ranwar: Omkar's assembled Body, Face or locomotion skeleton did not validate."));
+        Visual->Destroy();
+        return false;
+    }
+
+    const FReferenceSkeleton& Reference = SkeletonMesh->GetRefSkeleton();
+    const int32 Foot = Reference.FindBoneIndex(TEXT("foot_l"));
+    const int32 Toes = Reference.FindBoneIndex(TEXT("ball_l"));
+    if (Foot == INDEX_NONE || Toes == INDEX_NONE || Reference.FindBoneIndex(TEXT("pelvis")) == INDEX_NONE)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ranwar: Omkar's MetaHuman body is missing its floor and seat anchors."));
+        Visual->Destroy();
+        return false;
+    }
+    const FVector Forward = FAnimationRuntime::GetComponentSpaceTransformRefPose(Reference, Toes).GetLocation()
+        - FAnimationRuntime::GetComponentSpaceTransformRefPose(Reference, Foot).GetLocation();
+    const FBox Bounds = SkeletonMesh->GetBounds().GetBox();
+    const FTransform RelativeBody = Body->GetComponentTransform().GetRelativeTransform(Visual->GetActorTransform());
+    if (Forward.SizeSquared2D() < 1.0 || !Bounds.IsValid || RelativeBody.ContainsNaN()
+        || !RelativeBody.GetScale3D().Equals(FVector::OneVector, 0.01))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Ranwar: Omkar's MetaHuman body transform cannot be registered to the capsule."));
+        Visual->Destroy();
+        return false;
+    }
+    const FQuat Facing = FRotator(0.0, -Forward.Rotation().Yaw, 0.0).Quaternion();
+    const FTransform NormalizedBody(Facing,
+        FVector(0.0, 0.0, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - Bounds.Min.Z));
+    const FTransform OnFoot = RelativeBody.Inverse() * NormalizedBody;
+    if (!Visual->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::KeepRelativeTransform))
+    {
+        Visual->Destroy();
+        return false;
+    }
+    Visual->SetActorRelativeTransform(OnFoot);
+    TInlineComponentArray<UGroomComponent*> Grooms(Visual);
+    for (UGroomComponent* Groom : Grooms)
+    {
+        Groom->SimulationSettings.bOverrideSettings = true;
+        Groom->SimulationSettings.SolverSettings.bEnableSimulation = false;
+        Groom->SetUseCards(true);
+        Groom->UpdateHairSimulation();
+    }
+
+    MetaHumanVisual = Visual;
+    MetaHumanBody = Body;
+    BodyRelativeToVisual = RelativeBody;
+    MetaHumanOnFootTransform = OnFoot;
+    MetaHumanFacing = Facing;
+    IdleLoop = Idle;
+    WalkLoop = Walk;
+    RunLoop = Run;
+    bNativeLocomotion = true;
+    // Average supported-foot speed measured on each assembled body, in cm/s.
+    NativeStanceSpeeds = FCString::Strcmp(Folder, MetaHumanFolder) == 0
+        ? FVector2D(214.24, 539.71) : FVector2D(224.8, 569.1);
+    Body->AddTickPrerequisiteActor(this);
+    ResetLocomotion();
+    UE_LOG(LogTemp, Display, TEXT("Ranwar: using the assembled MetaHuman Omkar visual. %s"), *Package);
+    return true;
+}
+
+bool ARanwarCharacter::AttachMetaHumanRider(USceneComponent& VehicleParent, USkinnedMeshComponent& DriverPose)
+{
+    const TArray<FTransform>& SeatedPose = DriverPose.GetComponentSpaceTransforms();
+    if (!IsValid(MetaHumanVisual) || !IsValid(MetaHumanBody) || bMetaHumanSeated
+        || DriverPose.GetSkinnedAsset() != MetaHumanBody->GetSkinnedAsset()
+        || SeatedPose.IsEmpty() || SeatedPose.Num() != MetaHumanBody->GetNumBones()
+        || !MetaHumanVisual->AttachToComponent(&VehicleParent, FAttachmentTransformRules::KeepRelativeTransform))
+    {
+        return false;
+    }
+    bMetaHumanSeated = true;
+    bMetaHumanBodyTickEnabledOnFoot = MetaHumanBody->IsComponentTickEnabled();
+    MetaHumanVisual->SetActorRelativeTransform(BodyRelativeToVisual.Inverse() * DriverPose.GetRelativeTransform());
+    // Keep the skeletal Body as the pose source for the face and clothes while seated.
+    MetaHumanBody->SetComponentTickEnabled(false);
+    MetaHumanBody->HandleExistingParallelEvaluationTask(true, true);
+    MetaHumanBody->SetAnimationMode(EAnimationMode::AnimationCustomMode);
+    MetaHumanBody->SetComponentSpaceTransformsDoubleBuffering(false);
+    RefreshMetaHumanRiderPose(DriverPose);
+    MetaHumanVisual->SetActorHiddenInGame(false);
+    return true;
+}
+
+void ARanwarCharacter::RefreshMetaHumanRiderPose(const USkinnedMeshComponent& DriverPose)
+{
+    const TArray<FTransform>& SeatedPose = DriverPose.GetComponentSpaceTransforms();
+    if (!bMetaHumanSeated || !IsValid(MetaHumanBody) || DriverPose.GetSkinnedAsset() != MetaHumanBody->GetSkinnedAsset()
+        || SeatedPose.IsEmpty() || SeatedPose.Num() != MetaHumanBody->GetNumBones())
+    {
+        return;
+    }
+    MetaHumanBody->GetEditableComponentSpaceTransforms() = SeatedPose;
+    MetaHumanBody->FinalizeBoneTransform();
+    MetaHumanBody->UpdateChildTransforms();
+    MetaHumanBody->UpdateBounds();
+    MetaHumanBody->MarkRenderTransformDirty();
+    MetaHumanBody->MarkRenderDynamicDataDirty();
+    MetaHumanBody->RefreshFollowerComponents();
+}
+
+void ARanwarCharacter::RestoreMetaHumanVisual()
+{
+    if (IsValid(MetaHumanVisual) && IsValid(MetaHumanBody))
+    {
+        if (MetaHumanVisual->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::KeepRelativeTransform))
+        {
+            MetaHumanVisual->SetActorRelativeTransform(MetaHumanOnFootTransform);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Ranwar: could not return Omkar's MetaHuman to the walking capsule."));
+        }
+        MetaHumanVisual->SetActorHiddenInGame(false);
+        if (bMetaHumanSeated)
+        {
+            bMetaHumanSeated = false;
+            MetaHumanBody->SetComponentSpaceTransformsDoubleBuffering(true);
+            MetaHumanBody->SetComponentTickEnabled(bMetaHumanBodyTickEnabledOnFoot);
+            ResetLocomotion();
+        }
+    }
+}
+
 void ARanwarCharacter::LoadOmkarAppearance()
 {
+    if (LoadMetaHumanAppearance())
+    {
+        return;
+    }
     USkeletalMesh* Rig = LoadOmkarAsset<USkeletalMesh>(TEXT("Omkar"));
     if (!Rig)
     {
@@ -289,43 +518,106 @@ void ARanwarCharacter::LoadOmkarAppearance()
     GetMesh()->SetSkeletalMeshAsset(Rig);
     GetMesh()->SetRelativeRotation(FRotator(0.0, -Forward.Rotation().Yaw, 0.0));
     GetMesh()->SetRelativeLocation(FVector(0.0, 0.0, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - Bounds.Min.Z));
-    GetMesh()->PlayAnimation(IdleLoop.Get(), true);
-    // Evaluate the first idle pose before the startup or pause overlay can freeze the world.
-    GetMesh()->TickAnimation(0.0f, false);
-    GetMesh()->RefreshBoneTransforms();
-    ActiveLoop = IdleLoop;
+    ResetLocomotion();
 }
 
-void ARanwarCharacter::UpdateLocomotion()
+void ARanwarCharacter::ResetLocomotion()
 {
-    if (GetCharacterMovement()->IsFalling())
+    USkeletalMeshComponent* Avatar = GetAvatarBody();
+    Avatar->SetAnimInstanceClass(URanwarStrideAnimation::StaticClass());
+    ActiveLoop = IdleLoop;
+    LocomotionPosition = 0.0;
+    PreviousLocomotionLocation = GetActorLocation();
+    LastRunStepPosition = -1.0;
+    DistanceSinceStep = 0.0;
+    bFootContactsInitialized = false;
+    if (URanwarStrideAnimation* Stride = Cast<URanwarStrideAnimation>(Avatar->GetAnimInstance()))
     {
-        GetMesh()->SetPlayRate(0.0f);
-        return;
+        Stride->Present(IdleLoop, 0.0, 0.0f);
+        // Evaluate the first frame before the startup or pause overlay can freeze the world.
+        Avatar->TickAnimation(0.0f, false);
+        Avatar->RefreshBoneTransforms();
     }
+}
+
+double ARanwarCharacter::UpdateLocomotion(float DeltaSeconds)
+{
+    const FVector Location = GetActorLocation();
+    double Traveled = FVector::Dist2D(Location, PreviousLocomotionLocation);
+    PreviousLocomotionLocation = Location;
+    if (Traveled > FMath::Max(75.0, 1.5 * RunSpeed * DeltaSeconds))
+    {
+        Traveled = 0.0;
+    }
+    URanwarStrideAnimation* Stride = Cast<URanwarStrideAnimation>(GetAvatarBody()->GetAnimInstance());
+    if (!Stride)
+    {
+        return Traveled;
+    }
+
     const double Speed = GetVelocity().Size2D();
+    const bool bFalling = GetCharacterMovement()->IsFalling();
     UAnimSequence* Next = IdleLoop.Get();
-    double Rate = 1.0;
-    if (Speed >= (ActiveLoop == RunLoop ? 128.0 : 144.0))
+    double Advance = DeltaSeconds;
+    if (bFalling)
+    {
+        Next = ActiveLoop.Get();
+        Advance = 0.0;
+    }
+    else if (Speed >= (ActiveLoop == RunLoop ? 176.0 : 194.0))
     {
         Next = RunLoop.Get();
-        Rate = FMath::Clamp(Speed / RunClipSpeed, 0.40, 1.35);
     }
-    else if (Speed > 18.0)
+    else if (Speed > 13.0)
     {
         Next = WalkLoop.Get();
-        Rate = FMath::Clamp(Speed / WalkClipSpeed, 0.35, 1.40);
     }
-    if (ActiveLoop.Get() != Next)
+    FRanwarFootMotion FootMotion;
+    if (Next != IdleLoop)
     {
-        GetMesh()->PlayAnimation(Next, true);
-        ActiveLoop = Next;
+        const bool bRunning = Next == RunLoop;
+        if (bNativeLocomotion)
+        {
+            FootMotion.Forward = MetaHumanFacing.UnrotateVector(FVector::ForwardVector).GetSafeNormal2D();
+            FootMotion.StrideScale = bRunning ? NativeRunStrideScale : NativeWalkStrideScale;
+            FootMotion.StrideScale *= FMath::GetMappedRangeValueClamped(FVector2D(13.0, 100.0),
+                FVector2D(0.60, 1.0), Speed);
+        }
+        const double NativeSpeed = bRunning ? NativeStanceSpeeds.Y : NativeStanceSpeeds.X;
+        const double LegacySpeed = bRunning ? RunClipSpeed : WalkClipSpeed;
+        if (!bFalling)
+        {
+            Advance = Traveled / (bNativeLocomotion ? NativeSpeed * FootMotion.StrideScale : LegacySpeed);
+        }
     }
-    GetMesh()->SetPlayRate(static_cast<float>(Rate));
+    if (ActiveLoop != Next)
+    {
+        const double Cycles = bNativeLocomotion ? 4.0 : 1.0;
+        if (ActiveLoop != IdleLoop && Next != IdleLoop)
+        {
+            const double PreviousCycle = ActiveLoop->GetPlayLength() / Cycles;
+            LocomotionPosition = FMath::Fmod(LocomotionPosition, PreviousCycle) / PreviousCycle
+                * (Next->GetPlayLength() / Cycles);
+        }
+        else
+        {
+            LocomotionPosition = 0.0;
+        }
+        ActiveLoop = Next;
+        LastRunStepPosition = -1.0;
+        bFootContactsInitialized = false;
+    }
+    LocomotionPosition = FMath::Fmod(LocomotionPosition + Advance, static_cast<double>(Next->GetPlayLength()));
+    Stride->Present(Next, LocomotionPosition, DeltaSeconds, false, FootMotion);
+    return bFalling ? 0.0 : Traveled;
 }
 
 void ARanwarCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    if (IsValid(MetaHumanVisual))
+    {
+        MetaHumanVisual->Destroy();
+    }
     GetWorldTimerManager().ClearTimer(LandmarkScanTimer);
     GetWorldTimerManager().ClearTimer(RecoveryTimer);
     Super::EndPlay(EndPlayReason);

@@ -24,3 +24,7 @@ The ambientCG photogrammetry files were retrieved on 23 November 2026. The sourc
 | [Painted Plaster 006](https://ambientcg.com/a/PaintedPlaster006), `PaintedPlaster006_1K-JPG.zip`, `fd622afe5f601f3f31eb5c1ab1484dba99b698b857d70b7820a31d7275f74ded` | `weathered_paint.webp`, `weathered_paint_normal.png` | Shallow chips in painted facades. Use a 3 m projected repeat for the existing frontage UVs. The walls use the color derivative with their authored base tints. The normal map is used by the box-based wall finishes. |
 
 The color maps use desaturated 512 × 512 WebP derivatives. Plaster is level-adjusted to stay under the building palette. The positive-Y normal maps use 512 × 512 PNG with their XY relief attenuated to avoid deep-looking grooves. Godot imports mipmaps and uses the Compatibility renderer. The existing Blender exchange preserves projected world-space UVs and converts the color maps to PNG. Unreal uses the same asset colors and applies the established positive-Y normal conversion. [Ranwar scene exchange](../../../unreal/ContentSource/RANWAR_STREET.md)
+
+## Hill Road Tea Room lettering
+
+`hill_road_tea_room_signs.png` is an original 1024 × 512 opaque atlas for the fictional Tea Room tenant. It combines a painted Marathi and English fascia, a posted menu, and a smaller window notice. The lettering is shaped and baked using the project's existing Noto Sans Devanagari font. The frontage mesh maps all three panels to one material slot in Godot and Unreal. [Font license](../../startup/art/NotoSansDevanagari-OFL.txt)

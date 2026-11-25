@@ -148,6 +148,20 @@ $editor = '.\.toolchain\godot-4.7.2-stable\Godot_v4.7.2-stable_win64_console.exe
 & $editor --path prototype --resolution 1024x576 --disable-vsync --fixed-fps 90 --script res://tests/ranwar_building_smoke.gd -- --capture
 ```
 
+## Hill Road arrival frontage
+
+The Hill Road Tea Room has recessed displays, an awning and brackets, a rolled steel shutter beside the shop, steel downpipe fittings, and deeper upper-level window details. Its fictional bilingual fascia and notices share one original opaque sign atlas. The visual storefront uses the shared material kit, with separate shaded glazing and lettering surfaces. The existing collision mesh supplies the door, ramp and room. [Mapped storefront and collision](ranwar_mapped_buildings.gd) · [Visual frontage](ranwar_tea_room_frontage.gd) · [Texture credits](textures/SOURCES.md)
+
+St Peter’s BEST shelter has a continuous matte canopy with bracing, a drain outlet, a lamp housing and timber bench details. Nearby shade trees and service fixtures use a shared opaque material. A visual-only ground batch follows the existing curb profile on both sides of the arrival stretch, adding curb joints, gutter wear and an asphalt utility repair. The designs are interpreted for gameplay on the saved street layout. [Shelter](st_peters_shelter.gd) · [Shade trees](ranwar_arrival_greenery.gd) · [Ground finish](ranwar_hill_road_ground.gd)
+
+The art pass applies Riley Brown’s sequence of checking traversal, reusing tiled surfaces, and adding location-specific geometry and wear. The portable assets flow through the project’s existing Godot, Blender and Unreal exchange. [Tutorial](https://www.youtube.com/watch?v=Q9HNRzgRT5E) · [Unreal exchange workflow](../../unreal/ContentSource/RANWAR_STREET.md)
+
+## District façades and roof detail
+
+The mapped street pass revises all 38 OSM footprints and the separate Meena tower. Tall buildings have projecting balconies, differentiated window bays, podium bands, vertical ribs and rooftop service volumes. Low buildings use a smaller kit of frames, sills and trim. Remaining residential masses use one batched visual mesh per lot and release the generated mesh when their optional Godot visual cell unloads. The Unreal horizon adds rooftop setbacks to its existing instanced silhouettes. The Tea Room and Grocer retain their established openings. [Mapped building art](ranwar_mapped_buildings.gd) · [Façade kit](ranwar_facade_kit.gd) · [Background visuals](ranwar_background_facade.gd)
+
+The placed water tanks and condenser pairs use two cleared CC0 GLBs. The façade proportions draw on architectural references from Pali Hill and Carter Road. Their final placements and details are gameplay interpretations of the mapped area. [Prop source and adaptation](props/SOURCES.md#rooftop-props) · [Pali Hill reference](https://sog-design.com/portfolio-items/rustomjee-crescent-pali-hill/) · [Carter Road reference](https://www.madane.in/projects/carter-road)
+
 ## Focused world check
 
 The 22 November 2026 isolated Godot 4.7.2 headless probe cleared all five actor-sized spawn volumes against world colliders and confirmed the ground beneath the auto bay. It constructed 564 direct world children. The temporary extended probe used the ignored `.toolchain/world_clearance_check.gd` fixture and added motorcycle/scooter box checks; it was removed after the run. This verifies world startup and environmental clearances, not vehicle-to-vehicle interactions or minimum-device performance. The integrated Phase 1 smoke test owns mounting, controls, steering/lean, recovery and route checks. [Playtest and verification commands](../README.md)

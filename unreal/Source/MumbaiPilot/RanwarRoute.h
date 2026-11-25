@@ -7,6 +7,7 @@
 #include "RanwarRoute.generated.h"
 
 class ARanwarCharacter;
+class ARanwarBus;
 class ARanwarParcelContact;
 class ARanwarVehicle;
 class UAudioComponent;
@@ -77,7 +78,7 @@ public:
     void SetDialogueVolume(float Volume);
     bool GetWaypoint(FVector& Point) const;
     bool UsesParcelGroundHint() const { return Stage == ERanwarJobStage::Pickup || Stage == ERanwarJobStage::Dropoff; }
-    bool Interact(const ARanwarCharacter& Player);
+    bool Interact(ARanwarCharacter& Player);
     void OnVehicleEntry(const ARanwarVehicle& Vehicle);
     int32 GetCash() const;
     int32 GetPoliceAlert() const;
@@ -93,6 +94,8 @@ protected:
 private:
     enum class ESideJob : uint8 { None, Dabba, Ledger };
 
+    FText GetJobPrompt(const ARanwarCharacter& Player) const;
+    bool InteractWithJob(const ARanwarCharacter& Player);
     bool CanReach(const ARanwarCharacter& Player, const FVector& Point) const;
     ARanwarParcelContact* GetActiveParcelContact() const;
     ESideJob GetSideJobAt(const ARanwarCharacter& Player) const;
@@ -112,6 +115,9 @@ private:
 
     UPROPERTY(EditAnywhere, Category = "Ranwar")
     FVector GuideStop = FVector::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Ranwar")
+    TObjectPtr<ARanwarBus> StopBus;
 
     UPROPERTY(EditAnywhere, Category = "Ranwar")
     FVector JobBoard = FVector::ZeroVector;

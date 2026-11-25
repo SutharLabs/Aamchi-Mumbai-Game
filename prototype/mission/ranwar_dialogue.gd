@@ -5,6 +5,8 @@ const STANDARD_SIZE := 19
 const LARGE_SIZE := 25
 const MAX_WIDTH := 680.0
 
+var use_ira := false
+
 var _lines: Dictionary[String, Dictionary] = {}
 var _player := AudioStreamPlayer.new()
 var _card := PanelContainer.new()
@@ -60,6 +62,9 @@ func configure(enabled: bool, speaker_names: bool, large: bool, volume: float, t
 
 
 func speak(id: String) -> float:
+	var ira_id := id + "-ira"
+	if use_ira and _lines.has(ira_id):
+		id = ira_id
 	var record: Dictionary = _lines.get(id, {})
 	if record.is_empty():
 		return 0.0

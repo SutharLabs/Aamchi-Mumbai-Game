@@ -4,7 +4,9 @@
 #include "CollisionQueryParams.h"
 #include "CollisionShape.h"
 #include "Components/BoxComponent.h"
+#include "Components/LODSyncComponent.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/CollisionProfile.h"
 #include "Engine/SkeletalMesh.h"
@@ -12,8 +14,9 @@
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "GroomComponent.h"
 #include "Misc/PackageName.h"
-#include "ReferenceSkeleton.h"
+#include "RanwarVehicle.h"
 
 namespace
 {
@@ -134,66 +137,23 @@ namespace
             ? LoadObject<AssetType>(nullptr, *FString::Printf(TEXT("%s.%s"), Package, Name)) : nullptr;
     }
 
-    FTransform ComponentPose(const FReferenceSkeleton& Skeleton, const TArray<FTransform>& Pose, int32 Bone)
+    TSubclassOf<AActor> LoadTrafficDriverClass()
     {
-        FTransform Result = FTransform::Identity;
-        for (int32 Index = Bone; Index != INDEX_NONE; Index = Skeleton.GetParentIndex(Index))
+        for (const TCHAR* Package : {
+            TEXT("/Game/OmkarAssembled/r006/Omkar/BP_Omkar"),
+            TEXT("/Game/OmkarAssembled/r005/Omkar/BP_Omkar"),
+            TEXT("/Game/OmkarAssembled/r004/Omkar/BP_Omkar") })
         {
-            Result *= Pose[Index];
-        }
-        return Result;
-    }
-
-    void ApplyDriverPose(UPoseableMeshComponent& Rider, USkeletalMesh& Mesh, bool bRickshaw)
-    {
-        const FReferenceSkeleton& Skeleton = Mesh.GetRefSkeleton();
-        const int32 Hips = Skeleton.FindBoneIndex(TEXT("Hips"));
-        const int32 Foot = Skeleton.FindBoneIndex(TEXT("LeftFoot"));
-        const int32 Toes = Skeleton.FindBoneIndex(TEXT("LeftToes"));
-        if (Hips == INDEX_NONE || Foot == INDEX_NONE || Toes == INDEX_NONE)
-        {
-            return;
-        }
-        Rider.SetSkinnedAssetAndUpdate(&Mesh, true);
-        TArray<FTransform>& Pose = Rider.BoneSpaceTransforms;
-        Pose = Skeleton.GetRefBonePose();
-        const FVector Forward = (ComponentPose(Skeleton, Pose, Toes).GetLocation()
-            - ComponentPose(Skeleton, Pose, Foot).GetLocation()).GetSafeNormal2D();
-        if (Forward.IsNearlyZero())
-        {
-            return;
-        }
-        const FQuat Facing(FVector::UpVector, -FMath::Atan2(Forward.Y, Forward.X));
-        const double Scale = bRickshaw ? 0.84 : 0.72;
-        const FVector Seat = bRickshaw ? FVector(18.5, 0.0, 74.5) : FVector(5.0, 35.0, 99.0);
-        Rider.SetRelativeRotation(Facing);
-        Rider.SetRelativeScale3D(FVector(Scale));
-        Rider.SetRelativeLocation(Seat - Facing.RotateVector(ComponentPose(Skeleton, Pose, Hips).GetLocation() * Scale));
-
-        const auto Aim = [&Skeleton, &Pose, &Facing](FName Bone, FName Child, const FVector& Direction)
-        {
-            const int32 BoneIndex = Skeleton.FindBoneIndex(Bone);
-            const int32 ChildIndex = Skeleton.FindBoneIndex(Child);
-            if (BoneIndex == INDEX_NONE || ChildIndex == INDEX_NONE || Skeleton.GetParentIndex(ChildIndex) != BoneIndex)
+            if (FPackageName::DoesPackageExist(Package, nullptr, false))
             {
-                return;
+                UClass* Driver = LoadClass<AActor>(nullptr, *FString::Printf(TEXT("%s.BP_Omkar_C"), Package));
+                if (IsValid(Driver) && !Driver->HasAnyClassFlags(CLASS_Abstract))
+                {
+                    return Driver;
+                }
             }
-            const FTransform Current = ComponentPose(Skeleton, Pose, BoneIndex);
-            const FQuat Parent = ComponentPose(Skeleton, Pose, Skeleton.GetParentIndex(BoneIndex)).GetRotation();
-            const FVector CurrentDirection = Current.TransformVectorNoScale(Pose[ChildIndex].GetTranslation()).GetSafeNormal();
-            const FQuat Turn = FQuat::FindBetweenNormals(CurrentDirection, Facing.UnrotateVector(Direction.GetSafeNormal()));
-            Pose[BoneIndex].SetRotation((Parent.Inverse() * Turn * Current.GetRotation()).GetNormalized());
-        };
-        Aim(TEXT("LeftUpperLeg"), TEXT("LeftLowerLeg"), FVector(1.0, -0.22, -0.14));
-        Aim(TEXT("RightUpperLeg"), TEXT("RightLowerLeg"), FVector(1.0, 0.22, -0.14));
-        Aim(TEXT("LeftLowerLeg"), TEXT("LeftFoot"), FVector(0.2, 0.04, -1.0));
-        Aim(TEXT("RightLowerLeg"), TEXT("RightFoot"), FVector(0.2, -0.04, -1.0));
-        Aim(TEXT("LeftUpperArm"), TEXT("LeftLowerArm"), FVector(0.65, -0.35, -0.75));
-        Aim(TEXT("RightUpperArm"), TEXT("RightLowerArm"), FVector(0.65, 0.35, -0.75));
-        Aim(TEXT("LeftLowerArm"), TEXT("LeftHand"), FVector(1.0, 0.42, 0.35));
-        Aim(TEXT("RightLowerArm"), TEXT("RightHand"), FVector(1.0, -0.42, 0.35));
-        Rider.MarkRefreshTransformDirty();
-        Rider.SetVisibility(true);
+        }
+        return nullptr;
     }
 }
 
@@ -215,15 +175,104 @@ ARanwarTrafficCar::ARanwarTrafficCar()
     SeatedDriver->SetVisibility(false);
 }
 
-void ARanwarTrafficCar::Configure(UStaticMesh* Vehicle, USkeletalMesh* Driver, bool bRickshaw)
+void ARanwarTrafficCar::Configure(UStaticMesh* Vehicle, TSubclassOf<AActor> NativeDriverClass,
+    USkeletalMesh* FallbackDriver, bool bRickshaw)
 {
     Chassis->SetBoxExtent(TrafficExtent(bRickshaw));
     Body->SetStaticMesh(Vehicle);
     Body->SetRelativeLocation(FVector(0.0, 0.0, -GetRideHeight()));
-    if (Driver)
+    const ERanwarVehicleKind Kind = bRickshaw ? ERanwarVehicleKind::Rickshaw : ERanwarVehicleKind::Hatchback;
+    if (NativeDriverClass)
     {
-        ApplyDriverPose(*SeatedDriver, *Driver, bRickshaw);
+        if (!InstallNativeDriver(NativeDriverClass, Kind))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Ranwar traffic could not fit %s to the driver seat."), *GetNameSafe(NativeDriverClass.Get()));
+        }
     }
+    else if (FallbackDriver)
+    {
+        RanwarDriverPose::FitAmbient(*SeatedDriver, *FallbackDriver, Kind);
+    }
+}
+
+bool ARanwarTrafficCar::InstallNativeDriver(TSubclassOf<AActor> DriverClass, ERanwarVehicleKind Kind)
+{
+    FActorSpawnParameters Parameters;
+    Parameters.Owner = this;
+    Parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    AActor* Driver = GetWorld()->SpawnActor<AActor>(DriverClass, GetActorTransform(), Parameters);
+    if (!Driver)
+    {
+        return false;
+    }
+
+    Driver->SetActorEnableCollision(false);
+    USkeletalMeshComponent* DriverBody = nullptr;
+    const TInlineComponentArray<USkeletalMeshComponent*> Meshes(Driver);
+    for (USkeletalMeshComponent* Mesh : Meshes)
+    {
+        Mesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+        Mesh->bEnableUpdateRateOptimizations = true;
+        if (Mesh->GetFName() == TEXT("Body"))
+        {
+            DriverBody = Mesh;
+        }
+    }
+    USkeletalMesh* Rig = DriverBody ? DriverBody->GetSkeletalMeshAsset() : nullptr;
+    if (!Rig || !RanwarDriverPose::FitAmbient(*SeatedDriver, *Rig, Kind))
+    {
+        Driver->Destroy();
+        return false;
+    }
+
+    SeatedDriver->SetVisibility(false);
+    const FTransform BodyLocal = DriverBody->GetComponentTransform().GetRelativeTransform(Driver->GetActorTransform());
+    const TArray<FTransform>& Pose = SeatedDriver->GetComponentSpaceTransforms();
+    if (BodyLocal.ContainsNaN() || !BodyLocal.GetScale3D().Equals(FVector::OneVector, 0.01)
+        || Pose.IsEmpty() || Pose.Num() != DriverBody->GetNumBones()
+        || !Driver->AttachToComponent(Body, FAttachmentTransformRules::KeepRelativeTransform))
+    {
+        Driver->Destroy();
+        return false;
+    }
+
+    Driver->SetActorRelativeTransform(BodyLocal.Inverse() * SeatedDriver->GetRelativeTransform());
+    DriverBody->SetComponentTickEnabled(false);
+    DriverBody->HandleExistingParallelEvaluationTask(true, true);
+    DriverBody->SetAnimationMode(EAnimationMode::AnimationCustomMode);
+    DriverBody->SetComponentSpaceTransformsDoubleBuffering(false);
+    DriverBody->GetEditableComponentSpaceTransforms() = Pose;
+    DriverBody->FinalizeBoneTransform();
+    DriverBody->UpdateChildTransforms();
+    DriverBody->UpdateBounds();
+    DriverBody->MarkRenderTransformDirty();
+    DriverBody->MarkRenderDynamicDataDirty();
+    DriverBody->RefreshFollowerComponents();
+
+    if (ULODSyncComponent* LODs = Driver->FindComponentByClass<ULODSyncComponent>())
+    {
+        LODs->MinLOD = FMath::Max(LODs->MinLOD, 1);
+    }
+    const TInlineComponentArray<UGroomComponent*> Grooms(Driver);
+    for (UGroomComponent* Groom : Grooms)
+    {
+        Groom->SimulationSettings.bOverrideSettings = true;
+        Groom->SimulationSettings.SolverSettings.bEnableSimulation = false;
+        Groom->SetUseCards(true);
+        Groom->UpdateHairSimulation();
+    }
+    NativeDriverVisual = Driver;
+    return true;
+}
+
+void ARanwarTrafficCar::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    if (IsValid(NativeDriverVisual)
+        && (EndPlayReason == EEndPlayReason::Destroyed || EndPlayReason == EEndPlayReason::RemovedFromWorld))
+    {
+        NativeDriverVisual->Destroy();
+    }
+    Super::EndPlay(EndPlayReason);
 }
 
 double ARanwarTrafficCar::GetRideHeight() const
@@ -241,10 +290,15 @@ void ARanwarTraffic::BeginPlay()
     Super::BeginPlay();
     HatchbackMesh = LoadTrafficAsset<UStaticMesh>(TEXT("/Game/Ranwar/Vehicles/Hatchback"), TEXT("Hatchback"));
     RickshawMesh = LoadTrafficAsset<UStaticMesh>(TEXT("/Game/Ranwar/Vehicles/Rickshaw"), TEXT("Rickshaw"));
-    DriverMesh = LoadTrafficAsset<USkeletalMesh>(TEXT("/Game/Ranwar/Characters/Omkar/Omkar"), TEXT("Omkar"));
     if (CivilianLimit <= 0 || !(HatchbackMesh || RickshawMesh) || !BuildRoute())
     {
         SetActorTickEnabled(false);
+        return;
+    }
+    NativeDriverClass = LoadTrafficDriverClass();
+    if (!NativeDriverClass)
+    {
+        FallbackDriverMesh = LoadTrafficAsset<USkeletalMesh>(TEXT("/Game/Ranwar/Characters/Omkar/Omkar"), TEXT("Omkar"));
     }
 }
 
@@ -427,7 +481,7 @@ void ARanwarTraffic::RefreshPopulation(const APlayerController& Player)
         Parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
         if (ARanwarTrafficCar* Car = GetWorld()->SpawnActor<ARanwarTrafficCar>(Location, Heading, Parameters))
         {
-            Car->Configure(Mesh, DriverMesh.Get(), bRickshaw);
+            Car->Configure(Mesh, NativeDriverClass, FallbackDriverMesh.Get(), bRickshaw);
             ActiveCars.Add({Car, Distance, 0.0, 0.0});
             ++SpawnCount;
         }

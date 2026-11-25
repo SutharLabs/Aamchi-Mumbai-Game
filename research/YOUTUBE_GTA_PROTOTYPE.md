@@ -15,3 +15,18 @@ The recording shows a creator directing an agent through planning, asset procure
 ## Application to Aamchi Mumbai Game
 
 Use the same sequence on a short Ranwar corridor in the existing Godot project. Lock the mapped street and traversal first, replace the most visible blockout façades with original measured or rights-cleared assets, then add the street-level details in the gameplay camera. Test the parcel route, left-hand traffic, vehicle entry, and character transitions after each change. Measure the dressed and populated route on the target devices. Prioritize a small, convincing street over district expansion until those checks pass. [Ranwar world and evidence](../prototype/world/README.md) · [Project phase tracker](../docs/PHASE_PROGRESS.md)
+
+## GAMFAZE’s 24-hour Unreal driving prototype
+
+Reviewed 24 November 2026 from the exact 5:24 video requested for this project. The MotionGraphics video-reference workflow retrieved the source via yt-dlp. YouTube rate-limited caption downloads, so visual timing comes from matched source frames. The creator describes an Unreal Engine 5 racing prototype and lists an RTX 3060 Ti and 16 GB of RAM. [Creator’s video](https://www.youtube.com/watch?v=_9L3phZH3iI)
+
+| Time | Observed workflow |
+| --- | --- |
+| 0:55–1:40 | Downloads a car model, shows the car and its wheel rig in Blender, then imports and inspects the car in Unreal. [Marketplace step](https://www.youtube.com/watch?v=_9L3phZH3iI&t=55s) · [Blender rig](https://www.youtube.com/watch?v=_9L3phZH3iI&t=70s) |
+| 2:10–2:55 | Shows an Unreal Blueprint graph, then tests the green car and rear chase camera on a flat route in the editor. [Blueprint view](https://www.youtube.com/watch?v=_9L3phZH3iI&t=130s) · [Drive test](https://www.youtube.com/watch?v=_9L3phZH3iI&t=160s) |
+| 3:10–4:10 | Shows terrain and distant buildings before driving through foliage, hills and a water-edge section. [World setup](https://www.youtube.com/watch?v=_9L3phZH3iI&t=190s) · [Wooded drive](https://www.youtube.com/watch?v=_9L3phZH3iI&t=235s) |
+| 4:25–5:20 | Demonstrates the assembled road circuit with materials, marked edges, buildings, chase camera and speed/gear display in the gameplay view. [Final circuit](https://www.youtube.com/watch?v=_9L3phZH3iI&t=265s) |
+
+The transferable steps are to verify a licensed mesh and pivots, prove the asset against the existing vehicle rig, and inspect the result on a dressed road in the normal chase camera. Aamchi replaced the centre shutter of one closed Hill Road shop with the 552-triangle CC0 Poly Haven asset. The matched gameplay renders show the metal material response at the same scale and lighting. The exchange preserves the road, doors and collision. [Shutter provenance](../prototype/world/props/SOURCES.md#hill-road-shutter-study)
+
+A scratch gameplay comparison attached the Vinish.dev scooter’s replacement visual and moving wheels to Aamchi’s existing scooter controller in Godot Compatibility. The matched straight drives both traveled 5.788 m and reached 25 km/h at the same input tick. The richer paint, rear detail and tires are visible from the normal chase camera. The source mesh has 57,365 triangles and 38 materials, and hand and seat contact still need tuning. The comparison covers one straight run. GPU settings and texture budgets need measurements on Aamchi’s Windows and Android targets. [Vinish.dev source and license](https://vinish.dev/free-3d-models/motorcycles) · [Realism intake catalogue](OPEN_MODEL_CATALOGUE.md#9-realism-shortlist-and-intake-on-24-november-2026) · [Project phase tracker](../docs/PHASE_PROGRESS.md)

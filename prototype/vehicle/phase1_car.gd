@@ -25,8 +25,8 @@ var _shell_rings: Array[PackedVector3Array] = []
 var _stock_meshes: Dictionary[MeshInstance3D, Mesh] = {}
 var _moving_trim: Dictionary[MeshInstance3D, Vector3] = {}
 var _face_panels: Dictionary[MeshInstance3D, Array] = {}
+var _lamp_damage_offsets: Dictionary[MeshInstance3D, int] = {}
 var _front_lenses: MeshInstance3D
-var _rear_lenses: MeshInstance3D
 var _scrapes: MeshInstance3D
 var _chassis: CollisionShape3D
 var _body_style: BodyStyle
@@ -50,8 +50,8 @@ func _init(patrol: bool = false, body_style: BodyStyle = BodyStyle.HATCH) -> voi
 func _build_bodywork(patrol: bool) -> void:
 	var style: Dictionary = BODY_STYLES[_body_style]
 	var paint := _material(Color("d7e1e3") if patrol else style.paint)
-	paint.roughness = 0.36
-	paint.metallic = 0.12
+	paint.roughness = 0.32
+	paint.metallic = 0.19
 	var roof := _material(Color("273858") if patrol else style.roof)
 	roof.roughness = 0.41
 	var glass := _material(Color("63879745"))
@@ -152,6 +152,7 @@ func _build_cabin(roof: Material, glass: Material, trim: Material) -> void:
 		BodyMesh.bar(self, "BColumn", b_low, b_top, 0.026, trim)
 		BodyMesh.bar(self, "HatchQuarterColumn", Vector3(side * 0.735, 0.451, 1.140), Vector3(side * 0.611, 1.013, 1.035), 0.024, trim)
 	BodyMesh.faces(self, "ShapedCabinGlazing", panes, glass)
+	_build_windscreen_wipers(windscreen_low, windscreen_top, trim)
 	BodyMesh.loft(self, "CrownedRoof", [
 		_roof_ring(-0.575, 0.557, 0.979, 1.011),
 		_roof_ring(-0.472, 0.622, 0.998, 1.089),
@@ -204,6 +205,7 @@ func _build_variant_cabin(roof: Material, glass: Material, trim: Material) -> vo
 			BodyMesh.bar(self, "RearQuarterPillar", rear_low.lerp(front_low, 0.24) * mirror,
 				rear_top.lerp(front_top, 0.28) * mirror, 0.026, trim)
 	BodyMesh.faces(self, "ShapedCabinGlazing", panes, glass)
+	_build_windscreen_wipers(front_low, front_top, trim)
 	BodyMesh.loft(self, "CrownedRoof", [
 		_roof_ring(front_top.z - 0.04, front_top.x - 0.015, front_top.y - 0.015, front_top.y + 0.03),
 		_roof_ring(front_top.z + 0.13, front_top.x + 0.027, front_top.y + 0.008, crown - 0.015),
@@ -211,6 +213,17 @@ func _build_variant_cabin(roof: Material, glass: Material, trim: Material) -> vo
 		_roof_ring(rear_top.z - 0.12, rear_top.x + 0.026, rear_top.y + 0.004, crown - 0.013),
 		_roof_ring(rear_top.z + 0.05, rear_top.x - 0.012, rear_top.y - 0.015, rear_top.y + 0.025),
 	], roof)
+
+
+func _build_windscreen_wipers(base: Vector3, top: Vector3, trim: Material) -> void:
+	var lower := Vector3(0.0, base.y, base.z - 0.009)
+	var upper := Vector3(0.0, top.y, top.z - 0.009)
+	for x: float in [-0.48, 0.07]:
+		var mount := lower.lerp(upper, 0.044) + Vector3.RIGHT * x
+		var tip := lower.lerp(upper, 0.170) + Vector3.RIGHT * (x + 0.34)
+		var hinge := mount.lerp(tip, 0.61)
+		BodyMesh.bar(self, "WindscreenWiperArm", mount, hinge, 0.007, trim)
+		BodyMesh.bar(self, "WindscreenWiperBlade", hinge - Vector3.RIGHT * 0.12, tip + Vector3.RIGHT * 0.10, 0.008, trim)
 
 
 func _build_suv_cladding(trim: Material, satin: Material) -> void:
@@ -250,6 +263,18 @@ func _build_cabin_interior() -> void:
 	block.size = Vector3(0.28, 0.035, 0.032)
 	surface.append_from(block, 0, STEERING_POSE)
 	BodyMesh.part(self, "RightHandDriveInterior", surface.commit(), _material(Color("514943")))
+	var upholstery := _material(Color("777064"))
+	var seat_pads: Array[Array] = []
+	for side: float in [-1.0, 1.0]:
+		var seat_x := side * FRONT_SEAT_OFFSET
+		seat_pads.append([Vector3(seat_x, 0.507, 0.065), Vector3(0.286, 0.016, 0.340)])
+		seat_pads.append([Vector3(seat_x, 0.648, 0.188), Vector3(0.248, 0.268, 0.029)])
+	BodyMesh.detail_boxes(self, "FrontSeatInserts", seat_pads, upholstery)
+	BodyMesh.detail_boxes(self, "ConsoleAndDashboard", [
+		[Vector3(FRONT_SEAT_OFFSET, 0.590, -0.675), Vector3(0.245, 0.097, 0.124)],
+		[Vector3(0.0, 0.552, -0.650), Vector3(0.210, 0.124, 0.026)],
+		[Vector3(0.0, 0.478, -0.129), Vector3(0.155, 0.116, 0.291)],
+	], _material(Color("343838")))
 
 
 func _roof_ring(z: float, half_width: float, bottom: float, crown: float) -> PackedVector3Array:
@@ -262,11 +287,16 @@ func _roof_ring(z: float, half_width: float, bottom: float, crown: float) -> Pac
 
 
 func _build_fascias(trim: StandardMaterial3D, satin: Material) -> void:
-	var lamp := _material(Color("e7e2ca"))
+	var lamp := _material(Color("657477"))
 	lamp.cull_mode = BaseMaterial3D.CULL_DISABLED
-	lamp.emission_enabled = true
-	lamp.emission = Color("dfcc9a")
-	lamp.emission_energy_multiplier = 0.7
+	lamp.roughness = 0.27
+	lamp.metallic = 0.27
+	var diffuser := _material(Color("e1e4ca"))
+	diffuser.cull_mode = BaseMaterial3D.CULL_DISABLED
+	diffuser.roughness = 0.29
+	diffuser.emission_enabled = true
+	diffuser.emission = Color("e3e0ca")
+	diffuser.emission_energy_multiplier = 0.22
 	_brake_material = _material(Color("a41424"))
 	_brake_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_brake_material.emission_enabled = true
@@ -275,6 +305,8 @@ func _build_fascias(trim: StandardMaterial3D, satin: Material) -> void:
 	trim.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var front_lamps: Array[PackedVector3Array] = []
 	var rear_lamps: Array[PackedVector3Array] = []
+	var headlamp_diffusers: Array[PackedVector3Array] = []
+	var reversing_lenses: Array[PackedVector3Array] = []
 	for side: float in [-1.0, 1.0]:
 		var mirror := Vector3(side, 1.0, 1.0)
 		front_lamps.append(PackedVector3Array([
@@ -287,19 +319,51 @@ func _build_fascias(trim: StandardMaterial3D, satin: Material) -> void:
 			Vector3(0.617, 0.141, 1.851) * mirror, Vector3(0.605, 0.281, 1.851) * mirror,
 			Vector3(0.534, 0.286, 1.851) * mirror, Vector3(0.494, 0.229, 1.851) * mirror,
 		]))
+		headlamp_diffusers.append(PackedVector3Array([
+			Vector3(0.392, 0.100, -1.859) * mirror, Vector3(0.382, 0.130, -1.859) * mirror,
+			Vector3(0.588, 0.148, -1.859) * mirror, Vector3(0.598, 0.126, -1.859) * mirror,
+			Vector3(0.522, 0.111, -1.859) * mirror,
+		]))
+		reversing_lenses.append(PackedVector3Array([
+			Vector3(0.525, 0.116, 1.856) * mirror, Vector3(0.578, 0.114, 1.856) * mirror,
+			Vector3(0.591, 0.135, 1.856) * mirror, Vector3(0.521, 0.137, 1.856) * mirror,
+		]))
 	_front_lenses = _track_panel("SweptHeadlightLenses", front_lamps, lamp)
-	_rear_lenses = _track_panel("VerticalTailLenses", rear_lamps, _brake_material)
+	_lamp_damage_offsets[_front_lenses] = 0
+	_lamp_damage_offsets[_track_panel("HeadlampDiffusers", headlamp_diffusers, diffuser)] = 0
+	_lamp_damage_offsets[_track_panel("VerticalTailLenses", rear_lamps, _brake_material)] = 2
+	_lamp_damage_offsets[_track_panel("ReversingLenses", reversing_lenses, lamp)] = 2
 	_track_panel("BumperInserts", [
 		PackedVector3Array([Vector3(-0.455, -0.165, -1.849), Vector3(-0.475, -0.092, -1.849), Vector3(0.475, -0.092, -1.849), Vector3(0.455, -0.165, -1.849)]),
 		PackedVector3Array([Vector3(-0.350, 0.013, -1.851), Vector3(-0.359, 0.120, -1.851), Vector3(0.359, 0.120, -1.851), Vector3(0.350, 0.013, -1.851)]),
 		PackedVector3Array([Vector3(0.505, -0.123, 1.849), Vector3(0.559, -0.065, 1.849), Vector3(-0.559, -0.065, 1.849), Vector3(-0.505, -0.123, 1.849)]),
 	], trim)
 	var first_trim := get_child_count()
-	for y: float in [0.036, 0.068, 0.10]:
+	for y: float in [0.036, 0.069, 0.102]:
 		BodyMesh.bar(self, "GrilleSlat", Vector3(-0.339, y, -1.857), Vector3(0.339, y, -1.857), 0.006, satin)
-	_add_box("FrontPlate", Vector3(0.36, 0.086, 0.016), Vector3(0.0, -0.104, -1.856), satin)
-	_add_box("RearPlate", Vector3(0.37, 0.090, 0.019), Vector3(0.0, 0.015, 1.850), satin)
+	for side: float in [-1.0, 1.0]:
+		BodyMesh.bar(self, "LowerIntakeLouvre", Vector3(side * 0.204, -0.130, -1.856),
+			Vector3(side * 0.436, -0.130, -1.856), 0.004, satin)
+	var plate := _material(Color("d7dbce"))
+	_add_box("FrontPlateCarrier", Vector3(0.374, 0.093, 0.010), Vector3(0.0, -0.104, -1.859), trim)
+	_add_box("RearPlateCarrier", Vector3(0.375, 0.096, 0.012), Vector3(0.0, 0.015, 1.855), trim)
+	_add_box("FrontPlate", Vector3(0.348, 0.074, 0.004), Vector3(0.0, -0.104, -1.868), plate)
+	_add_box("RearPlate", Vector3(0.350, 0.076, 0.005), Vector3(0.0, 0.015, 1.864), plate)
+	BodyMesh.registration_text(self, Vector3(0.0, -0.103, -1.871), true, false, trim)
+	BodyMesh.registration_text(self, Vector3(0.0, 0.017, 1.868), false, false, trim)
 	BodyMesh.bar(self, "HatchPull", Vector3(-0.106, 0.215, 1.851), Vector3(0.106, 0.215, 1.851), 0.017, trim)
+	var front_detail: Array[Array] = []
+	var lens_trim: Array[Array] = []
+	var reflectors: Array[Array] = []
+	for side: float in [-1.0, 1.0]:
+		front_detail.append([Vector3(side * 0.487, -0.111, -1.857), Vector3(0.139, 0.066, 0.012)])
+		front_detail.append([Vector3(side * 0.466, -0.082, 1.855), Vector3(0.147, 0.043, 0.012)])
+		lens_trim.append([Vector3(side * 0.522, 0.124, -1.854), Vector3(0.013, 0.057, 0.003)])
+		lens_trim.append([Vector3(side * 0.551, 0.181, 1.853), Vector3(0.094, 0.010, 0.003)])
+		reflectors.append([Vector3(side * 0.464, -0.083, 1.865), Vector3(0.108, 0.022, 0.006)])
+	BodyMesh.detail_boxes(self, "BumperRecesses", front_detail, trim)
+	BodyMesh.detail_boxes(self, "LensSeparators", lens_trim, satin)
+	BodyMesh.detail_boxes(self, "RearReflectors", reflectors, _material(Color("823327")))
 	_track_trim(first_trim)
 
 
@@ -308,14 +372,16 @@ func _build_door_details(side: float, paint: Material, trim: Material, satin: Ma
 	for z: float in [-0.637, 0.28, 0.875]:
 		BodyMesh.bar(self, "DoorShutLine", Vector3(x, -0.143, z), Vector3(x, 0.320, z + 0.028), 0.0038, trim)
 	BodyMesh.bar(self, "SillShutLine", Vector3(x, -0.143, -0.637), Vector3(x, -0.143, 0.875), 0.004, trim)
+	BodyMesh.bar(self, "LowerDoorRubStrip", Vector3(side * 0.821, -0.073, -0.808),
+		Vector3(side * 0.821, -0.073, 0.929), 0.015, trim)
 	for z: float in [0.042, 0.627]:
 		BodyMesh.bar(self, "DoorPull", Vector3(x, 0.333, z), Vector3(x, 0.333, z + 0.110), 0.013, satin)
 	BodyMesh.bar(self, "MirrorStalk", Vector3(side * 0.728, 0.469, -0.725), Vector3(side * 0.855, 0.504, -0.745), 0.034, trim)
 	var mirror := SphereMesh.new()
 	mirror.radius = 0.5
 	mirror.height = 1.0
-	mirror.radial_segments = 10
-	mirror.rings = 4
+	mirror.radial_segments = 16
+	mirror.rings = 6
 	var housing := BodyMesh.part(self, "OvalMirrorHousing", mirror, paint)
 	housing.position = Vector3(side * 0.863, 0.520, -0.766)
 	housing.scale = Vector3(0.17, 0.108, 0.13)
@@ -398,9 +464,9 @@ func _rebuild_damaged_panels() -> void:
 	for panel: MeshInstance3D in _face_panels:
 		var shaped_faces: Array[PackedVector3Array] = []
 		var faces: Array = _face_panels[panel]
+		var lamp_offset: int = _lamp_damage_offsets.get(panel, -1)
 		for index in faces.size():
-			if (panel == _front_lenses and _broken_lamps[index] != 0) or (
-					panel == _rear_lenses and _broken_lamps[2 + index] != 0):
+			if lamp_offset >= 0 and _broken_lamps[lamp_offset + index] != 0:
 				continue
 			shaped_faces.append(_crumple_polygon(faces[index]))
 		panel.visible = not shaped_faces.is_empty()

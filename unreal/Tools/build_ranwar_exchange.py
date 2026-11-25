@@ -17,6 +17,10 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 FINISHES = ("Plain", "Plaster", "Concrete", "Clay", "Timber")
+SANDBAR_FINISHES = {
+    "TowerConcrete": "Concrete", "WeatheredPlaster": "Plaster",
+    "MineralStucco": "Plaster", "PavementConcrete": "Concrete",
+}
 TILE_SIZE_METRES = 128.0
 
 
@@ -97,6 +101,8 @@ def build_materials(source, root, textures):
                     "roughness": 0.92,
                     "metallic": 0.0,
                 }
+            for variant, finish in SANDBAR_FINISHES.items():
+                materials[f"Ranwar_{key}_{variant}"] = materials[f"Ranwar_{key}_{finish}"].copy()
         else:
             materials[f"Ranwar_{key}"] = record.copy()
     for key, record in materials.items():
@@ -124,6 +130,12 @@ def append_surface(section, spec, material):
     key = f"Ranwar_{spec['material']}"
     default = material["color"]
     world_uv = spec["world_uv_scale"]
+    mapped = spec["name"].startswith("Footprint_")
+    building = mapped or spec["name"] == "Frontage" or spec.get("label") in {"Facade", "HillRoadStreetFront"}
+    tower = mapped and any(point[1] > 15.0 for point in source_points)
+    style = sum(round(point) for point in spec["center"]) % 3
+    if mapped:
+        style = int(spec["name"].removeprefix("Footprint_")) % 3
 
     if len(indices) % 3:
         raise ValueError(f"Non-triangle geometry for {spec['name']}")
@@ -140,7 +152,15 @@ def append_surface(section, spec, material):
         direction = surface_normal.normalized()
         section.faces.append(tuple(offset + index for index in tri))
         finish = round(finish_data[tri[0]][0]) if material["batch"] and finish_data else 0
-        section.surface_materials.append(f"{key}_{FINISHES[finish]}" if material["batch"] else key)
+        finish_name = FINISHES[finish]
+        vertical = abs(direction.y) < 0.25
+        if vertical and building and finish_name == "Plaster":
+            finish_name = "MineralStucco" if style == 0 else "WeatheredPlaster"
+        elif vertical and tower and finish_name == "Concrete":
+            finish_name = "TowerConcrete"
+        elif spec["name"] == "HillRoadGroundFinish" and finish_name == "Concrete" and abs(direction.y) > 0.9:
+            finish_name = "PavementConcrete"
+        section.surface_materials.append(f"{key}_{finish_name}" if material["batch"] else key)
         for index in tri:
             section.corner_colors.append(color_data[index] if color_data else default)
             if world_uv[0]:
@@ -268,6 +288,89 @@ def verify_traversal(collision, start, doors):
                 raise ValueError(f"Exported collision blocks the {door['name']} entrance at {height:.2f} m.")
 
 
+def segment_nearest(point, start, end):
+    span = end - start
+    t = max(0.0, min(1.0, (point - start).dot(span) / span.length_squared))
+    return start + span * t
+
+
+def fits_roof(point, edges, margin):
+    crossings = sum(
+        (a.y > point.y) != (b.y > point.y) and
+        point.x < a.x + (point.y - a.y) * (b.x - a.x) / (b.y - a.y)
+        for a, b in edges
+    )
+    return crossings % 2 and all(
+        (segment_nearest(point, a, b) - point).length >= margin for a, b in edges
+    )
+
+
+def building_dressing(sites, roads):
+    # Physical extents of the selected conventional Sandbar meshes, in metres.
+    roofs = (("Condenser", 0.83, 0.83, 0.96), ("SatDish", 1.27, 1.30, 0.72),
+             ("HVAC", 2.99, 1.64, 0.74), ("VentChimney", 1.50, 1.40, 0.72),
+             ("IndustrialAC", 2.00, 1.20, 0.82), ("VentUnitC", 4.80, 3.00, 0.65))
+    streets = [(Vector((a[0], a[2])), Vector((b[0], b[2])))
+               for road in roads for a, b in zip(road["points"], road["points"][1:]) if a != b]
+    props, decals = [], []
+    awnings = 0
+    for index, site in enumerate(sites):
+        points = list(map(Vector, site["polygon"]))
+        edges = [(a, b) for a, b in zip(points, points[1:] + points[:1]) if a != b]
+        height = site["height"]
+        center = sum(points, Vector((0.0, 0.0))) / len(points)
+        winding = 1 if sum(a.x * b.y - a.y * b.x for a, b in edges) > 0 else -1
+        frontage = []
+        for a, b in edges:
+            middle = (a + b) * 0.5
+            direction = (b - a).normalized()
+            outward = Vector((direction.y, -direction.x)) * winding
+            nearest = min((segment_nearest(middle, *street) for street in streets),
+                          key=lambda point: (point - middle).length_squared)
+            approach = nearest - middle
+            if approach.dot(outward) > 1.0 and (b - a).length >= 3.5:
+                frontage.append((approach.length, a, b, outward))
+        if not frontage:
+            continue
+        distance, a, b, outward = min(frontage, key=lambda item: item[0])
+        direction = (b - a).normalized()
+        # Keep local positive Y pointing toward the street for front-facing props.
+        if Vector((-direction.y, direction.x)).dot(outward) < 0.0:
+            direction = -direction
+        middle = (a + b) * 0.5
+        asset, width, depth, scale = roofs[index % len(roofs)]
+        margin = math.hypot(width, depth) * scale * 0.5 + 0.32
+        reserved = list(site["reserved"])
+        if height >= 15.0:
+            reserved.append((center.x, center.y, 2.4))
+        candidates = [middle.lerp(center, ratio) + direction * offset
+                      for ratio in (0.48, 0.77, 1.0) for offset in (0.0, -2.6, 2.6, -4.6, 4.6)]
+        for point in candidates:
+            if fits_roof(point, edges, margin) and all(
+                (point - Vector((rx, rz))).length >= radius + margin for rx, rz, radius in reserved
+            ):
+                props.append({"asset": asset, "label": f"Roof {asset} / {site['id']}",
+                              "position": exchange_position((point.x, height + 0.025, point.y)),
+                              "forward": exchange_position((direction.x, 0, direction.y)), "scale": scale})
+                break
+        if distance > 24.0 or site["adapted_front"]:
+            continue
+        if awnings < 8 and index % 3 == 2 and (b - a).length >= 6.0 and 5.0 < height < 15.0:
+            point = a.lerp(b, 0.29) + outward * 0.48
+            props.append({"asset": "Awning", "label": f"Canvas sunshade / {site['id']}",
+                          "position": exchange_position((point.x, 2.77, point.y)),
+                          "forward": exchange_position((direction.x, 0, direction.y)), "scale": 0.40})
+            awnings += 1
+        if index % 2 == 0 or height >= 15.0:
+            point = a.lerp(b, 0.11 + 0.025 * (index % 3)) + outward * 0.015
+            band = min(height - 0.80, 2.55 + (2.55 if height >= 15.0 else 0.0))
+            decals.append({"variant": ("012A", "016A", "017A", "019A")[(index // 2) % 4],
+                           "position": exchange_position((point.x, band, point.y)),
+                           "outward": exchange_position((outward.x, 0, outward.y)),
+                           "width": 0.47 + (index % 3) * 0.12, "height": 1.65})
+    return props, decals
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", required=True, type=Path)
@@ -292,11 +395,13 @@ def main():
     collision_source = read_collision(data["collision_triangles"])
     verify_traversal(collision_source, data["player_start"], data["doors"])
     collision = export_section(output, "RanwarCollision", collision_source)
+    building_props, building_decals = building_dressing(data.get("building_sites", []), data["roads"])
     manifest = {
         "schema": 1,
         "asset_frame": "Blender +x forward, +y left, +z up, metres",
         "source_sha256": hashlib.sha256(args.source.read_bytes()).hexdigest(),
         "parts": assets, "collision": collision, "materials": materials,
+        "building_props": building_props, "building_decals": building_decals,
         "player_start": {
             "feet": exchange_position(data["player_start"]["feet"]),
             "forward": exchange_position(data["player_start"]["forward"]),
@@ -318,6 +423,7 @@ def main():
         f"Verified {len(assets)} visual FBX sections, {manifest['visual_triangles']} visual triangles, "
         f"{manifest['collision_triangles']} collision triangles and {len(manifest['markers'])} landmarks."
     )
+    print(f"Planned {len(building_props)} Sandbar building props and {len(building_decals)} rain streaks.")
 
 
 if __name__ == "__main__":

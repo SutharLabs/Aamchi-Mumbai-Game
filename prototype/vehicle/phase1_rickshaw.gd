@@ -6,6 +6,11 @@ const DriverBody := preload("res://character/player_character.gd")
 const WHEEL_WIDTH := 0.155
 const DRIVER_SCALE := 0.84
 
+var avatar_options: Dictionary = {}:
+	set(options):
+		avatar_options = options
+		_driver.avatar_options = options
+
 var _driver := DriverBody.new()
 
 
@@ -115,12 +120,33 @@ func _build_bodywork() -> void:
 	], yellow)
 	_build_cabin(yellow, fabric, seat, bar_material, trim)
 	_build_lighting(bar_material, rim)
+	_build_service_details(bar_material, rim, fabric)
 	for side: float in [-1.0, 1.0]:
 		var wheel := _add_wheel_at(Vector3(side * 0.539, -0.25, 0.94), tire, rim, false, wheel_radius, WHEEL_WIDTH)
 		BodyMesh.dress_wheel(wheel, wheel_radius, WHEEL_WIDTH, tire, rim, bar_material, 5)
 	var front_wheel := _add_wheel_at(Vector3(0.0, -0.25, -1.05), tire, rim, true, wheel_radius, WHEEL_WIDTH)
 	BodyMesh.dress_wheel(front_wheel, wheel_radius, WHEEL_WIDTH, tire, rim, bar_material, 5)
 	_build_front_fender(front_wheel, paint)
+
+
+func _build_service_details(trim: Material, metal: Material, fabric: Material) -> void:
+	var vent_openings: Array[Array] = []
+	var flange: Array[Array] = []
+	var mudflaps: Array[Array] = []
+	for side: float in [-1.0, 1.0]:
+		# Above each rear wheel is a separate steel cover with folded vent edges.
+		for slot in range(4):
+			var y := 0.047 + float(slot) * 0.039
+			vent_openings.append([Vector3(side * 0.311, y, 1.345), Vector3(0.151, 0.024, 0.014)])
+			flange.append([Vector3(side * 0.311, y + 0.012, 1.355), Vector3(0.142, 0.006, 0.007)])
+		mudflaps.append([Vector3(side * 0.54, -0.292, 1.282), Vector3(0.148, 0.176, 0.016)])
+		BodyMesh.bar(self, "RearCanopyHem", Vector3(side * 0.556, 0.961, 1.247),
+			Vector3(side * 0.558, 0.335, 1.324), 0.012, trim)
+		BodyMesh.bar(self, "CanopyTie", Vector3(side * 0.574, 0.970, 0.752),
+			Vector3(side * 0.559, 1.083, 0.758), 0.010, fabric)
+	BodyMesh.detail_boxes(self, "RearServicePanelOpenings", vent_openings, trim)
+	BodyMesh.detail_boxes(self, "FoldedVentLips", flange, metal)
+	BodyMesh.detail_boxes(self, "RearMudflaps", mudflaps, trim)
 
 
 func _body_ring(z: float, width: float, bottom: float, shoulder: float, crown: float) -> PackedVector3Array:

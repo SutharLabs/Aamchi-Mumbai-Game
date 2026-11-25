@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "RanwarBus.h"
 #include "RanwarGame.h"
 #include "RanwarParcelContact.h"
 #include "RanwarPlayerController.h"
@@ -328,6 +329,16 @@ ARanwarRoute::ESideJob ARanwarRoute::GetSideJobAt(const ARanwarCharacter& Player
 
 FText ARanwarRoute::GetPrompt(const ARanwarCharacter& Player) const
 {
+    if (IsValid(StopBus) && StopBus->IsPassenger(Player))
+    {
+        return StopBus->GetPrompt(Player);
+    }
+    const FText JobPrompt = GetJobPrompt(Player);
+    return JobPrompt.IsEmpty() && IsValid(StopBus) ? StopBus->GetPrompt(Player) : JobPrompt;
+}
+
+FText ARanwarRoute::GetJobPrompt(const ARanwarCharacter& Player) const
+{
     if (Stage == ERanwarJobStage::Complete)
     {
         switch (GetSideJobAt(Player))
@@ -407,7 +418,16 @@ FText ARanwarRoute::GetObjective(const FVector& PlayerLocation) const
         FText::AsNumber(FMath::RoundToInt(FVector::Dist2D(PlayerLocation, Point) / 100.0)));
 }
 
-bool ARanwarRoute::Interact(const ARanwarCharacter& Player)
+bool ARanwarRoute::Interact(ARanwarCharacter& Player)
+{
+    if (IsValid(StopBus) && StopBus->IsPassenger(Player))
+    {
+        return StopBus->Interact(Player);
+    }
+    return InteractWithJob(Player) || (IsValid(StopBus) && StopBus->Interact(Player));
+}
+
+bool ARanwarRoute::InteractWithJob(const ARanwarCharacter& Player)
 {
     if (Stage == ERanwarJobStage::Complete)
     {

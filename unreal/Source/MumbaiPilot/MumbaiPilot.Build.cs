@@ -6,6 +6,6 @@ public class MumbaiPilot : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "InputCore" });
-        PrivateDependencyModuleNames.AddRange(new[] { "AudioExtensions", "Json", "Slate", "SlateCore" });
+        PrivateDependencyModuleNames.AddRange(new[] { "AnimationCore", "AudioExtensions", "HairStrandsCore", "Json", "Slate", "SlateCore" });
     }
 }

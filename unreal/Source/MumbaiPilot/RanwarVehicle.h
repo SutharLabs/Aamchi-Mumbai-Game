@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
 #include "GameFramework/Pawn.h"
 #include "RanwarVehicle.generated.h"
 
@@ -9,6 +10,8 @@ class UAudioComponent;
 class UBoxComponent;
 class UPoseableMeshComponent;
 class USpringArmComponent;
+class USkeletalMesh;
+class UStaticMesh;
 class UStaticMeshComponent;
 
 UENUM(BlueprintType)
@@ -18,6 +21,53 @@ enum class ERanwarVehicleKind : uint8
     Rickshaw,
     Motorcycle,
     Scooter
+};
+
+namespace RanwarDriverPose
+{
+    bool FitAmbient(UPoseableMeshComponent& Rider, USkeletalMesh& Mesh, ERanwarVehicleKind Kind);
+}
+
+UCLASS()
+class MUMBAIPILOT_API URanwarVehicleVisualProfile : public UDataAsset
+{
+    GENERATED_BODY()
+
+public:
+    bool HasValidGeometry() const;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    TObjectPtr<UStaticMesh> Body;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    TObjectPtr<UStaticMesh> Fork;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    TObjectPtr<UStaticMesh> FrontWheel;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    TObjectPtr<UStaticMesh> RearWheel;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    FVector ForkPivot = FVector::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    FVector SteeringAxis = FVector::UpVector;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    FVector FrontWheelPivot = FVector::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    FVector RearWheelPivot = FVector::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    FVector DriverHip = FVector::ZeroVector;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    double FrontWheelRadius = 0.0;
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    double RearWheelRadius = 0.0;
 };
 
 UCLASS()
@@ -62,7 +112,9 @@ private:
     void UseHorn();
     void StopEngineAudio();
     void UpdateVehicleLook(double DeltaSeconds);
-    void ShowDriver(const ARanwarCharacter& Character);
+    void SetDetailedVisual(URanwarVehicleVisualProfile* Profile);
+    void UpdateDetailedVisual(double Travel, double DeltaSeconds);
+    bool ShowDriver(ARanwarCharacter& Character);
     void RestoreDriver(ARanwarCharacter& Character, const FVector* ExitLocation);
     bool FindExitLocation(const ARanwarCharacter& Character, FVector& ExitLocation) const;
     bool SampleGround(const FVector& Position, double Up, double Down, double& GroundZ) const;
@@ -74,6 +126,18 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category = "Vehicle")
     TObjectPtr<UStaticMeshComponent> VehicleMesh;
+
+    UPROPERTY()
+    TObjectPtr<UStaticMeshComponent> VisualFork;
+
+    UPROPERTY()
+    TObjectPtr<UStaticMeshComponent> VisualFrontWheel;
+
+    UPROPERTY()
+    TObjectPtr<UStaticMeshComponent> VisualRearWheel;
+
+    UPROPERTY(Transient)
+    TObjectPtr<URanwarVehicleVisualProfile> VisualProfile;
 
     UPROPERTY()
     TObjectPtr<UStaticMeshComponent> StandInBody;
@@ -97,6 +161,9 @@ private:
     double ForwardSpeed = 0.0;
     double Throttle = 0.0;
     double Steering = 0.0;
+    double VisualSteerAngle = 0.0;
+    double FrontWheelRoll = 0.0;
+    double RearWheelRoll = 0.0;
     double CameraYaw = 0.0;
     double CameraPitch = -12.0;
     double CameraLookTime = 0.0;

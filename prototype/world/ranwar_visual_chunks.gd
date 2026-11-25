@@ -13,6 +13,7 @@ class ChunkVisual:
 	var size: Vector3
 	var material: Material
 	var mesh: Mesh
+	var build_mesh: Callable
 
 
 class Chunk:
@@ -47,6 +48,14 @@ func register_mesh(anchor: Vector3, label: String, pose: Transform3D, mesh: Mesh
 	visual.label = label
 	visual.pose = pose
 	visual.mesh = mesh
+	_register_visual(anchor, visual)
+
+
+func register_generated_mesh(anchor: Vector3, label: String, pose: Transform3D, build_mesh: Callable) -> void:
+	var visual := ChunkVisual.new()
+	visual.label = label
+	visual.pose = pose
+	visual.build_mesh = build_mesh
 	_register_visual(anchor, visual)
 
 
@@ -127,8 +136,11 @@ func _load_chunk(cell: Vector2i) -> void:
 	for visual: ChunkVisual in chunk.visuals:
 		var instance := MeshInstance3D.new()
 		instance.name = visual.label
+		instance.set_meta(&"export_label", visual.label)
 		instance.transform = visual.pose
-		if visual.mesh != null:
+		if visual.build_mesh.is_valid():
+			instance.mesh = visual.build_mesh.call()
+		elif visual.mesh != null:
 			instance.mesh = visual.mesh
 		else:
 			var mesh := BoxMesh.new()

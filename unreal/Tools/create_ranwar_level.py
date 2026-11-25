@@ -124,7 +124,32 @@ def section_materials(mesh, loaded):
         mesh.set_material(index, loaded[name])
 
 
+def add_ground_level_weathering(editor, material, color):
+    position = editor.create_material_expression(material, unreal.MaterialExpressionWorldPosition, -860, -290)
+    height = editor.create_material_expression(material, unreal.MaterialExpressionComponentMask, -620, -290)
+    height.set_editor_property("r", False)
+    height.set_editor_property("g", False)
+    height.set_editor_property("b", True)
+    height.set_editor_property("a", False)
+    scale = editor.create_material_expression(material, unreal.MaterialExpressionDivide, -440, -290)
+    scale.set_editor_property("const_b", 145.0)
+    fade = editor.create_material_expression(material, unreal.MaterialExpressionSaturate, -260, -290)
+    damp_color = editor.create_material_expression(material, unreal.MaterialExpressionMultiply, -120, -155)
+    damp_color.set_editor_property("const_b", 0.68)
+    weathered = editor.create_material_expression(material, unreal.MaterialExpressionLinearInterpolate, 70, -155)
+    for source, destination, pin in (
+        (position, height, ""), (height, scale, "A"), (scale, fade, ""),
+        (color, damp_color, "A"), (damp_color, weathered, "A"),
+        (color, weathered, "B"), (fade, weathered, "Alpha"),
+    ):
+        if not editor.connect_material_expressions(source, "", destination, pin):
+            raise RuntimeError(f"Could not attach ground-level weathering to {material.get_name()}.")
+    return weathered
+
+
 def create_materials(source, manifest, asset_tools, assets):
+    from import_sandbar_street_assets import SANDBAR_SURFACES, sandbar_surface_textures
+
     result = {}
     pending = []
     for name, descriptor in manifest.items():
@@ -136,6 +161,9 @@ def create_materials(source, manifest, asset_tools, assets):
                 pending.append((name, field, import_task(path, TEXTURES, path.stem)))
     asset_tools.import_asset_tasks([task for _, _, task in pending])
     textures = {(name, field): imported(task, unreal.Texture2D) for name, field, task in pending}
+    variants = {name.rsplit("_", 1)[-1] for name in manifest} & SANDBAR_SURFACES.keys()
+    sandbar_maps = {variant: sandbar_surface_textures(assets, TEXTURES, variant)
+                    for variant in sorted(variants)}
     editor = unreal.MaterialEditingLibrary
 
     for name, descriptor in manifest.items():
@@ -147,26 +175,51 @@ def create_materials(source, manifest, asset_tools, assets):
             raise RuntimeError(f"Could not create material {name}.")
         editor.delete_all_material_expressions(material)
         color = editor.create_material_expression(material, unreal.MaterialExpressionVertexColor, -520, 0)
-        albedo = textures.get((name, "albedo_file"))
+        variant = name.rsplit("_", 1)[-1]
+        facade = sandbar_maps.get(variant, {})
+        albedo = facade.get("Diffuse") or textures.get((name, "albedo_file"))
         if albedo is not None:
+            if descriptor.get("name") == "TeaRoomOriginalLettering":
+                # Keep the small bilingual atlas readable at the entrance on Low as well.
+                albedo.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_UI)
+                albedo.set_editor_property("never_stream", True)
+                if not assets.save_loaded_asset(albedo):
+                    raise RuntimeError("Could not save the Hill Road Tea Room lettering atlas.")
             texture = editor.create_material_expression(material, unreal.MaterialExpressionTextureSample, -520, 170)
             texture.set_editor_property("texture", albedo)
             multiply = editor.create_material_expression(material, unreal.MaterialExpressionMultiply, -230, 0)
             editor.connect_material_expressions(color, "", multiply, "A")
+            if facade:
+                # Preserve the authored paint palette beneath the photographed surface texture.
+                blend = editor.create_material_expression(material, unreal.MaterialExpressionLinearInterpolate, -360, 150)
+                blend.set_editor_property("const_a", 1.0)
+                texture_weights = {"WeatheredPlaster": 0.72, "MineralStucco": 0.58, "TowerConcrete": 0.54}
+                blend.set_editor_property("const_alpha", texture_weights.get(variant, 0.45))
+                editor.connect_material_expressions(texture, "", blend, "B")
+                texture = blend
             editor.connect_material_expressions(texture, "", multiply, "B")
             color = multiply
+        if facade and variant in {"WeatheredPlaster", "MineralStucco"}:
+            color = add_ground_level_weathering(editor, material, color)
         editor.connect_material_property(color, "", unreal.MaterialProperty.MP_BASE_COLOR)
         for prop, field, y in ((unreal.MaterialProperty.MP_ROUGHNESS, "roughness", 320),
                                (unreal.MaterialProperty.MP_METALLIC, "metallic", 470)):
-            constant = editor.create_material_expression(material, unreal.MaterialExpressionConstant, -260, y)
-            constant.set_editor_property("r", descriptor[field])
-            editor.connect_material_property(constant, "", prop)
-        normal = textures.get((name, "normal_file"))
+            if facade and field == "roughness":
+                roughness = editor.create_material_expression(material, unreal.MaterialExpressionTextureSample, -520, y)
+                roughness.set_editor_property("texture", facade["Rough"])
+                roughness.set_editor_property("sampler_type", unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+                editor.connect_material_property(roughness, "R", prop)
+            else:
+                constant = editor.create_material_expression(material, unreal.MaterialExpressionConstant, -260, y)
+                constant.set_editor_property("r", descriptor[field])
+                editor.connect_material_property(constant, "", prop)
+        normal = facade.get("Normal") or textures.get((name, "normal_file"))
         if normal is not None:
-            normal.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_NORMALMAP)
-            normal.set_editor_property("srgb", False)
-            normal.set_editor_property("flip_green_channel", True)
-            assets.save_loaded_asset(normal)
+            if not facade:
+                normal.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_NORMALMAP)
+                normal.set_editor_property("srgb", False)
+                normal.set_editor_property("flip_green_channel", True)
+                assets.save_loaded_asset(normal)
             sample = editor.create_material_expression(material, unreal.MaterialExpressionTextureSample, -530, 610)
             sample.set_editor_property("texture", normal)
             sample.set_editor_property("sampler_type", unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL)
@@ -228,6 +281,9 @@ def populate(actors, axes, manifest, source):
     if mode is None or landmark_class is None:
         raise RuntimeError("Build the native MumbaiPilot editor module before creating the Ranwar level.")
     from create_ranwar_environment import add_environment
+    from import_ranwar_street_life import add_ranwar_ambient_pedestrians, add_ranwar_street_life, load_metahuman_cast
+    from import_sandbar_building_props import add_sandbar_building_props, add_sandbar_weather_decals
+    from import_sandbar_street_assets import add_sandbar_street_props
     add_environment(actors, spawn, axes, manifest, source, import_task, imported)
 
     start_x, start_y, start_z = axes.position(manifest["player_start"]["feet"])
@@ -240,15 +296,21 @@ def populate(actors, axes, manifest, source):
         actor = spawn(actors, landmark_class, marker["name"], axes.position(marker["position"]))
         actor.set_editor_property("display_name", unreal.Text(marker["name"]))
         actor.set_editor_property("details", unreal.Text(marker["details"]))
-    add_parcel_route(actors, axes, manifest, yaw)
+    cast = load_metahuman_cast()
+    add_parcel_route(actors, axes, manifest, yaw, cast)
     add_traffic(actors, axes, manifest)
+    add_sandbar_street_props(actors, spawn, axes, manifest, ground_arrival_civilian)
+    add_sandbar_building_props(actors, spawn, axes, manifest)
+    add_sandbar_weather_decals(actors, spawn, axes, manifest)
+    add_ranwar_street_life(actors, spawn, axes, manifest, source, ground_arrival_civilian, import_task, imported)
+    add_ranwar_ambient_pedestrians(actors, spawn, axes, ground_arrival_civilian, cast)
     unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).set_level_viewport_camera_info(
         unreal.Vector(start_x - forward_x * 4.1, start_y - forward_y * 4.1, start_z + 185),
         unreal.Rotator(pitch=-12.0, yaw=yaw),
     )
 
 
-def add_parcel_route(actors, axes, manifest, heading):
+def add_parcel_route(actors, axes, manifest, heading, cast):
     route = spawn(actors, unreal.RanwarRoute, "Ranwar Parcel Run")
     feet = unreal.Vector(*axes.position(manifest["player_start"]["feet"]))
     forward_x, forward_y, _ = axes.position(manifest["player_start"]["forward"])
@@ -262,17 +324,19 @@ def add_parcel_route(actors, axes, manifest, heading):
     right = unreal.Vector(-forward.y, forward.x, 0.0)
     # Use the curb strip so the camera, sidewalk and left-hand traffic lane stay clear.
     bus = feet - forward * 530.0 + right * 200.0 - unreal.Vector(0.0, 0.0, 45.0)
-    add_arrival_prop(actors, "BestBus", "Bandra BEST arrival coach", bus, heading, True)
-    add_arrival_prop(actors, "AnjaliKurta", "Anjali", guide, heading + 180.0, True)
-    for package, name, distance, lateral, facing in (
-        ("Pedestrian", "Sameer", 2300.0, -1630.0, 15.0),
-        ("Farah", "Farah", 2800.0, 36.0, 180.0),
-        ("Nitin", "Nitin", 3400.0, -1666.0, 175.0),
-        ("Leena", "Leena", 2600.0, -1594.0, 10.0),
-        ("Iqbal", "Iqbal", 3700.0, 36.0, -15.0),
+    coach = add_arrival_prop(actors, "BestBus", "Bandra BEST arrival coach", bus, heading, True,
+                             actor_class=unreal.RanwarBus)
+    route.set_editor_property("stop_bus", coach)
+    add_placed_cast_member(actors, cast, "female", "AnjaliKurta", "Anjali", guide, heading + 180.0, True)
+    for package, name, role, distance, lateral, facing in (
+        ("Pedestrian", "Vikram" if cast else "Sameer", "rival", 2300.0, -1630.0, 15.0),
+        ("Farah", "Farah", "female", 2800.0, 36.0, 180.0),
+        ("Nitin", "Nitin", "male", 3400.0, -1666.0, 175.0),
+        ("Leena", "Leena", "female", 2600.0, -1594.0, 10.0),
+        ("Iqbal", "Iqbal", "male", 3700.0, 36.0, -15.0),
     ):
         point = ground_arrival_civilian(route, name, feet + forward * distance + across * lateral)
-        add_arrival_prop(actors, package, name, point, heading + facing, True)
+        add_placed_cast_member(actors, cast, role, package, name, point, heading + facing, True)
     # The Godot job-board coordinates (-9, 0, 5) convert to (-5, 9, 0) in the exchange.
     route.set_editor_property("job_board", unreal.Vector(*axes.position((-5.0, 9.0, 0.0))))
     footway = [unreal.Vector(*axes.position(point)) for point in manifest["footway"]]
@@ -287,14 +351,14 @@ def add_parcel_route(actors, axes, manifest, heading):
     route.set_editor_property("parcel_pickup", parcel_pickup)
     route.set_editor_property("parcel_dropoff", parcel_dropoff)
     # Source metres use (-Godot Z, -Godot X, Godot Y). Contacts stand clear of the lane centre.
-    route.set_editor_property("parcel_pickup_contact",
-                              add_parcel_contact(actors, axes, route, "Ravi", "Iqbal", parcel_pickup, (0.828, -0.352, 0.0)))
-    route.set_editor_property("parcel_dropoff_contact",
-                              add_parcel_contact(actors, axes, route, "Kavita", "Leena", parcel_dropoff, (0.888, -0.148, 0.0)))
+    route.set_editor_property("parcel_pickup_contact", add_parcel_contact(
+        actors, axes, route, "Ravi", "Iqbal", parcel_pickup, (0.828, -0.352, 0.0), cast and cast["male"]))
+    route.set_editor_property("parcel_dropoff_contact", add_parcel_contact(
+        actors, axes, route, "Kavita", "Leena", parcel_dropoff, (0.888, -0.148, 0.0), cast and cast["female"]))
     doors_by_site = {door["osm_way"]: door for door in manifest["doors"]}
-    for site, anchor, stand_in, name in (
-        (360291657, "ledger_pickup", "Farah", "Asha"),
-        (357472313, "ledger_handoff", "Nitin", "Chapel Corner Grocer"),
+    for site, anchor, stand_in, name, role in (
+        (360291657, "ledger_pickup", "Farah", "Asha", "female"),
+        (357472313, "ledger_handoff", "Nitin", "Chapel Corner Grocer", "male"),
     ):
         door = doors_by_site[site]
         x, y, z = door["inside"]
@@ -308,7 +372,8 @@ def add_parcel_route(actors, axes, manifest, heading):
                                              y - toward_y * 0.72 + toward_x * 0.76, z)))
         direction_x, direction_y, _ = axes.position((toward_x, toward_y, 0.0))
         position = ground_arrival_civilian(route, name, point)
-        add_arrival_prop(actors, stand_in, name, position, math.degrees(math.atan2(direction_y, direction_x)), False)
+        add_placed_cast_member(actors, cast, role, stand_in, name, position,
+                               math.degrees(math.atan2(direction_y, direction_x)), False)
     route.set_editor_property("road_heading", heading)
     route.set_editor_property("loan_bays", [feet + forward * offset + across * 285.0 for offset in (1300.0, 2000.0, 2700.0)])
 
@@ -319,11 +384,32 @@ def add_parcel_route(actors, axes, manifest, heading):
     route.set_editor_property("yard_heading", math.degrees(math.atan2(yard_y, yard_x)))
 
 
-def add_parcel_contact(actors, axes, route, name, fallback, anchor, source_offset):
+def add_placed_cast_member(actors, cast, role, package, name, point, heading, solid):
+    if not cast:
+        return add_arrival_prop(actors, package, name, point, heading, solid)
+
+    from import_ranwar_street_life import add_metahuman_pedestrian
+    actor = add_metahuman_pedestrian(actors, spawn, cast[role], name, point, unreal.Rotator(yaw=heading))
+    actor.set_editor_property("blocks_passage", solid)
+    tags = ["RanwarMetaHumanCast", f"RanwarNPC.{name.replace(' ', '')}"]
+    if role == "rival":
+        tags.append("RanwarRivalCourier")
+    actor.set_editor_property("tags", tags)
+    return actor
+
+
+def add_parcel_contact(actors, axes, route, name, fallback, anchor, source_offset, metahuman):
     offset = unreal.Vector(*axes.position(source_offset))
     feet = ground_arrival_civilian(route, name, anchor + offset)
     heading = math.degrees(math.atan2(-offset.y, -offset.x))
     actor = spawn(actors, unreal.RanwarParcelContact, name, (feet.x, feet.y, feet.z), unreal.Rotator(yaw=heading))
+    if metahuman:
+        actor.set_editor_property("meta_human_class", metahuman.actor_class)
+        actor.set_editor_property("breath_loop", metahuman.idle)
+        actor.set_editor_property("contact_gesture", metahuman.gesture)
+        actor.set_editor_property("tags", ["RanwarMetaHumanCast", f"RanwarNPC.{name}"])
+        return actor
+
     preferred_path = f"/Game/Ranwar/Arrival/{name}.{name}"
     fallback_path = f"/Game/Ranwar/Arrival/{fallback}.{fallback}"
     assets = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
@@ -336,7 +422,7 @@ def add_parcel_contact(actors, axes, route, name, fallback, anchor, source_offse
 
 
 def configure_parcel_contact_animation(actor, name):
-    from import_omkar import CONTACT_DESTINATION
+    from import_omkar import CONTACT_DESTINATION, load_kavita_ponytail
 
     package = f"{CONTACT_DESTINATION}/{name}"
     rig = unreal.load_asset(f"{package}/{name}.{name}")
@@ -346,6 +432,8 @@ def configure_parcel_contact_animation(actor, name):
         isinstance(clip, unreal.AnimSequence) for clip in (breath, gesture)
     ):
         raise RuntimeError(f"No complete skinned contact exchange for {name}.")
+    if name == "Kavita":
+        rig = load_kavita_ponytail(rig) or rig
     component = actor.get_editor_property("skeletal_appearance")
     component.set_skeletal_mesh_asset(rig)
     scale = 0.96 if name == "Kavita" else 1.0
@@ -355,7 +443,7 @@ def configure_parcel_contact_animation(actor, name):
 
 
 def ground_arrival_civilian(context, name, point):
-    # Arrival feet include the bus step height. The static cast stands on the actual pavement.
+    # Arrival feet include the bus step height. The cast stands on the actual pavement.
     hit = unreal.SystemLibrary.line_trace_single_for_objects(
         context, point + unreal.Vector(0.0, 0.0, 60.0), point - unreal.Vector(0.0, 0.0, 180.0),
         [unreal.ObjectTypeQuery.ECC_WORLD_STATIC], True, [], unreal.DrawDebugTrace.NONE,
@@ -371,12 +459,12 @@ def ground_arrival_civilian(context, name, point):
     return grounded
 
 
-def add_arrival_prop(actors, package, label, position, heading, solid):
+def add_arrival_prop(actors, package, label, position, heading, solid, *, actor_class=unreal.StaticMeshActor):
     asset_path = f"/Game/Ranwar/Arrival/{package}.{package}"
     mesh = unreal.load_asset(asset_path)
     if not isinstance(mesh, unreal.StaticMesh):
         raise RuntimeError(f"Could not load the imported arrival asset {asset_path}.")
-    actor = spawn(actors, unreal.StaticMeshActor, label, (position.x, position.y, position.z), unreal.Rotator(yaw=heading))
+    actor = spawn(actors, actor_class, label, (position.x, position.y, position.z), unreal.Rotator(yaw=heading))
     component = actor.static_mesh_component
     component.set_static_mesh(mesh)
     component.set_collision_profile_name("BlockAll" if solid else "NoCollision")
@@ -384,6 +472,7 @@ def add_arrival_prop(actors, package, label, position, heading, solid):
         component.set_collision_response_to_channel(
             unreal.CollisionChannel.ECC_VISIBILITY, unreal.CollisionResponseType.ECR_IGNORE,
         )
+    return actor
 
 
 def add_traffic(actors, axes, manifest):

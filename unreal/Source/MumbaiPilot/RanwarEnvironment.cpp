@@ -87,6 +87,12 @@ APostProcessVolume* ARanwarEnvironment::CreateExposure(UWorld& World)
         Settings.DepthOfFieldFstop = 8.0f;
         Settings.bOverride_BloomIntensity = true;
         Settings.BloomIntensity = 0.22f;
+        Settings.bOverride_AmbientOcclusionIntensity = true;
+        Settings.AmbientOcclusionIntensity = 0.72f;
+        Settings.bOverride_AmbientOcclusionRadius = true;
+        Settings.AmbientOcclusionRadius = 72.0f;
+        Settings.bOverride_AmbientOcclusionRadiusInWS = true;
+        Settings.AmbientOcclusionRadiusInWS = true;
         Settings.bOverride_MotionBlurAmount = true;
         Settings.MotionBlurAmount = 0.0f;
     }
@@ -168,12 +174,12 @@ void ARanwarEnvironment::ApplyEnvironment()
     if (Sky)
     {
         USkyLightComponent* Light = Sky->GetLightComponent();
-        Light->SetIntensity(FMath::Lerp(0.68f, 1.64f, Day));
+        Light->SetIntensity(FMath::Lerp(0.68f, 1.16f, Day));
     }
     if (Haze)
     {
         UExponentialHeightFogComponent* Fog = Haze->GetComponent();
-        Fog->SetFogDensity(FMath::Lerp(0.016f, 0.024f, Day));
+        Fog->SetFogDensity(FMath::Lerp(0.016f, 0.019f, Day));
         Fog->SetFogInscatteringColor(FMath::Lerp(FLinearColor(0.015f, 0.025f, 0.043f),
             FLinearColor(0.36f, 0.49f, 0.56f), Day));
     }

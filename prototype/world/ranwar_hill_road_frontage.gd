@@ -2,6 +2,7 @@ extends RefCounted
 ## Shallow street-facing fittings for the authored background lots near the BEST stop.
 
 const Surfaces := preload("res://world/ranwar_surface_materials.gd")
+const SHUTTER_MODEL := preload("res://world/props/rollershutter_door.glb")
 const BASE := Color("827972")
 const FRAME := Color("b3ad9a")
 const GLASS := Color("4b6268")
@@ -9,7 +10,7 @@ const SHUTTERS: Array[Color] = [Color("6c7466"), Color("696c67"), Color("626e6a"
 const AWNINGS: Array[Color] = [Color("75483d"), Color("49646a"), Color("8a7453")]
 
 
-static func create(height: float, variant: int, material: Material) -> ArrayMesh:
+static func create(height: float, variant: int, material: Material, use_textured_shutter: bool) -> ArrayMesh:
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_smooth_group(-1)
@@ -18,7 +19,7 @@ static func create(height: float, variant: int, material: Material) -> ArrayMesh
 	var shop := variant % 3 != 1
 	for x: float in [-4.25, 0.0, 4.25]:
 		if shop:
-			_shutter(surface, x, variant)
+			_shutter(surface, x, variant, use_textured_shutter and x == 0.0)
 		else:
 			_window(surface, Vector3(x, 1.64, 0), variant)
 			if x == 0.0:
@@ -48,12 +49,32 @@ static func create(height: float, variant: int, material: Material) -> ArrayMesh
 	surface.set_material(material)
 	surface.generate_normals()
 	surface.index()
-	return surface.commit()
+	var mesh := surface.commit()
+	if shop and use_textured_shutter:
+		_append_textured_shutter(mesh)
+	return mesh
 
 
-static func _shutter(surface: SurfaceTool, x: float, variant: int) -> void:
-	var color := SHUTTERS[variant % SHUTTERS.size()]
+static func _append_textured_shutter(frontage: ArrayMesh) -> void:
+	var model := SHUTTER_MODEL.instantiate() as Node3D
+	var shutter := model as MeshInstance3D
+	if shutter == null:
+		shutter = model.get_child(0) as MeshInstance3D
+	var source := shutter.mesh
+	var width := source.get_aabb().size.x
+	var placement := Transform3D(Basis.from_scale(Vector3(3.09 / width, 1.0, 1.0)), Vector3(0, 0.08, 0.13))
+	var panel := SurfaceTool.new()
+	panel.append_from(source, 0, placement)
+	panel.set_material(shutter.get_active_material(0))
+	panel.commit(frontage)
+	model.free()
+
+
+static func _shutter(surface: SurfaceTool, x: float, variant: int, textured_panel: bool) -> void:
 	Surfaces.add_box(surface, Vector3(x, 1.28, 0.055), Vector3(3.36, 2.56, 0.13), FRAME)
+	if textured_panel:
+		return
+	var color := SHUTTERS[variant % SHUTTERS.size()]
 	Surfaces.add_box(surface, Vector3(x, 1.25, 0.139), Vector3(3.09, 2.34, 0.08), color)
 	for slat in 8:
 		Surfaces.add_box(surface, Vector3(x, 0.29 + float(slat) * 0.28, 0.182), Vector3(3.04, 0.025, 0.014),
